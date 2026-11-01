@@ -1,0 +1,214 @@
+/* ======================================================================
+   Form_Design.css | طراحی واکنش‌گرا و راست‌به‌چپ
+   تغییر رنگ اصلی، سایز کنترل‌ها و پس‌زمینه فقط از بخش :root انجام می‌شود.
+   فونت از ریشه BinaProject خوانده می‌شود و داخل خروجی کپی نشده است.
+   ====================================================================== */
+@font-face {
+  font-family: 'IranYekanX';
+  src: url('../IRANYekanX-Light.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+:root {
+  --font-app: 'IranYekanX', Tahoma, 'Segoe UI', sans-serif;
+  --canvas: #a8b9cc;          /* رنگ صفحه در تصویر مرجع */
+  --frame: #376092;           /* قاب دور فرم */
+  --main-text: #182b40;
+  --muted: #596a7a;
+  --title: #ae3037;
+  --normal-label: #086b22;
+  --total-label: #7d087f;
+  --field: #e9eff5;
+  --total-field: #faeeee;
+  --line: #768b9b;
+  --control-height: 36px;
+  --row-height: 47px;
+  --total-row-height: 64px;
+  --radius: 9px;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; }
+body { margin: 0; background: #eef2f6; color: var(--main-text); font-family: var(--font-app); font-size: 14px; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+button:focus-visible, input:focus-visible, select:focus-visible, [contenteditable]:focus-visible { outline: 3px solid #1a67b6; outline-offset: 2px; }
+
+.app-shell { min-height: 100vh; max-width: 1900px; margin-inline: auto; background: #fff; box-shadow: 0 9px 38px #233c5730; }
+.app-header {
+  display: flex; align-items: center; gap: 16px;
+  height: 42px; padding-inline: 12px 20px;
+  background: #f9fcfe; border-bottom: 1px solid #c9d3df;
+}
+.app-identity { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; }
+.app-logo { display: grid; place-items: center; width: 21px; height: 21px; border: 2px solid #a93480; border-radius: 4px; color: #ad216d; background: #fdeef8; font-family: Georgia, serif; font-size: 14px; font-weight: 900; }
+.app-header-note { color: #758496; font-size: 11px; }
+.app-header-actions { margin-inline-start: auto; }
+.icon-button { display: grid; place-items: center; width: 31px; height: 30px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #4a6782; }
+.icon-button:hover { background: #e7eef7; border-color: #c6d4e3; }
+.icon-button svg { width: 18px; height: 18px; }
+
+.work-area {
+  min-height: calc(100vh - 42px); border: 7px solid var(--frame);
+  background: linear-gradient(180deg, #aec0d2 0%, var(--canvas) 36%, #a6b8cd 100%);
+  box-shadow: inset 0 0 0 1px #d8e4ef;
+  padding: 22px clamp(16px, 3vw, 38px) 12px;
+}
+.hero { display: grid; grid-template-columns: 255px minmax(0, 1fr) 288px; gap: 20px; align-items: start; min-height: 167px; }
+.hero-title { grid-column: 2; grid-row: 1; text-align: center; padding-top: 19px; }
+.eyebrow { font-size: 11px; letter-spacing: .02em; color: #55708b; }
+.hero-title h1 { margin: 7px 0 9px; color: var(--title); font-size: clamp(23px, 2vw, 30px); font-weight: 800; text-shadow: 1px 1px #fff; }
+.hero-title p { margin: 0; color: #52697d; font-size: 12px; }
+.period-panel {
+  grid-column: 1; grid-row: 1; width: 100%;
+  padding: 12px 14px 10px; background: #eaf1f7a8;
+  border: 1px solid #dce7f3; border-radius: var(--radius);
+  box-shadow: 0 3px 11px #526d8620;
+}
+.panel-heading { margin: 0 0 10px; font-size: 12px; color: #50677f; font-weight: 800; }
+.select-row { display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 8px; color: #1b2e42; font-size: 12px; font-weight: 700; }
+.field-select, .note-filter, .company-picker select { width: 100%; min-width: 0; height: var(--control-height); padding: 0 8px; border: 1px solid #a2b0c1; border-radius: 5px; background: #f3f1f8; color: #1a2b3b; }
+.field-select:hover, .note-filter:hover, .company-picker select:hover { border-color: #6686ac; }
+.period-hint { margin: 7px 0 1px; font-size: 10px; color: #687c8f; text-align: center; }
+.period-hint.is-warning { color: #aa2d38; font-weight: 800; }
+
+.options-panel { grid-column: 3; grid-row: 1; width: 100%; }
+.metal-button {
+  display: block; width: 100%; min-height: 39px; border: 1px solid #516982; border-radius: 9px;
+  padding: 7px 12px; color: #102f57; font-weight: 800; font-size: 13px;
+  background: linear-gradient(#f5f9fc 0%, #b7cde0 42%, #92a9be 95%);
+  box-shadow: inset 0 2px 2px #ffffffbd, 0 3px 5px #39516c8c;
+  text-shadow: 0 1px #fff;
+}
+.metal-button:hover { filter: brightness(1.045); }
+.metal-button[aria-pressed="false"] { background: #e7edf3; box-shadow: inset 0 1px 2px #7e90a5aa; }
+.option-checks { display: flex; justify-content: space-between; gap: 5px; align-items: center; min-height: 34px; padding: 4px 8px; margin-top: 8px; background: #ffffff70; border: 1px solid #e4eef8; border-radius: 5px; }
+.check-label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; cursor: pointer; font-size: 11px; font-weight: 700; }
+.check-label input { width: 16px; height: 16px; margin: 0; accent-color: #376092; }
+.note-filter { margin-top: 4px; background: #eee9f0; font-size: 11px; text-align: center; }
+.company-picker { display: flex; align-items: center; gap: 9px; padding: 10px 1px 0; white-space: nowrap; font-size: 11px; }
+.company-picker select { height: 32px; font-size: 11px; }
+
+.report-section { margin-top: 8px; }
+.section-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 39px; padding-inline: 5px; border-bottom: 1px solid #ffffff77; }
+.section-toolbar-heading { display: inline-flex; gap: 7px; align-items: center; color: #3d5268; font-size: 12px; font-weight: 800; }
+.status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #3b9362; }
+.muted-caption { color: #61768a; font-size: 10px; font-weight: 400; }
+.toolbar-buttons { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.toolbar-button { min-height: 29px; padding: 4px 12px; border: 1px solid #7493b1; border-radius: 6px; background: #d8e5f1; color: #24486b; font-size: 11px; font-weight: 800; }
+.toolbar-button:hover { background: #f1f6fa; }
+.toolbar-button[aria-pressed="true"] { color: #fff; background: #416a99; }
+.toolbar-button-add { background: #d4e8da; border-color: #789b82; color: #24623b; }
+.toolbar-button-muted { color: #54697e; border-color: #a0acb8; background: #dde3e9; }
+
+/* ترتیب ستون‌ها از راست به چپ: شرح حساب | یادداشت | درصد رشد */
+.report-grid { --cols: minmax(340px, 1.68fr) minmax(225px, 1fr) minmax(225px, 1fr); width: min(100%, 1030px); margin: 18px auto 0; }
+.grid-head, .report-row { display: grid; grid-template-columns: var(--cols); align-items: center; column-gap: 28px; }
+.grid-head { min-height: 42px; margin-bottom: 5px; }
+.head-cell { font-size: 13px; font-weight: 800; color: #b3252b; text-align: center; }
+.head-cell:first-child { color: #3a5874; }
+.report-row { min-height: var(--row-height); }
+.report-row.is-total { min-height: var(--total-row-height); }
+.report-row[data-section="other"].is-normal:first-of-type { margin-top: 3px; }
+.account-cell { min-width: 0; }
+.account-inner { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 39px; }
+.account-title { color: var(--normal-label); font-size: 15px; font-weight: 800; line-height: 1.55; text-align: center; }
+.is-total .account-title { color: var(--total-label); font-weight: 800; font-size: 16px; text-decoration: underline; text-underline-offset: 4px; font-style: italic; }
+.entry-cell { display: flex; min-width: 0; align-items: center; justify-content: center; }
+.row-input { width: min(100%, 280px); height: 35px; padding: 5px 12px; text-align: center; color: #243950; border: 1px solid var(--line); border-radius: 2px; background: var(--field); box-shadow: inset 0 1px 1px #ffffffbb; transition: border-color .15s, background-color .15s; }
+.row-input:focus { background: #fff; border-color: #286ead; }
+.row-input::placeholder { color: #b4c1cd; }
+.is-total .row-input { height: 39px; background: var(--total-field); border-color: #a39c9e; font-weight: 800; }
+.is-total .row-input:focus { background: white; }
+.growth-wrap { position: relative; display: flex; width: min(100%, 280px); align-items: center; }
+.growth-wrap .row-input { width: 100%; padding-inline: 30px; }
+.growth-unit { position: absolute; inset-inline-end: 12px; pointer-events: none; color: #6f8296; font-size: 12px; }
+.is-empty-note .row-input { visibility: hidden; }
+.report-grid.hide-notes { --cols: minmax(340px, 1.68fr) minmax(225px, 1fr); width: min(100%, 800px); }
+.hide-notes [data-note-col] { display: none; }
+.is-editing .account-title { padding: 5px 9px; border: 1px dashed #667e96; border-radius: 5px; background: #ffffff49; cursor: text; }
+.is-editing .account-title:hover { background: #ffffffac; }
+.delete-row { display: inline-grid; flex: 0 0 auto; place-items: center; width: 23px; height: 23px; padding: 0; border: 1px solid #b96767; border-radius: 50%; background: #ffebec; color: #a12b2b; font-size: 17px; }
+.edit-tip { margin: 13px 0 0; color: #3e5873; text-align: center; font-size: 11px; }
+.app-footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 17px; padding-top: 12px; border-top: 1px solid #e5edf583; color: #536a7f; font-size: 10px; }
+
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: 230px minmax(0, 1fr) 258px; gap: 13px; }
+  .work-area { padding-inline: 18px; }
+  .report-grid { --cols: minmax(235px, 1.4fr) minmax(170px, 1fr) minmax(165px, 1fr); }
+  .grid-head, .report-row { column-gap: 16px; }
+  .account-title { font-size: 13px; }
+  .is-total .account-title { font-size: 14px; }
+}
+@media (max-width: 760px) {
+  .work-area { border-width: 4px; padding: 16px 12px 13px; }
+  .hero { grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
+  .hero-title { grid-column: 1 / -1; grid-row: 1; padding: 0 0 8px; }
+  .period-panel { grid-column: 1; grid-row: 2; }
+  .options-panel { grid-column: 2; grid-row: 2; }
+  .hero-title h1 { font-size: 23px; }
+  .report-grid { width: 100%; --cols: minmax(168px, 1.4fr) minmax(126px, 1fr) minmax(118px, 1fr); }
+  .report-grid.hide-notes { width: 100%; --cols: minmax(170px, 1.5fr) minmax(145px, 1fr); }
+  .grid-head, .report-row { column-gap: 9px; }
+  .head-cell { font-size: 11px; }
+  .account-title { font-size: 12px; }
+  .is-total .account-title { font-size: 12px; }
+  .row-input { height: 34px; padding-inline: 5px; font-size: 12px; }
+  .muted-caption { display: none; }
+}
+@media (max-width: 520px) {
+  .app-header-note { display: none; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-title { grid-row: 1; grid-column: 1; }
+  .period-panel { grid-row: 2; grid-column: 1; }
+  .options-panel { grid-row: 3; grid-column: 1; }
+  .period-panel { padding: 11px; }
+  .select-row { grid-template-columns: 106px minmax(0, 1fr); }
+  .option-checks { justify-content: center; gap: 18px; }
+  .section-toolbar { align-items: flex-start; padding-block: 8px; flex-wrap: wrap; }
+  .report-grid { --cols: minmax(118px, 1.3fr) minmax(83px, 1fr) minmax(75px, .9fr); margin-top: 8px; }
+  .report-grid.hide-notes { --cols: minmax(150px, 1.4fr) minmax(100px, .9fr); }
+  .grid-head, .report-row { column-gap: 5px; }
+  .account-title { font-size: 11px; }
+  .is-total .account-title { font-size: 11px; }
+  .head-cell { font-size: 10px; }
+  .row-input { font-size: 11px; }
+  .growth-wrap .row-input { padding-inline: 17px; }
+  .growth-unit { inset-inline-end: 4px; font-size: 10px; }
+  .app-footer { flex-direction: column; gap: 3px; }
+}
+/* چیدمان نزدیک به تصویر اولیه: عنوان وسط، گزینه‌ها چپ و دوره مالی راست. */
+@media (min-width: 1200px) and (min-height: 700px) {
+  :root { --row-height: 35px; --total-row-height: 50px; }
+  .work-area { position: relative; }
+  .hero { display: block; min-height: 105px; }
+  .hero-title { position: absolute; top: 51px; left: 50%; width: max-content; max-width: 45%; transform: translateX(-50%); padding: 0; }
+  .options-panel { position: absolute; top: 20px; left: 36px; width: 285px; }
+  .period-panel { position: absolute; top: 204px; right: 17px; width: 242px; padding: 7px 10px; background: #e9f1f79c; }
+  .section-toolbar { min-height: 32px; }
+  .report-grid { width: min(100%, 1000px); margin-top: 8px; }
+  .grid-head { min-height: 32px; margin-bottom: 4px; }
+  .account-inner { min-height: 31px; }
+  .row-input { height: 31px; }
+  .is-total .row-input { height: 37px; }
+}
+
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  html, body, .app-shell, .work-area { background: white !important; box-shadow: none; }
+  .app-shell { min-height: auto; }
+  .work-area { min-height: auto; border: 0; padding: 0; }
+  .app-header, .options-panel, .section-toolbar, .app-footer, .edit-tip { display: none !important; }
+  .hero { display: grid; grid-template-columns: 220px 1fr; min-height: auto; }
+  .period-panel { position: static; grid-column: 1; width: auto; padding: 4px; border: 0; box-shadow: none; background: white; }
+  .hero-title { position: static; grid-column: 2; transform: none; width: auto; max-width: none; }
+  .report-section { margin-top: 8px; }
+  .report-grid, .report-grid.hide-notes { width: 100%; }
+  .row-input, .is-total .row-input { border-color: #999; background: #fff; print-color-adjust: exact; }
+  .report-row { break-inside: avoid; }
+  .is-editing .account-title { border: 0; background: transparent; }
+  .delete-row { display: none; }
+}
