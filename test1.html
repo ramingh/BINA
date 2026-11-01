@@ -1,0 +1,578 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BINA | مدیریت بانک محلی v3</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121a2b; --panel2:#182235;
+    --ink:#e8eef8; --muted:#8b9bb4; --line:#243047;
+    --brand:#3b82f6; --brand2:#06b6d4;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --chip:#1e293b; --radius:14px;
+    --font:Tahoma,"Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:var(--font);font-size:13.5px;line-height:1.8;
+    background:radial-gradient(1200px 600px at 100% -10%,#1a2744 0%,var(--bg) 55%);
+    color:var(--ink);min-height:100vh;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 16px 48px}
+  .topbar{
+    display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;
+    padding:12px 16px;border-radius:14px;margin-bottom:14px;
+    background:linear-gradient(135deg,#1e3a5f,#0f766e 120%);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .topbar h1{margin:0;font-size:1.05rem}
+  .topbar .storage{
+    display:flex;gap:8px;align-items:center;font-size:12px;
+    background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);
+    border-radius:999px;padding:5px 12px;direction:ltr;font-family:var(--mono);
+  }
+  .topbar .storage .badge-ok{color:#86efac}
+  .topbar .storage .badge-warn{color:#fcd34d}
+  .topbar button{padding:5px 10px;font-size:12px}
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.22);
+  }
+  .panel h2{margin:0 0 10px;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  select,input{
+    background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:9px;padding:7px 10px;font-size:12.5px;font-family:inherit;
+  }
+  select{min-width:130px}
+  button{
+    cursor:pointer;border:0;border-radius:9px;padding:8px 13px;font-size:12.5px;
+    font-family:inherit;background:var(--brand);color:#fff;transition:.15s filter;
+  }
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.secondary{background:#334155}
+  button.ok{background:#15803d}
+  button.warn{background:#b45309}
+  button.danger{background:#b91c1c}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .hint{color:var(--muted);font-size:11.5px;margin-top:6px}
+  .banner{margin-top:8px;border-radius:9px;padding:8px 11px;font-size:12px}
+  .banner.ok{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25)}
+  .banner.warn{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+  .banner.err{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
+  .banner.info{background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pill{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:11.5px}
+  .pill b{color:#93c5fd}
+  /* جدول جداول */
+  .scroll{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{position:sticky;top:0;background:#0f172a;color:#cbd5e1;text-align:right;padding:7px 9px;white-space:nowrap;z-index:1}
+  td{padding:6px 9px;border-top:1px solid var(--line);white-space:nowrap}
+  td.ltr{direction:ltr;text-align:left;font-family:var(--mono)}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  tr.selected td{background:rgba(59,130,246,.12)}
+  .st-ok{color:var(--ok)}
+  .st-missing{color:var(--bad)}
+  .st-incomplete{color:var(--warn)}
+  .st-diff{color:#fb923c}
+  input[type=checkbox]{width:15px;height:15px;accent-color:var(--brand)}
+  /* tree */
+  .db-item{border:1px solid var(--line);border-radius:10px;margin-bottom:6px;overflow:hidden;background:var(--panel2)}
+  .db-head{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;user-select:none;font-size:12px}
+  .db-head:hover{background:rgba(255,255,255,.03)}
+  .db-head .name{font-family:var(--mono);direction:ltr;flex:1}
+  .db-head .meta{color:var(--muted);font-size:11px}
+  .chev{transition:transform .2s;color:var(--muted);width:14px;text-align:center}
+  .db-item.open .chev{transform:rotate(90deg)}
+  .db-body{display:none;border-top:1px solid var(--line);padding:4px 6px 8px}
+  .db-item.open .db-body{display:block}
+  .store-row{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 22px;border-radius:6px;font-size:11.5px}
+  .store-row:hover{background:rgba(255,255,255,.03)}
+  .store-row .sname{font-family:var(--mono);direction:ltr;flex:1}
+  .count-pill{font-family:var(--mono);font-size:11px;background:var(--chip);border-radius:999px;padding:1px 8px;direction:ltr}
+  pre.log{
+    margin:6px 0 0;background:#060b14;color:#c7d7ee;border-radius:10px;padding:10px;
+    max-height:200px;overflow:auto;direction:ltr;text-align:left;
+    font:11.5px/1.6 var(--mono);border:1px solid var(--line);white-space:pre-wrap;
+  }
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h1>BINA | مدیریت بانک محلی</h1>
+    <div class="storage" id="storageBar">
+      <span id="stPersist" class="badge-warn">⏳</span>
+      <span id="stUsage">— MB / — MB</span>
+      <button id="btnPersist" class="ghost" style="padding:3px 9px;font-size:11px">درخواست ماندگاری</button>
+      <button id="btnStop" class="danger" style="padding:3px 9px;font-size:11px" disabled>توقف</button>
+    </div>
+  </div>
+
+  <!-- ۱: راه‌اندازی اولیه -->
+  <section class="panel">
+    <h2><span class="dot"></span> ۱) راه‌اندازی اولیه</h2>
+    <div class="row">
+      <button id="btnBootstrap" class="ok">راه‌اندازی اولیه (ServerTables + columns + tk_)</button>
+      <button id="btnRefreshTables" class="secondary">بروزرسانی فهرست جداول از سرور</button>
+    </div>
+    <div class="hint">راه‌اندازی اولیه فقط ساختار و tk_ را آماده می‌کند. هیچ جدول Coding/Sanad دانلود نمی‌شود.</div>
+    <div id="bootMsg"></div>
+    <div class="pills" id="bootPills"></div>
+  </section>
+
+  <!-- ۲: جداول -->
+  <section class="panel">
+    <h2><span class="dot"></span> ۲) جداول (انتخاب و دانلود)</h2>
+    <div class="row" style="margin-bottom:8px">
+      <label class="hint">شرکت:</label>
+      <select id="fCompany"><option value="">همه</option></select>
+      <label class="hint">خانواده:</label>
+      <select id="fFamily">
+        <option value="">همه</option>
+        <option value="Coding">Coding</option>
+        <option value="Sanad">Sanad</option>
+      </select>
+      <label class="hint">وضعیت:</label>
+      <select id="fStatus">
+        <option value="">همه</option>
+        <option value="missing">نیست</option>
+        <option value="incomplete">ناقص</option>
+        <option value="diff">اختلاف تعداد</option>
+        <option value="ok">کامل</option>
+      </select>
+      <button id="btnApplyFilter" class="secondary">اعمال فیلتر</button>
+    </div>
+    <div class="row">
+      <button id="btnSelVisible" class="secondary">انتخاب همه‌ی نمایش‌داده‌شده</button>
+      <button id="btnSelIncomplete" class="secondary">انتخاب ناقص‌ها</button>
+      <button id="btnSelNone" class="secondary">لغو انتخاب</button>
+      <button id="btnSyncSelected" class="ok">دانلود جداول انتخاب‌شده</button>
+    </div>
+    <div id="tblMsg"></div>
+    <div class="pills" id="tblPills"></div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="chkAll" style="accent-color:var(--brand)"></th>
+            <th>جدول</th>
+            <th>شرکت</th>
+            <th>خانواده</th>
+            <th>سال</th>
+            <th>سرور</th>
+            <th>لوکال</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ۳: TK -->
+  <section class="panel">
+    <h2><span class="dot"></span> ۳) جداول کمکی TK</h2>
+    <div class="row">
+      <button id="btnLoadTK">نمایش tk_dic و tk_sherkat</button>
+    </div>
+    <div id="tkMsg"></div>
+    <div class="pills" id="tkPills"></div>
+    <div class="scroll" style="max-height:220px">
+      <table>
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th>نمونه</th>
+            <th>تعداد</th>
+          </tr>
+        </thead>
+        <tbody id="tkBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ۴: موجودی لوکال -->
+  <section class="panel">
+    <h2><span class="dot"></span> ۴) موجودی لوکال</h2>
+    <div class="row">
+      <button id="btnRefreshInv" class="secondary">بروزرسانی</button>
+      <button id="btnSelectAllDb" class="secondary">انتخاب همه</button>
+      <button id="btnSelectNoneDb" class="secondary">لغو انتخاب</button>
+      <button id="btnDeleteSelected" class="danger">حذف انتخاب‌ها</button>
+      <button id="btnWipeAll" class="danger">پاک کردن همه</button>
+    </div>
+    <div id="invMsg"></div>
+    <div class="tree" id="invTree"></div>
+  </section>
+
+  <!-- لاگ -->
+  <section class="panel">
+    <h2><span class="dot"></span> لاگ</h2>
+    <div class="row">
+      <button class="ghost" id="btnClearLog">پاک کردن</button>
+    </div>
+    <pre class="log" id="log"></pre>
+  </section>
+
+  <footer>BINA v3 · webservice + Index_db · gzip بلوکی · tk_ ردیفی در public</footer>
+</div>
+
+<script src="bina_db-v010.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const fa = n => (n==null||n==="") ? "—" : Number(n).toLocaleString("fa-IR");
+  const logBox = $("log");
+
+  function log(line){
+    logBox.textContent = "[" + new Date().toLocaleTimeString("fa-IR") + "] " + line + "\n" + logBox.textContent;
+  }
+  function msg(id,type,html){ $(id).innerHTML = html ? '<div class="banner '+type+'">'+html+'</div>' : ""; }
+  function busy(on){
+    [
+      "btnBootstrap","btnRefreshTables","btnApplyFilter","btnSelVisible",
+      "btnSelIncomplete","btnSelNone","btnSyncSelected","btnLoadTK",
+      "btnRefreshInv","btnSelectAllDb","btnSelectNoneDb","btnDeleteSelected","btnWipeAll"
+    ].forEach(id => { $(id).disabled = on; });
+    $("btnStop").disabled = !on;
+  }
+
+  if (typeof webservice === "undefined" || typeof Index_db === "undefined"){
+    msg("bootMsg","err","کلاس‌ها بارگذاری نشدند.");
+    return;
+  }
+
+  // endpoint در کد ثابت است
+  const ENDPOINT = "http://localhost/grid/FastDataHandler.ashx";
+
+  const ws = new webservice({
+    endpoint: ENDPOINT,
+    onProgress: p => {
+      if (p.event === "batch") log("batch " + p.table + " → " + p.count + " ردیف");
+      else if (p.event === "stats-done") log("stats " + p.table + " → " + p.count);
+      else if (p.event === "discover-done") log("discover: " + p.total + " جدول");
+    }
+  });
+  const db = new Index_db({
+    webservice: ws,
+    blockSize: 10000,
+    batchSize: 10000,
+    onProgress: p => {
+      if (p.event === "storage-persist") log(p.persisted ? "Storage ماندگار ✅" : "Storage ماندگار نشد ⚠️");
+      else if (p.event === "bootstrap-online") log("بار اول: دریافت از سرور");
+      else if (p.event === "bootstrap-done") log("bootstrap: firstRun="+p.firstRun+", جداول="+p.discovered+", tk_dic="+p.tkdik+", tk_sherkat="+p.tksherkat);
+      else if (p.event === "tk-loaded") log("TK " + p.store + " → " + p.count);
+      else if (p.event === "tk-skip") log("TK " + p.store + " از قبل موجود ("+p.count+")");
+      else if (p.event === "tk-error") log("خطای TK: " + p.error);
+      else if (p.event === "table-start") log("شروع " + p.table + (p.received ? " (ادامه از "+p.received+")" : ""));
+      else if (p.event === "table-done") log("پایان " + p.table + " → " + p.received);
+      else if (p.event === "table-skip") log("رد " + p.table);
+  else if (p.event === "table-error")
+  log("خطای " + p.table + ": [" + (p.errorName||"?") + "] " + (p.error || "بدون پیام") + " @ " + (p.errorStack||""));
+ 
+  else if (p.event === "chunk") log(p.table + " → " + p.received + " (lastId="+p.lastId+")");
+      else if (p.event === "job-done") log("پیشرفت: " + p.done + "/" + p.total + " — " + p.table);
+      else if (p.event === "checkpoint-recovered") log("بازیابی چک‌پوینت " + p.table);
+      else if (p.event === "refresh-start") log("بروزرسانی فهرست از سرور...");
+      else if (p.event === "refresh-done") log("فهرست بروزرسانی شد: " + p.total + " جدول");
+    }
+  });
+
+  // ── Storage ──
+  async function refreshStorage(){
+    try{
+      const s = await db.getStorageStatus();
+      $("stPersist").textContent = s.persisted ? "✅ ماندگار" : "⚠️ نیمه‌ماندگار";
+      $("stPersist").className = s.persisted ? "badge-ok" : "badge-warn";
+      $("stUsage").textContent = s.usageMB + " MB / " + s.quotaMB + " MB";
+    }catch(_){}
+  }
+  $("btnPersist").onclick = async () => {
+    busy(true);
+    try{
+      const ok = await navigator.storage?.persist?.();
+      log(ok ? "ماندگاری پذیرفته شد ✅" : "ماندگاری رد شد ⚠️");
+      await refreshStorage();
+    } finally { busy(false); }
+  };
+  $("btnStop").onclick = () => { db.stop(); log("درخواست توقف"); };
+
+  // ── bootstrap ──
+  $("btnBootstrap").onclick = async () => {
+    busy(true);
+    msg("bootMsg","info","در حال راه‌اندازی اولیه…");
+    $("bootPills").innerHTML = "";
+    try{
+      const r = await db.bootstrap();
+      msg("bootMsg","ok",
+        (r.firstRun ? "بار اول" : "قبلاً انجام شده") +
+        " — جداول: <b>"+fa(r.discovered)+"</b> · tk_dic: <b>"+fa(r.tkdik)+"</b> · tk_sherkat: <b>"+fa(r.tksherkat)+"</b>"
+      );
+      $("bootPills").innerHTML =
+        '<span class="pill">حالت: <b>'+(r.firstRun?"اولیه":"موجود")+'</b></span>'+
+        '<span class="pill">tk_dic: <b>'+fa(r.tkdik)+'</b></span>'+
+        '<span class="pill">tk_sherkat: <b>'+fa(r.tksherkat)+'</b></span>';
+      await refreshStorage();
+      await loadCompanies();
+      await loadTableList();
+    }catch(err){
+      if (err.name === "AbortError") msg("bootMsg","warn","متوقف شد.");
+      else { msg("bootMsg","err",err.message); log("خطا: " + err.message); }
+    }finally { busy(false); }
+  };
+
+  $("btnRefreshTables").onclick = async () => {
+    busy(true);
+    msg("bootMsg","info","بروزرسانی فهرست جداول از سرور…");
+    try{
+      const r = await db.refreshServerTables();
+      msg("bootMsg","ok","فهرست بروزرسانی شد — جداول: <b>"+fa(r.total)+"</b>");
+      await loadCompanies();
+      await loadTableList();
+    }catch(err){
+      if (err.name === "AbortError") msg("bootMsg","warn","متوقف شد.");
+      else { msg("bootMsg","err",err.message); log("خطا: " + err.message); }
+    }finally { busy(false); }
+  };
+
+  // ── شرکت‌ها ──
+  async function loadCompanies(){
+    try{
+      const codes = await db.getCompanyCodes();
+      const sel = $("fCompany");
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">همه</option>';
+      codes.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        sel.appendChild(opt);
+      });
+      if (codes.includes(cur)) sel.value = cur;
+    }catch(_){}
+  }
+
+  // ── لیست جداول ──
+  let tableCache = [];
+  async function loadTableList(){
+    const company = $("fCompany").value || null;
+    const family = $("fFamily").value || null;
+    const status = $("fStatus").value || null;
+    msg("tblMsg","info","در حال خواندن فهرست…");
+    try{
+      tableCache = await db.getTableList({ companyCode: company, family, status });
+      const body = $("tblBody");
+      body.innerHTML = "";
+      tableCache.forEach((r, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td><input type="checkbox" class="cb-tbl" data-table="'+r.table+'"></td>'+
+          '<td class="ltr">'+r.table+'</td>'+
+          '<td class="ltr">'+r.company+'</td>'+
+          '<td>'+r.family+'</td>'+
+          '<td>'+(r.year ?? "—")+'</td>'+
+          '<td class="ltr">'+fa(r.serverCount)+'</td>'+
+          '<td class="ltr">'+fa(r.localCount)+'</td>'+
+          '<td>'+statusLabel(r.status)+'</td>';
+        body.appendChild(tr);
+      });
+      const summary = {
+        total: tableCache.length,
+        missing: tableCache.filter(r => r.status === "missing").length,
+        incomplete: tableCache.filter(r => r.status === "incomplete").length,
+        diff: tableCache.filter(r => r.status === "diff").length,
+        ok: tableCache.filter(r => r.status === "ok").length
+      };
+      $("tblPills").innerHTML =
+        '<span class="pill">کل: <b>'+fa(summary.total)+'</b></span>'+
+        '<span class="pill">نیست: <b>'+fa(summary.missing)+'</b></span>'+
+        '<span class="pill">ناقص: <b>'+fa(summary.incomplete)+'</b></span>'+
+        '<span class="pill">اختلاف: <b>'+fa(summary.diff)+'</b></span>'+
+        '<span class="pill">کامل: <b>'+fa(summary.ok)+'</b></span>';
+      msg("tblMsg","ok","فهرست بارگذاری شد — " + fa(tableCache.length) + " جدول");
+    }catch(err){
+      msg("tblMsg","err",err.message);
+      log("خطا فهرست: " + err.message);
+    }
+  }
+
+  function statusLabel(st){
+    if (st === "ok") return '<span class="st-ok">کامل</span>';
+    if (st === "missing") return '<span class="st-missing">نیست</span>';
+    if (st === "incomplete") return '<span class="st-incomplete">ناقص</span>';
+    if (st === "diff") return '<span class="st-diff">اختلاف تعداد</span>';
+    return st;
+  }
+
+  $("btnApplyFilter").onclick = () => loadTableList();
+  $("fCompany").onchange = () => loadTableList();
+  $("fFamily").onchange = () => loadTableList();
+  $("fStatus").onchange = () => loadTableList();
+
+  $("chkAll").onchange = function(){
+    document.querySelectorAll(".cb-tbl").forEach(c => c.checked = this.checked);
+  };
+  $("btnSelVisible").onclick = () => document.querySelectorAll(".cb-tbl").forEach(c => c.checked = true);
+  $("btnSelNone").onclick = () => document.querySelectorAll(".cb-tbl").forEach(c => c.checked = false);
+  $("btnSelIncomplete").onclick = () => {
+    document.querySelectorAll(".cb-tbl").forEach(c => {
+      const table = c.getAttribute("data-table");
+      const row = tableCache.find(r => r.table === table);
+      c.checked = row && (row.status === "missing" || row.status === "incomplete" || row.status === "diff");
+    });
+  };
+
+  $("btnSyncSelected").onclick = async () => {
+    const names = [...document.querySelectorAll(".cb-tbl:checked")].map(c => c.getAttribute("data-table"));
+    if (!names.length){ msg("tblMsg","warn","هیچ جدولی انتخاب نشده."); return; }
+    if (!confirm("دانلود " + names.length + " جدول انتخاب‌شده؟")) return;
+    busy(true);
+    msg("tblMsg","info","در حال دانلود " + names.length + " جدول…");
+    try{
+      const r = await db.syncTables(names);
+      msg("tblMsg","ok","تمام شد — درخواستی: <b>"+fa(r.requested)+"</b> · انجام‌شده: <b>"+fa(r.completed)+"</b>");
+      await loadTableList();
+      await refreshStorage();
+      await refreshInventory();
+    }catch(err){
+      if (err.name === "AbortError"){ msg("tblMsg","warn","متوقف شد."); log("توقف sync"); }
+      else { msg("tblMsg","err",err.message); log("خطا sync: " + err.message); console.error(err); }
+    }finally{ busy(false); }
+  };
+
+  // ── TK ──
+  $("btnLoadTK").onclick = async () => {
+    busy(true);
+    msg("tkMsg","info","در حال خواندن TK…");
+    try{
+      const dic = await db.getTKdik();
+      const sherkat = await db.getTKEsmSherkat();
+      $("tkPills").innerHTML =
+        '<span class="pill">tk_dic: <b>'+fa(dic.length)+'</b></span>'+
+        '<span class="pill">tk_sherkat: <b>'+fa(sherkat.length)+'</b></span>';
+      const body = $("tkBody");
+      body.innerHTML = "";
+      const r1 = document.createElement("tr");
+      r1.innerHTML =
+        '<td class="ltr">tk_dic</td>'+
+        '<td class="ltr">'+(dic.slice(0,3).map(r => (r.FieldName||"")+" → "+(r.Caption||"")).join(" | ") || "—")+'</td>'+
+        '<td class="ltr">'+fa(dic.length)+'</td>';
+      body.appendChild(r1);
+      const r2 = document.createElement("tr");
+      r2.innerHTML =
+        '<td class="ltr">tk_sherkat</td>'+
+        '<td class="ltr">'+(sherkat.slice(0,3).map(r => (r.Codesherkat||"")+" → "+(r.EsmSherkat||"")).join(" | ") || "—")+'</td>'+
+        '<td class="ltr">'+fa(sherkat.length)+'</td>';
+      body.appendChild(r2);
+      msg("tkMsg", (dic.length||sherkat.length) ? "ok" : "warn",
+        (dic.length||sherkat.length) ? "TK‌ها خوانده شدند." : "TK خالی است؛ ابتدا راه‌اندازی اولیه.");
+    }catch(err){ msg("tkMsg","err",err.message); }
+    finally{ busy(false); }
+  };
+
+  // ── موجودی لوکال ──
+  function renderInventory(list){
+    const root = $("invTree");
+    root.innerHTML = "";
+    if (!list.length){ root.innerHTML = '<div class="hint">بانکی وجود ندارد.</div>'; return; }
+    list.forEach(dbi => {
+      const item = document.createElement("div");
+      item.className = "db-item";
+      const total = (dbi.stores||[]).reduce((s,x) => s + (typeof x.count === "number" ? x.count : 0), 0);
+      const head = document.createElement("div");
+      head.className = "db-head";
+      head.innerHTML =
+        '<input type="checkbox" class="cb-db" data-db="'+dbi.database+'">'+
+        '<span class="chev">▸</span>'+
+        '<span class="name">'+dbi.database+'</span>'+
+        '<span class="meta">v'+(dbi.version??"?")+" · "+(dbi.stores?dbi.stores.length:0)+" store · جمع "+fa(total)+'</span>';
+      head.onclick = e => { if (e.target.tagName !== "INPUT") item.classList.toggle("open"); };
+      const body = document.createElement("div");
+      body.className = "db-body";
+      if (dbi.error) body.innerHTML = '<div class="banner err">'+dbi.error+'</div>';
+      else if (!dbi.stores || !dbi.stores.length) body.innerHTML = '<div class="hint">بدون استور</div>';
+      else dbi.stores.forEach(st => {
+        const row = document.createElement("div");
+        row.className = "store-row";
+        row.innerHTML =
+          '<span class="sname">'+st.store+'</span>'+
+          '<span class="count-pill">'+(st.count==null?"?":fa(st.count))+'</span>';
+        body.appendChild(row);
+      });
+      item.appendChild(head);
+      item.appendChild(body);
+      root.appendChild(item);
+    });
+  }
+
+  async function refreshInventory(){
+    msg("invMsg","info","در حال خواندن IndexedDB…");
+    try{
+      const list = await db.listLocalInventory();
+      renderInventory(list);
+      msg("invMsg","ok","بانک: <b>"+fa(list.length)+"</b>");
+    }catch(err){
+      msg("invMsg","err",err.message);
+    }
+  }
+
+  $("btnRefreshInv").onclick = refreshInventory;
+  $("btnSelectAllDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = true);
+  $("btnSelectNoneDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = false);
+
+  $("btnDeleteSelected").onclick = async () => {
+    const names = [...document.querySelectorAll(".cb-db:checked")].map(c => c.getAttribute("data-db"));
+    if (!names.length){ msg("invMsg","warn","چیزی انتخاب نشده است."); return; }
+    if (!confirm("این بانک‌ها حذف شوند؟\n" + names.join("\n"))) return;
+    busy(true);
+    try{
+      const res = await db.deleteLocalDatabases(names);
+      res.forEach(r => log((r.ok?"حذف: ":"خطا: ")+r.database+(r.blocked?" (blocked)":"")+(r.error?" "+r.error:"")));
+      msg("invMsg","ok","حذف انجام شد.");
+      await refreshInventory();
+      await loadTableList();
+    }catch(err){ msg("invMsg","err",err.message); }
+    finally{ busy(false); }
+  };
+
+  $("btnWipeAll").onclick = async () => {
+    if (!confirm("همهٔ بانک‌های IndexedDB این origin حذف شوند؟")) return;
+    busy(true);
+    try{
+      const res = await db.wipeAllLocal();
+      log("wipeAll: " + res.length + " مورد");
+      msg("invMsg","ok","همه پاک شد.");
+      $("tblBody").innerHTML = "";
+      $("tblPills").innerHTML = "";
+      $("bootPills").innerHTML = "";
+      $("tkBody").innerHTML = "";
+      $("tkPills").innerHTML = "";
+      await refreshInventory();
+      await refreshStorage();
+    }catch(err){ msg("invMsg","err",err.message); }
+    finally{ busy(false); }
+  };
+
+  $("btnClearLog").onclick = () => { logBox.textContent = ""; };
+
+  // ── شروع ──
+  (async function init(){
+    await refreshStorage();
+    await loadCompanies();
+    await loadTableList();
+    log("صفحه آماده است.");
+  })();
+})();
+</script>
+</body>
+</html>

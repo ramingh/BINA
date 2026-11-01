@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>کویری SQL روی بانک لوکال</title>
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css"
+    onerror="this.href='tabulator.min.css'">
+  <style>
+    body { margin: 0; background: #f2f5fa; color: #1c2b3a; font-family: IRANYekanX, Tahoma, system-ui, sans-serif; font-size: 14px; line-height: 1.8 }
+    .page { max-width: 1400px; margin: 0 auto; padding: 16px }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px }
+    h2 { margin: 0 0 8px; font-size: 14px; color: #12395e }
+    button { cursor: pointer; border: 0; border-radius: 9px; padding: 7px 16px; font: inherit; font-size: 13px; background: #12395e; color: #fff; margin: 2px 0 2px 6px }
+    button.g { background: #eef2f7; color: #1c2b3a; font-size: 12px; padding: 4px 12px }
+    button:disabled { opacity: .5; cursor: wait }
+    textarea { width: 100%; min-height: 110px; font: 13px Consolas, Menlo, monospace; direction: ltr; text-align: left; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #0f2233; color: #d8e6f3; resize: vertical; box-sizing: border-box }
+    .chip { display: inline-block; border: 1px solid #b7e2cf; background: #e7f6ef; color: #067647; border-radius: 999px; padding: 0 12px; font: 12px Consolas, Menlo, monospace; margin: 3px 0 3px 6px; direction: ltr }
+    .msg { font-size: 13px; color: #64748b; margin: 6px 0 }
+    .err { background: #fdeceb; color: #b42318; border: 1px solid #f4c5c1; border-radius: 10px; padding: 8px 14px; margin: 6px 0; white-space: pre-wrap }
+    .warn { background: #fdf3e7; color: #b54708; border: 1px solid #f3d9b5; border-radius: 10px; padding: 8px 14px; margin: 6px 0 }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+
+    <section class="card">
+      <h2>حافظه</h2>
+      <button id="bSrc">منبع‌های موجود</button>
+      <button id="bClear" class="g">آزاد کردن حافظه</button>
+      <div id="prog" class="msg">آماده</div>
+      <div id="chips"></div>
+    </section>
+
+    <section class="card">
+      <h2>کویری</h2>
+      <textarea id="q" spellcheck="false">SELECT  [Id],[ShomarehSanad],[Tarikh],[KOl_Code],[Moien_Code],[Tafsil_Code],[SharhSanad],[Bedehkar],[Bestankar],[_SrcTable]
+FROM [Bina].[dbo].[vw_All_Sanad]
+WHERE [_SrcTable] LIKE '%1200%'</textarea>
+      <button id="run">▶ اجرا (Ctrl+Enter)</button>
+      <span id="info" class="msg"></span>
+      <div id="out"></div>
+      <div id="grid"></div>
+    </section>
+
+  </main>
+
+  <!-- همهٔ فایل‌ها در یک پوشه و روی همان origin بانک لوکال اجرا شوند -->
+  <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+  <script>if (typeof Tabulator === 'undefined') document.write('<scr' + 'ipt src="tabulator.min.js"><\/scr' + 'ipt>');</script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+  <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="alasql.min.js"><\/scr' + 'ipt>');</script>
+  <script src="../app/bina/bina-grid.js"></script>
+  <script src="../app/bina/bina-local-sql.js"></script>
+  <script>
+    (function () {
+      const $ = s => document.querySelector(s);
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const engine = new BinaLocalSql({ onProgress: m => { $('#prog').textContent = m; } });
+      const grid = new BinaGrid('#grid', { height: '56vh', pageSize: 500, storagePrefix: 'BinaLocal' });
+
+      function showRam() {
+        const st = engine.status();
+        let heap = '';
+        if (performance.memory) heap = ' · حافظهٔ JS ≈ ' + Math.round(performance.memory.usedJSHeapSize / 1048576) + ' MB';
+        $('#chips').innerHTML = st.tables.map(t => '<span class="chip">' + t.table + ' (' + t.rows.toLocaleString('en-US') + ')</span>').join('') +
+          '<div class="msg">در رم: ' + st.tables.length + ' جدول · ' + st.totalRows.toLocaleString('fa-IR') + ' ردیف' + heap + '</div>';
+      }
+
+      async function run() {
+        const btn = $('#run');
+        btn.disabled = true;
+        $('#out').innerHTML = '';
+        $('#info').textContent = 'در حال اجرا…';
+        try {
+          const r = await engine.query($('#q').value);
+          const tg = performance.now();
+          await grid.setData(r.rows, 'LocalQuery', { own: true });   /* خروجی تازهٔ کویری مال گرید است → بدون کپی */
+          const gridMs = Math.round(performance.now() - tg);
+          $('#info').textContent = r.rows.length.toLocaleString('fa-IR') + ' ردیف — ' +
+            (r.loaded.length ? 'خواندن و باز کردن ' + r.loaded.length + ' جدول ' + r.loadMs + ' ms' : 'از رم (' + r.loadMs + ' ms)') +
+            ' · کویری ' + r.ms + ' ms · نمایش در گرید ' + gridMs + ' ms';
+          if (r.warnings.length) $('#out').innerHTML = '<div class="warn">' + r.warnings.map(esc).join('<br>') + '</div>';
+          $('#prog').textContent = 'آماده';
+        } catch (e) {
+          $('#info').textContent = '';
+          $('#out').innerHTML = '<div class="err">' + esc(e && e.message || e) + '</div>';
+        }
+        btn.disabled = false;
+        showRam();
+      }
+
+      $('#run').addEventListener('click', run);
+      $('#q').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run(); });
+      $('#bClear').addEventListener('click', () => { engine.clear(); $('#prog').textContent = 'حافظه آزاد شد'; showRam(); });
+      $('#bSrc').addEventListener('click', async () => {
+        try {
+          const s = (await engine.sources()).filter(x => x.family === 'Sanad');
+          const co = [...new Set(s.map(x => x.company))], yr = [...new Set(s.map(x => x.year))].sort();
+          $('#prog').textContent = s.length + ' جدول Sanad · شرکت‌ها: ' + co.join('، ') + ' · سال‌ها: ' + yr.join('، ');
+        } catch (e) { $('#out').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; }
+      });
+      showRam();
+    })();
+  </script>
+</body>
+
+</html>

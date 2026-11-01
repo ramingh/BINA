@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="fa">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <title>Simple Operational Sidebar</title>
+    <link href="style.css" rel="stylesheet" />
+    <link href="palette.css" rel="stylesheet" />
+      <script src="./com_dic1.js"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+  
+        <aside aria-label="منوی اصلی" class="sidebar">
+            <header class="sidebar__header">
+                <button aria-label="بستن سایدبار" class="header-action-button sidebar-toggle-button"
+                    id="sidebarToggleButton" title="بستن سایدبار" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                        <path d="m9 6 6 6-6 6"></path>
+                    </svg>
+                </button>
+                <strong class="sidebar__title">Bina</strong>
+                <div class="sidebar__actions">
+                    <div class="language-control">
+                        <button aria-label="زبان" class="header-action-button language-button" id="languageButton"
+                            title="زبان" type="button">
+                            <svg aria-hidden="true" viewbox="0 0 24 24">
+                                <circle cx="12" cy="12" r="8.5"></circle>
+                                <path
+                                    d="M3.8 12h16.4M12 3.5c2.2 2.3 3.4 5.2 3.4 8.5S14.2 18.2 12 20.5M12 3.5C9.8 5.8 8.6 8.7 8.6 12s1.2 6.2 3.4 8.5">
+                                </path>
+                            </svg>
+                            <span class="language-status" id="languageStatus">فارسی</span>
+                        </button>
+<div class="language-popup" id="languagePopup" hidden>
+
+    <button data-language="fa" type="button">فارسی</button>
+    <button data-language="en" type="button">English</button>
+    <button data-language="ar" type="button">العربية</button>
+</div>
+                    </div>
+                    <button aria-label="شب و روز" class="header-action-button theme-button" id="themeButton"
+                        title="شب / روز" type="button">
+                        <svg aria-hidden="true" class="theme-icon theme-icon--sun" viewbox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3.6"></circle>
+                            <path
+                                d="M12 2.5v2M12 19.5v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2.5 12h2M19.5 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4">
+                            </path>
+                        </svg>
+                        <svg aria-hidden="true" class="theme-icon theme-icon--moon" viewbox="0 0 24 24">
+                            <path d="M19.2 15.2A7.5 7.5 0 0 1 8.8 4.8 8 8 0 1 0 19.2 15.2Z"></path>
+                        </svg>
+                    </button>
+                    <div class="palette-control">
+                        <button aria-label="پالت رنگ" class="palette-button" id="paletteButton" title="پالت رنگ"
+                            type="button">
+                            <svg aria-hidden="true" viewbox="0 0 24 24">
+                                <path class="palette-button__outline"
+                                    d="M12 3a9 9 0 1 0 0 18h1.4a1.7 1.7 0 0 0 0-3.4H12a2.1 2.1 0 0 1 0-4.2h2.8A6.2 6.2 0 0 0 21 7.2C19.2 4.6 15.9 3 12 3Z">
+                                </path>
+                                <circle class="palette-button__color palette-button__color--red" cx="7.4" cy="9"
+                                    r="1.7"></circle>
+                                <circle class="palette-button__color palette-button__color--yellow" cx="10.7" cy="6.7"
+                                    r="1.7"></circle>
+                                <circle class="palette-button__color palette-button__color--blue" cx="15.2" cy="7.3"
+                                    r="1.7"></circle>
+                            </svg>
+                        </button>
+                        <div class="palette-popup" hidden="" id="palettePopup">
+                            <div aria-label="رنگ‌های آماده" class="palette-grid">
+                                <button aria-label="خاکستری آبی" class="palette-swatch" data-color="#475569"
+                                    style="--swatch-color:#475569" type="button"></button>
+                                <button aria-label="طوسی" class="palette-swatch" data-color="#64748B"
+                                    style="--swatch-color:#64748B" type="button"></button>
+                                <button aria-label="ذغالی" class="palette-swatch" data-color="#1E293B"
+                                    style="--swatch-color:#1E293B" type="button"></button>
+                                <button aria-label="مشکی سرمه‌ای" class="palette-swatch" data-color="#0F172A"
+                                    style="--swatch-color:#0F172A" type="button"></button>
+                                <button aria-label="خاکستری تیره" class="palette-swatch" data-color="#334155"
+                                    style="--swatch-color:#334155" type="button"></button>
+                                <button aria-label="سرمه‌ای" class="palette-swatch" data-color="#1E3A8A"
+                                    style="--swatch-color:#1E3A8A" type="button"></button>
+                                <button aria-label="آبی پررنگ" class="palette-swatch" data-color="#1D4ED8"
+                                    style="--swatch-color:#1D4ED8" type="button"></button>
+                                <button aria-label="آبی" class="palette-swatch" data-color="#2563EB"
+                                    style="--swatch-color:#2563EB" type="button"></button>
+                                <button aria-label="آبی آسمانی" class="palette-swatch" data-color="#0284C7"
+                                    style="--swatch-color:#0284C7" type="button"></button>
+                                <button aria-label="فیروزه‌ای" class="palette-swatch" data-color="#0891B2"
+                                    style="--swatch-color:#0891B2" type="button"></button>
+                                <button aria-label="سبزآبی" class="palette-swatch" data-color="#0F766E"
+                                    style="--swatch-color:#0F766E" type="button"></button>
+                                <button aria-label="سبز" class="palette-swatch" data-color="#15803D"
+                                    style="--swatch-color:#15803D" type="button"></button>
+                                <button aria-label="سبز زیتونی" class="palette-swatch" data-color="#3F6212"
+                                    style="--swatch-color:#3F6212" type="button"></button>
+                                <button aria-label="لیمویی" class="palette-swatch" data-color="#65A30D"
+                                    style="--swatch-color:#65A30D" type="button"></button>
+                                <button aria-label="طلایی تیره" class="palette-swatch" data-color="#A16207"
+                                    style="--swatch-color:#A16207" type="button"></button>
+                                <button aria-label="طلایی" class="palette-swatch" data-color="#CA8A04"
+                                    style="--swatch-color:#CA8A04" type="button"></button>
+                                <button aria-label="نارنجی" class="palette-swatch" data-color="#EA580C"
+                                    style="--swatch-color:#EA580C" type="button"></button>
+                                <button aria-label="آجری" class="palette-swatch" data-color="#C2410C"
+                                    style="--swatch-color:#C2410C" type="button"></button>
+                                <button aria-label="قرمز" class="palette-swatch" data-color="#B91C1C"
+                                    style="--swatch-color:#B91C1C" type="button"></button>
+                                <button aria-label="زرشکی" class="palette-swatch" data-color="#9F1239"
+                                    style="--swatch-color:#9F1239" type="button"></button>
+                                <button aria-label="جگری" class="palette-swatch" data-color="#7F1D1D"
+                                    style="--swatch-color:#7F1D1D" type="button"></button>
+                                <button aria-label="قهوه‌ای آجری" class="palette-swatch" data-color="#7C2D12"
+                                    style="--swatch-color:#7C2D12" type="button"></button>
+                                <button aria-label="قهوه‌ای" class="palette-swatch" data-color="#78350F"
+                                    style="--swatch-color:#78350F" type="button"></button>
+                                <button aria-label="بنفش" class="palette-swatch" data-color="#6D28D9"
+                                    style="--swatch-color:#6D28D9" type="button"></button>
+                                <button aria-label="ارغوانی" class="palette-swatch" data-color="#7E22CE"
+                                    style="--swatch-color:#7E22CE" type="button"></button>
+                                <button aria-label="بنفش صورتی" class="palette-swatch" data-color="#A21CAF"
+                                    style="--swatch-color:#A21CAF" type="button"></button>
+                                <button aria-label="سرخابی" class="palette-swatch" data-color="#BE185D"
+                                    style="--swatch-color:#BE185D" type="button"></button>
+                                <button aria-label="آبی نفتی" class="palette-swatch" data-color="#0E7490"
+                                    style="--swatch-color:#0E7490" type="button"></button>
+                                <button aria-label="زیتونی روشن" class="palette-swatch" data-color="#4D7C0F"
+                                    style="--swatch-color:#4D7C0F" type="button"></button>
+                                <button aria-label="خاکی" class="palette-swatch" data-color="#78716C"
+                                    style="--swatch-color:#78716C" type="button"></button>
+                            </div>
+                            <button class="palette-more-button" id="moreColorButton" type="button">رنگ‌های
+                                بیشتر...</button>
+                            <input aria-label="انتخاب رنگ دلخواه" class="palette-color-input" id="customColorInput"
+                                type="color" value="#285F92" />
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <nav class="sidebar-menu">
+                <details class="menu-group" open="">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">▣</span>
+                        <span class="menu-item__label">اطلاعات اولیه شرکتها</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-01.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">معرفی شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-02.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">کدینگ شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-03.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">اسناد حسابداری
+                                شرکتها</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">▤</span>
+                        <span class="menu-item__label">کدینگ استاندارد</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-04.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گروه
+                                استاندارد</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-05.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">ایجاد کدینگ
+                                استاندارد</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-06.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">نمایش کدینگ
+                                استاندارد</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">◇</span>
+                        <span class="menu-item__label">معرفی گروهها و ارتباط با کدینگ</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-07.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گروههای صورتهای
+                                مالی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-08.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گروههای گزارشات
+                                مالی</span></a>
+                        <details class="menu-group">
+                            <summary class="menu-item menu-item--level-2">
+                                <span class="menu-item__bullet"></span>
+                                <span class="menu-item__label">ارتباط کدینگ با . . .</span>
+                            </summary>
+                            <div class="submenu submenu--level-3">
+                                <a class="menu-item menu-item--level-3" href="pages/tab-09.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">گروههای صورتهای
+                                        مالی</span></a>
+                                <a class="menu-item menu-item--level-3" href="pages/tab-10.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">گروههای گزارشات
+                                        مالی</span></a>
+                            </div>
+                        </details>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">⇄</span>
+                        <span class="menu-item__label">ارتباط اسناد با . . .</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-11.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گروههای صورتهای
+                                مالی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-12.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گروههای گزارشات
+                                مالی</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">⌕</span>
+                        <span class="menu-item__label">اسنادو مرور حساب شرکتها</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-13.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">اسناد
+                                حسابداری</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-14.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">جستجوی سنواتی و بررسی
+                                حسابها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-15.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">نمایش کلی
+                                اسناد</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-16.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">مرور حسابها</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">▥</span>
+                        <span class="menu-item__label">گزارشات و صورتهای مالی شرکتها</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-17.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت سود و
+                                زیان</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-18.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت وضعیت
+                                مالی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-19.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت جریان وجوه
+                                نقد</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-20.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">ارزیابی
+                                عملکرد</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-21.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">میل به
+                                ورشکستگی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-22.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گزارش نقدینگی</span></a>
+                        <details class="menu-group">
+                            <summary class="menu-item menu-item--level-2">
+                                <span class="menu-item__bullet"></span>
+                                <span class="menu-item__label">داشبورد مدیریتی</span>
+                            </summary>
+                            <div class="submenu submenu--level-3">
+                                <a class="menu-item menu-item--level-3" href="pages/tab-23.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">نسبتهای مالی
+                                        هرشرکت</span></a>
+                                <a class="menu-item menu-item--level-3" href="pages/tab-24.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">عملکرد سنواتی هر
+                                        شرکت</span></a>
+                                <a class="menu-item menu-item--level-3" href="pages/tab-25.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">گزارشات مالی هر
+                                        شرکت</span></a>
+                            </div>
+                        </details>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-26.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">مقایسه نسبتهای مالی
+                                شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-27.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">مقایسه عملکرد سنواتی
+                                شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-28.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">مقایسه گزارشات مالی
+                                شرکتها</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">▧</span>
+                        <span class="menu-item__label">گزارشات و صورتهای مالی تجمیعی</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <a class="menu-item menu-item--level-2" href="pages/tab-29.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">تجمیع اطلاعات
+                                شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-30.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت سود و زیان
+                                تجمیعی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-31.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت وضعیت مالی
+                                تجمیعی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-32.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">صورت جریان وجوه نقد
+                                تجمیعی</span></a>
+                    </div>
+                </details>
+                <details class="menu-group">
+                    <summary class="menu-item menu-item--level-1">
+                        <span class="menu-item__icon">⚙</span>
+                        <span class="menu-item__label">تنظیمات</span>
+                    </summary>
+                    <div class="submenu submenu--level-2">
+                        <details class="menu-group">
+                            <summary class="menu-item menu-item--level-2">
+                                <span class="menu-item__bullet"></span>
+                                <span class="menu-item__label">اطلاعات پایه</span>
+                            </summary>
+                            <div class="submenu submenu--level-3">
+                                <a class="menu-item menu-item--level-3" href="pages/tab-33.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">اطلاعات شرکت و
+                                        کاربران</span></a>
+                                <a class="menu-item menu-item--level-3" href="pages/tab-34.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">سطح دسترسی
+                                        کاربران</span></a>
+                                <a class="menu-item menu-item--level-3" href="pages/tab-35.html"><span
+                                        class="menu-item__bullet"></span><span class="menu-item__label">مدیریت نمایش
+                                        فیلدها</span></a>
+                            </div>
+                        </details>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-36.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">اطلاعات
+                                شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-37.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">پروفایل
+                                شرکتها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-38.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">گزارش مجامع</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-39.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">آیین نامه ها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-40.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">دستوالعمل ها</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-41.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">روزنامه رسمی</span></a>
+                        <a class="menu-item menu-item--level-2" href="pages/tab-42.html"><span
+                                class="menu-item__bullet"></span><span class="menu-item__label">مستندات</span></a>
+                    </div>
+                </details>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <div class="tab-strip">
+                <div aria-label="تب‌های باز" class="tab-list" id="tabList"></div>
+                <button aria-label="بستن همه تب‌ها" class="tabs-close-all" id="closeAllTabsButton"
+                    title="بستن همه تب‌ها" type="button">×</button>
+            </div>
+            <section class="content-panel" id="contentPanel">
+                <div class="content-welcome" id="contentWelcome">یک گزینه از منو انتخاب کنید</div><iframe
+                    class="content-frame" hidden="" id="contentFrame" title="محتوای تب فعال"></iframe>
+            </section>
+        </main>
+    </div>
+    <footer aria-label="وضعیت برنامه" class="status-bar">
+        <div aria-hidden="true" class="status-bar__future"></div>
+        <span class="status-bar__item" id="statusDate"></span>
+        <span aria-hidden="true" class="status-bar__separator"></span>
+        <span class="status-bar__item" id="statusTime"></span>
+    </footer>
+            <site-translator></site-translator>
+    <script src="app.js"></script>
+    <script src="./com_dic1.js"></script>
+ 
+
+    <script>
+      // ۱. ساخت نمونه از کلاس مترجم
+      window.translator = new WebTranslator();
+
+      // ۲. آماده‌سازی دیتابیس
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          await window.translator.init();
+          console.log("✅ سیستم ترجمه آماده است.");
+        } catch (err) {
+          console.error("❌ خطا در راه‌اندازی مترجم:", err);
+        }
+      });
+
+      // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ بدون دستکاری app.js
+      const langPopup = document.getElementById('languagePopup');
+      if (langPopup) {
+        langPopup.addEventListener('click', (event) => {
+          const btn = event.target.closest('[data-language]');
+          if (!btn) return;
+
+          const langCode = btn.dataset.language; // fa, en, ar
+
+          // اجرای ترجمه روی صفحه اصلی
+          if (window.translator) {
+            window.translator.setLanguage(langCode);
+          }
+
+          // ترجمه محتوای تب فعال (iframe) در صورت باز بودن
+          const frame = document.getElementById('contentFrame');
+          if (frame && frame.contentWindow && frame.contentWindow.translator) {
+            frame.contentWindow.translator.setLanguage(langCode);
+          }
+        });
+      }
+    </script>
+</body>
+</html>
+ 
+ 

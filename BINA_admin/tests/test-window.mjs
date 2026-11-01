@@ -1,0 +1,16 @@
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const {BinaQuery,Parser}=require('./bina-query.js');
+const assert=(condition,message)=>{if(!condition)throw Error(message)};
+const rows=[{ID:3,bedm:50,codetm:1},{ID:1,bedm:100,codetm:1},{ID:4,bedm:10,codetm:2},{ID:2,bedm:200,codetm:1},{ID:5,bedm:null,codetm:2}];
+const q=new BinaQuery();
+q.loaded.set('sanad_1398_1000',{table:'Sanad_1398_1000',rows,known:rows.length,partial:false});
+let r=q.query({sql:`SELECT A.*, SUM(COALESCE(A.bedm,0)) OVER (ORDER BY A.ID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS JamBed FROM Sanad_1398_1000 A ORDER BY A.ID`,maxResultRows:100});
+assert(JSON.stringify(r.rows.map(x=>x.JamBed))===JSON.stringify([100,300,350,360,360]),'overall running sum');
+r=q.query({sql:`SELECT A.ID, A.codetm, SUM(COALESCE(A.bedm,0)) OVER (PARTITION BY A.codetm ORDER BY A.ID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS JamBed FROM Sanad_1398_1000 A ORDER BY A.ID`,maxResultRows:100});
+assert(JSON.stringify(r.rows.map(x=>x.JamBed))===JSON.stringify([100,300,350,10,10]),'partitioned sum');
+r=q.query({sql:'SELECT COUNT(*) AS N, SUM(bedm) AS S FROM Sanad_1398_1000',maxResultRows:100});
+assert(r.rows[0].N===5&&r.rows[0].S===360,'old aggregate preserved');
+r=q.query({sql:'SELECT ID FROM Sanad_1398_1000 ORDER BY ID LIMIT 2',maxResultRows:100});
+assert(r.rows[0].ID===1&&r.rows[1].ID===2,'old SQL preserved');
+console.log('PASS window SUM / PARTITION BY / old aggregation / ordering');

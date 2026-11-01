@@ -1,0 +1,940 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>بینا | مدیریت کامل بانک لوکال</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel2: #182235;
+      --ink: #e8eef8;
+      --muted: #8b9bb4;
+      --line: #243047;
+      --brand: #3b82f6;
+      --brand2: #06b6d4;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --chip: #1e293b;
+      --radius: 14px;
+      --font: Tahoma, "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 13.5px;
+      line-height: 1.85;
+      background: radial-gradient(1200px 600px at 100% -10%, #1a2744 0%, var(--bg) 55%);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 16px 56px;
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1e3a5f, #0f766e 120%);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .hero p {
+      margin: 4px 0 0;
+      opacity: .88;
+      font-size: 12px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: rgba(0, 0, 0, .25);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 999px;
+      padding: 3px 11px;
+      font-size: 11.5px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel h2 .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label.f {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    input[type=text],
+    input[type=number],
+    select {
+      background: var(--panel2);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-size: 13px;
+      min-width: 160px;
+    }
+
+    input[type=text] {
+      direction: ltr;
+      text-align: left;
+      font-family: var(--mono);
+      min-width: 340px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--brand);
+      color: #fff;
+      transition: .15s filter, .15s opacity;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #334155;
+    }
+
+    button.ok {
+      background: #15803d;
+    }
+
+    button.warn {
+      background: #b45309;
+    }
+
+    button.danger {
+      background: #b91c1c;
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .banner {
+      margin-top: 10px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+    }
+
+    .banner.ok {
+      background: rgba(34, 197, 94, .12);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, .25);
+    }
+
+    .banner.warn {
+      background: rgba(245, 158, 11, .12);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, .25);
+    }
+
+    .banner.err {
+      background: rgba(239, 68, 68, .12);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, .25);
+    }
+
+    .banner.info {
+      background: rgba(59, 130, 246, .12);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, .25);
+    }
+
+    /* درخت لوکال */
+    .tree {
+      margin-top: 8px;
+    }
+
+    .db-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      background: var(--panel2);
+    }
+
+    .db-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .db-head:hover {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .db-head .name {
+      font-family: var(--mono);
+      direction: ltr;
+      flex: 1;
+    }
+
+    .db-head .meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chev {
+      transition: transform .2s;
+      color: var(--muted);
+      width: 18px;
+      text-align: center;
+    }
+
+    .db-item.open .chev {
+      transform: rotate(90deg);
+    }
+
+    .db-body {
+      display: none;
+      border-top: 1px solid var(--line);
+      padding: 6px 8px 10px;
+    }
+
+    .db-item.open .db-body {
+      display: block;
+    }
+
+    .store-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px 6px 28px;
+      border-radius: 8px;
+    }
+
+    .store-row:hover {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .store-row .sname {
+      font-family: var(--mono);
+      direction: ltr;
+      flex: 1;
+    }
+
+    .count-pill {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--chip);
+      border-radius: 999px;
+      padding: 2px 10px;
+      direction: ltr;
+    }
+
+    input[type=checkbox] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+    }
+
+    /* شرکت‌ها */
+    .company-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+      max-height: 220px;
+      overflow: auto;
+      padding: 4px;
+    }
+
+    .company-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .company-item span {
+      font-family: var(--mono);
+      direction: ltr;
+    }
+
+    /* جدول گزارش */
+    .scroll {
+      overflow: auto;
+      max-height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #0f172a;
+      color: #cbd5e1;
+      text-align: right;
+      padding: 8px 10px;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-top: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    td.ltr {
+      direction: ltr;
+      text-align: left;
+      font-family: var(--mono);
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .st-ok {
+      color: var(--ok);
+    }
+
+    .st-missing {
+      color: var(--bad);
+    }
+
+    .st-incomplete {
+      color: var(--warn);
+    }
+
+    .st-diff {
+      color: #fb923c;
+    }
+
+    pre.log {
+      margin: 8px 0 0;
+      background: #060b14;
+      color: #c7d7ee;
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 240px;
+      overflow: auto;
+      direction: ltr;
+      text-align: left;
+      font: 12px/1.7 var(--mono);
+      border: 1px solid var(--line);
+      white-space: pre-wrap;
+    }
+
+    .summary-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      background: var(--chip);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="hero">
+      <div>
+        <h1>بینا | مدیریت کامل بانک لوکال</h1>
+        <p>وضعیت IndexedDB · اطلاعات پایه public · مقایسه و دانلود شرکت‌ها — BinaDBManager v5.2+</p>
+      </div>
+      <div class="badges">
+        <span class="chip">public + شرکت</span>
+        <span class="chip">mode=tables / stats / data</span>
+        <span class="chip">tk_dic = T_doc</span>
+      </div>
+    </header>
+
+    <!-- تنظیمات -->
+    <section class="panel">
+      <h2><span class="dot"></span> تنظیمات اتصال</h2>
+      <div class="row">
+        <label class="f">Endpoint وب‌سرویس
+          <input type="text" id="endpoint" value="https://location.gandomcs.com/grid/FastDataHandler.ashx"
+            spellcheck="false">
+        </label>
+        <label class="f">فشرده‌سازی
+          <select id="compression">
+            <option value="gzip" selected>GZIP بلوکی</option>
+            <option value="none">بدون فشرده</option>
+            <option value="lz">LZ تک‌رکوردی</option>
+          </select>
+        </label>
+        <button type="button" class="secondary" id="btnApply">اعمال</button>
+        <button type="button" class="danger" id="btnStop" disabled>توقف</button>
+      </div>
+    </section>
+
+    <!-- بخش ۱: موجودی لوکال -->
+    <section class="panel">
+      <h2><span class="dot"></span> ۱) وضعیت موجود لوکال</h2>
+      <div class="row">
+        <button type="button" id="btnRefreshInv">بروزرسانی فهرست</button>
+        <button type="button" class="secondary" id="btnSelectAllDb">انتخاب همه بانک‌ها</button>
+        <button type="button" class="secondary" id="btnSelectNone">لغو انتخاب</button>
+        <button type="button" class="danger" id="btnDeleteSelected">پاک کردن انتخاب‌ها</button>
+        <button type="button" class="danger" id="btnWipeAll">پاک کردن همه</button>
+      </div>
+      <div class="hint">هر بانک باز/بسته می‌شود. تعداد رکورد هر store نمایش داده می‌شود. تیک بانک = حذف کل آن بانک.
+      </div>
+      <div id="invMsg"></div>
+      <div class="tree" id="invTree"></div>
+    </section>
+
+    <!-- بخش ۲: اطلاعات پایه از سرور -->
+    <section class="panel">
+      <h2><span class="dot"></span> ۲) دریافت اطلاعات پایه از سرور</h2>
+      <div class="row">
+        <button type="button" class="ok" id="btnLoadBase">دریافت اطلاعات پایه (tables → stats)</button>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)">
+          <input type="checkbox" id="chkAllStats"> stats برای همه جداول (کندتر)
+        </label>
+      </div>
+      <div class="hint">
+        ترتیب: اول <code style="color:#93c5fd">mode=tables</code> در ServerTables،
+        بعد <code style="color:#93c5fd">mode=stats</code> برای Schema خانواده‌ای (columns).
+        tk_dic (T_doc) store آماده است؛ endpoint پر کردن جداگانه ندارد.
+      </div>
+      <div id="baseMsg"></div>
+      <div class="summary-pills" id="basePills"></div>
+    </section>
+
+    <!-- بخش ۳: شرکت‌ها + مقایسه + دانلود -->
+    <section class="panel">
+      <h2><span class="dot"></span> ۳) شرکت‌های سرور · مقایسه · دانلود</h2>
+      <div class="row">
+        <button type="button" id="btnLoadCompanies">نمایش کد شرکت‌ها از ServerTables</button>
+        <button type="button" class="secondary" id="btnSelAllCo">انتخاب همه</button>
+        <button type="button" class="secondary" id="btnSelNoCo">لغو انتخاب</button>
+        <button type="button" class="warn" id="btnCompare">مقایسه تعداد سرور / لوکال</button>
+        <button type="button" class="ok" id="btnSyncSelected">دانلود شرکت‌های تیک‌خورده</button>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)">
+          <input type="checkbox" id="chkVerify"> شمارش واقعی store (کندتر)
+        </label>
+      </div>
+      <div id="coMsg"></div>
+      <div class="company-grid" id="companyGrid"></div>
+      <div class="summary-pills" id="cmpPills"></div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>جدول</th>
+              <th>شرکت</th>
+              <th>خانواده</th>
+              <th>سال</th>
+              <th>سرور</th>
+              <th>لوکال</th>
+              <th>وضعیت</th>
+            </tr>
+          </thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="dot"></span> گزارش رخدادها</h2>
+      <div class="row">
+        <button type="button" class="ghost" id="btnClearLog">پاک کردن لاگ</button>
+      </div>
+      <pre class="log" id="log"></pre>
+    </section>
+
+    <footer>همه عملیات از طریق BinaDBManager · public.ServerTables / columns / catalog / tk_dic · بانک شرکتی فقط Coding
+      و Sanad</footer>
+  </div>
+
+  <script src="bina-db.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      /* ─── ابزار UI ─── */
+      function $(id) { return document.getElementById(id); }
+      function fa(n) {
+        if (n == null || n === "") return "—";
+        return Number(n).toLocaleString("fa-IR");
+      }
+      function msg(id, type, html) {
+        $(id).innerHTML = html ? '<div class="banner ' + type + '">' + html + "</div>" : "";
+      }
+      function log(line) {
+        var box = $("log");
+        box.textContent = "[" + new Date().toLocaleTimeString("fa-IR") + "] " + line + "\n" + box.textContent;
+      }
+      function busy(on) {
+        [
+          "btnApply", "btnRefreshInv", "btnSelectAllDb", "btnSelectNone", "btnDeleteSelected", "btnWipeAll",
+          "btnLoadBase", "btnLoadCompanies", "btnSelAllCo", "btnSelNoCo", "btnCompare", "btnSyncSelected"
+        ].forEach(function (id) { $(id).disabled = on; });
+        $("btnStop").disabled = !on;
+      }
+
+      if (typeof BinaDBManager === "undefined") {
+        msg("invMsg", "err", "bina-db.js بارگذاری نشد.");
+        return;
+      }
+
+      /* ─── یک instance مشترک ─── */
+      var manager = new BinaDBManager({
+        endpoint: $("endpoint").value.trim(),
+        compression: $("compression").value,
+        onProgress: function (p) {
+          if (p.event === "chunk")
+            log(p.table + " → received=" + p.received + " lastId=" + p.lastId);
+          else if (p.event === "table-start") log("شروع: " + p.table);
+          else if (p.event === "table-done") log("تمام: " + p.table + " (" + p.received + ")");
+          else if (p.event === "table-skip") log("رد شد: " + p.table);
+          else if (p.event === "base-tables") log("ServerTables ذخیره شد: " + p.count);
+          else if (p.event === "base-stats")
+            log("stats " + (p.ok ? "OK" : "FAIL") + ": " + p.table + (p.error ? " — " + p.error : ""));
+          else if (p.event === "job-done")
+            log("پیشرفت جداول: " + p.done + "/" + p.total + " — " + p.table);
+        }
+      });
+
+      function applySettings() {
+        manager.endpoint = $("endpoint").value.trim() || manager.endpoint;
+        manager.compression = $("compression").value;
+        log("تنظیمات اعمال شد: " + manager.endpoint + " | " + manager.compression);
+      }
+
+      $("btnApply").onclick = function () {
+        applySettings();
+        msg("baseMsg", "ok", "تنظیمات اعمال شد.");
+      };
+      $("btnStop").onclick = function () {
+        manager.stop();
+        log("درخواست توقف");
+      };
+      $("btnClearLog").onclick = function () { $("log").textContent = ""; };
+
+      /* ═══════════════════════════════════════
+         بخش ۱ — موجودی لوکال
+         ═══════════════════════════════════════ */
+      var inventoryCache = [];
+
+      function renderInventory(list) {
+        inventoryCache = list || [];
+        var root = $("invTree");
+        root.innerHTML = "";
+        if (!inventoryCache.length) {
+          root.innerHTML = '<div class="hint">بانکی وجود ندارد.</div>';
+          return;
+        }
+        inventoryCache.forEach(function (db, di) {
+          var item = document.createElement("div");
+          item.className = "db-item";
+          item.dataset.db = db.database;
+
+          var total = (db.stores || []).reduce(function (s, x) {
+            return s + (typeof x.count === "number" ? x.count : 0);
+          }, 0);
+
+          var head = document.createElement("div");
+          head.className = "db-head";
+          head.innerHTML =
+            '<input type="checkbox" class="cb-db" data-db="' + db.database + '">' +
+            '<span class="chev">▸</span>' +
+            '<span class="name">' + db.database + '</span>' +
+            '<span class="meta">v' + (db.version ?? "?") +
+            " · " + (db.stores ? db.stores.length : 0) + " store · جمع " + fa(total) + "</span>";
+
+          head.addEventListener("click", function (e) {
+            if (e.target.tagName === "INPUT") return;
+            item.classList.toggle("open");
+          });
+
+          var body = document.createElement("div");
+          body.className = "db-body";
+          if (db.error) {
+            body.innerHTML = '<div class="banner err">' + db.error + "</div>";
+          } else if (!db.stores || !db.stores.length) {
+            body.innerHTML = '<div class="hint">بدون object store</div>';
+          } else {
+            db.stores.forEach(function (st) {
+              var row = document.createElement("div");
+              row.className = "store-row";
+              row.innerHTML =
+                '<input type="checkbox" class="cb-store" data-db="' + db.database +
+                '" data-store="' + st.store + '">' +
+                '<span class="sname">' + st.store + "</span>" +
+                '<span class="count-pill">' + (st.count == null ? "?" : fa(st.count)) + "</span>";
+              body.appendChild(row);
+            });
+          }
+
+          item.appendChild(head);
+          item.appendChild(body);
+          root.appendChild(item);
+        });
+      }
+
+      async function refreshInventory() {
+        busy(true);
+        msg("invMsg", "info", "در حال خواندن IndexedDB…");
+        try {
+          var list = await manager.listLocalInventory();
+          renderInventory(list);
+          var nStore = list.reduce(function (s, d) { return s + (d.stores ? d.stores.length : 0); }, 0);
+          msg("invMsg", "ok", "بانک: <b>" + fa(list.length) + "</b> · store: <b>" + fa(nStore) + "</b>");
+          log("موجودی لوکال: " + list.length + " بانک");
+        } catch (err) {
+          msg("invMsg", "err", err.message);
+          log("خطا موجودی: " + err.message);
+        } finally {
+          busy(false);
+        }
+      }
+
+      $("btnRefreshInv").onclick = refreshInventory;
+
+      $("btnSelectAllDb").onclick = function () {
+        document.querySelectorAll(".cb-db").forEach(function (c) { c.checked = true; });
+      };
+      $("btnSelectNone").onclick = function () {
+        document.querySelectorAll(".cb-db, .cb-store").forEach(function (c) { c.checked = false; });
+      };
+
+      $("btnDeleteSelected").onclick = async function () {
+        var names = [];
+        document.querySelectorAll(".cb-db:checked").forEach(function (c) {
+          names.push(c.getAttribute("data-db"));
+        });
+        // اگر فقط store تیک خورده و بانک نه — فعلاً کل بانک والد پیشنهاد می‌شود
+        document.querySelectorAll(".cb-store:checked").forEach(function (c) {
+          var dbn = c.getAttribute("data-db");
+          if (names.indexOf(dbn) < 0) names.push(dbn);
+        });
+        names = [...new Set(names)];
+        if (!names.length) {
+          msg("invMsg", "warn", "چیزی انتخاب نشده است.");
+          return;
+        }
+        if (!confirm("این بانک‌ها حذف شوند؟\n" + names.join("\n"))) return;
+        busy(true);
+        try {
+          var res = await manager.deleteLocalDatabases(names);
+          res.forEach(function (r) {
+            log((r.ok ? "حذف: " : "خطا: ") + r.database + (r.blocked ? " (blocked)" : "") + (r.error ? " " + r.error : ""));
+          });
+          msg("invMsg", "ok", "حذف انجام شد. فهرست را تازه کنید.");
+          await refreshInventory();
+        } catch (err) {
+          msg("invMsg", "err", err.message);
+        } finally {
+          busy(false);
+        }
+      };
+
+      $("btnWipeAll").onclick = async function () {
+        if (!confirm("همهٔ بانک‌های IndexedDB این origin حذف شوند؟")) return;
+        busy(true);
+        try {
+          var res = await manager.wipeAllLocal();
+          log("wipeAll: " + res.length + " مورد");
+          msg("invMsg", "ok", "همه پاک شد.");
+          $("companyGrid").innerHTML = "";
+          $("cmpBody").innerHTML = "";
+          $("basePills").innerHTML = "";
+          $("cmpPills").innerHTML = "";
+          await refreshInventory();
+        } catch (err) {
+          msg("invMsg", "err", err.message);
+        } finally {
+          busy(false);
+        }
+      };
+
+      /* ═══════════════════════════════════════
+         بخش ۲ — اطلاعات پایه
+         ═══════════════════════════════════════ */
+      $("btnLoadBase").onclick = async function () {
+        applySettings();
+        busy(true);
+        msg("baseMsg", "info", "در حال tables و بعد stats…");
+        $("basePills").innerHTML = "";
+        try {
+          var result = await manager.loadBasepublic({
+            allStats: $("chkAllStats").checked
+          });
+          msg("baseMsg", "ok",
+            "ServerTables: <b>" + fa(result.serverTables) +
+            "</b> · Schema: <b>" + (result.familiesSchema.join(", ") || "—") +
+            "</b> · stats موفق: <b>" + fa(result.statsOk) + "</b>" +
+            (result.statsFail ? " · ناموفق: <b>" + fa(result.statsFail) + "</b>" : "")
+          );
+          $("basePills").innerHTML =
+            '<span class="pill">جداول سرور: ' + fa(result.serverTables) + "</span>" +
+            '<span class="pill">columns: ' + (result.familiesSchema.join(" · ") || "خالی") + "</span>" +
+            '<span class="pill">tk_dic آماده</span>';
+          log("loadBasepublic تمام شد");
+          // شرکت‌ها را هم تازه کن
+          await loadCompanies();
+          await refreshInventory();
+        } catch (err) {
+          msg("baseMsg", "err", err.message);
+          log("خطا base: " + err.message);
+          console.error(err);
+        } finally {
+          busy(false);
+        }
+      };
+
+      /* ═══════════════════════════════════════
+         بخش ۳ — شرکت‌ها / مقایسه / دانلود
+         ═══════════════════════════════════════ */
+      async function loadCompanies() {
+        try {
+          await manager.initialize();
+          var codes = await manager.getCompanyCodes();
+          var grid = $("companyGrid");
+          grid.innerHTML = "";
+          if (!codes.length) {
+            msg("coMsg", "warn", "کد شرکتی در ServerTables نیست. اول اطلاعات پایه را بگیر.");
+            return codes;
+          }
+          codes.forEach(function (code) {
+            var el = document.createElement("label");
+            el.className = "company-item";
+            el.innerHTML = '<input type="checkbox" class="cb-co" value="' + code + '"><span>' + code + "</span>";
+            grid.appendChild(el);
+          });
+          msg("coMsg", "ok", "تعداد شرکت: <b>" + fa(codes.length) + "</b>");
+          log("شرکت‌ها: " + codes.length);
+          return codes;
+        } catch (err) {
+          msg("coMsg", "err", err.message);
+          throw err;
+        }
+      }
+
+      $("btnLoadCompanies").onclick = async function () {
+        busy(true);
+        try { await loadCompanies(); }
+        finally { busy(false); }
+      };
+
+      $("btnSelAllCo").onclick = function () {
+        document.querySelectorAll(".cb-co").forEach(function (c) { c.checked = true; });
+      };
+      $("btnSelNoCo").onclick = function () {
+        document.querySelectorAll(".cb-co").forEach(function (c) { c.checked = false; });
+      };
+
+      function selectedCompanies() {
+        return Array.from(document.querySelectorAll(".cb-co:checked")).map(function (c) { return c.value; });
+      }
+
+      function statusLabel(st) {
+        if (st === "ok") return '<span class="st-ok">متطابق</span>';
+        if (st === "missing-local") return '<span class="st-missing">نیست در لوکال</span>';
+        if (st === "incomplete") return '<span class="st-incomplete">ناقص</span>';
+        if (st === "count-diff") return '<span class="st-diff">اختلاف تعداد</span>';
+        return st;
+      }
+
+      $("btnCompare").onclick = async function () {
+        applySettings();
+        busy(true);
+        msg("coMsg", "info", "در حال مقایسه…");
+        try {
+          var codes = selectedCompanies();
+          // اگر هیچ تیکی نیست، همه مقایسه می‌شوند
+          var report = await manager.compareCompanies(
+            codes.length ? codes : null,
+            { verifyStored: $("chkVerify").checked }
+          );
+          var body = $("cmpBody");
+          body.innerHTML = "";
+          report.rows.forEach(function (r) {
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+              '<td class="ltr">' + r.table + "</td>" +
+              '<td class="ltr">' + r.company + "</td>" +
+              "<td>" + r.family + "</td>" +
+              "<td>" + (r.year ?? "—") + "</td>" +
+              '<td class="ltr">' + fa(r.serverCount) + "</td>" +
+              '<td class="ltr">' + fa(r.localCount) + "</td>" +
+              "<td>" + statusLabel(r.status) + "</td>";
+            body.appendChild(tr);
+          });
+          var s = report.summary;
+          $("cmpPills").innerHTML =
+            '<span class="pill">کل: ' + fa(s.total) + "</span>" +
+            '<span class="pill">متطابق: ' + fa(s.ok) + "</span>" +
+            '<span class="pill">نیست: ' + fa(s.missing) + "</span>" +
+            '<span class="pill">ناقص: ' + fa(s.incomplete) + "</span>" +
+            '<span class="pill">اختلاف: ' + fa(s.diff) + "</span>";
+          msg("coMsg", "ok", "مقایسه انجام شد — " + fa(s.total) + " جدول.");
+          log("compare: total=" + s.total + " missing=" + s.missing + " diff=" + s.diff);
+        } catch (err) {
+          msg("coMsg", "err", err.message);
+          log("خطا compare: " + err.message);
+          console.error(err);
+        } finally {
+          busy(false);
+        }
+      };
+
+      $("btnSyncSelected").onclick = async function () {
+        var codes = selectedCompanies();
+        if (!codes.length) {
+          msg("coMsg", "warn", "حداقل یک شرکت را تیک بزن.");
+          return;
+        }
+        if (!confirm("دانلود/همگام‌سازی شرکت‌های انتخاب‌شده؟\n" + codes.join(", "))) return;
+        applySettings();
+        busy(true);
+        msg("coMsg", "info", "در حال دانلود " + codes.length + " شرکت…");
+        try {
+          var result = await manager.syncSelectedCompanies(codes);
+          msg("coMsg", "ok",
+            "تمام شد — شرکت: <b>" + fa(result.companies) +
+            "</b> · جداول: <b>" + fa(result.completedTables) + "</b> / " + fa(result.totalTables)
+          );
+          log("syncSelectedCompanies OK");
+          // بعد از دانلود دوباره مقایسه
+          var report = await manager.compareCompanies(codes, { verifyStored: $("chkVerify").checked });
+          var body = $("cmpBody");
+          body.innerHTML = "";
+          report.rows.forEach(function (r) {
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+              '<td class="ltr">' + r.table + "</td>" +
+              '<td class="ltr">' + r.company + "</td>" +
+              "<td>" + r.family + "</td>" +
+              "<td>" + (r.year ?? "—") + "</td>" +
+              '<td class="ltr">' + fa(r.serverCount) + "</td>" +
+              '<td class="ltr">' + fa(r.localCount) + "</td>" +
+              "<td>" + statusLabel(r.status) + "</td>";
+            body.appendChild(tr);
+          });
+          await refreshInventory();
+        } catch (err) {
+          if (err && err.name === "AbortError") {
+            msg("coMsg", "warn", "متوقف شد. دادهٔ ذخیره‌شده تا این لحظه محفوظ است.");
+            log("توقف کاربر");
+          } else {
+            msg("coMsg", "err", err.message);
+            log("خطا sync: " + err.message);
+            console.error(err);
+          }
+        } finally {
+          busy(false);
+        }
+      };
+
+      // شروع: موجودی لوکال
+      refreshInventory();
+      log("صفحه مدیریت آماده است.");
+    })();
+  </script>
+</body>
+
+</html>
