@@ -1,12 +1,12 @@
 /* ============================================================
    WebTranslator — نسخه‌ی کامل
-   بانک: Public
-   استور: Tk_dic
+   بانک: public
+   استور: tk_dic
    ============================================================ */
 
 class WebTranslator {
   /* dbVersion = null → دیتابیس موجود با هر نسخه‌ای که دارد باز می‌شود (ساختار بانک مال برنامه است، مترجم نسخه‌اش را تعیین نمی‌کند).
-     نام دیتابیس و استور بدون حساسیت به حروف تطبیق داده می‌شوند (Public/public ، tk_dic/tk_dic). */
+     نام دیتابیس و استور بدون حساسیت به حروف تطبیق داده می‌شوند (public/public ، tk_dic/tk_dic). */
   constructor(dbName = 'public', storeName = 'tk_dic', dbVersion = null, options = {}) {
     this.dbName = dbName;
     this.storeName = storeName;
@@ -88,8 +88,8 @@ this.originalTexts = new WeakMap();
 
   /* ============================================================
      بارگذاری دیکشنری از IndexedDB
-     بانک: Public
-     استور: Tk_dic
+     بانک: public
+     استور: tk_dic
      ساختار Value: [EnglishName, countryCode, PersianText, position]
      ============================================================ */
   /* نام واقعی دیتابیس (بدون حساسیت به حروف) — اگر indexedDB.databases() نبود همان نام داده‌شده */
@@ -335,8 +335,7 @@ this.originalTexts = new WeakMap();
         if (childDoc.readyState && childDoc.readyState !== 'complete') continue;
 
         if (childDoc.body) {
-          console.log( '11111111111l' , langCode);
-
+     
     //       childDoc.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
         }
         this._translateRoot(childDoc, langCode, activedict, visited);

@@ -351,7 +351,7 @@
     build() {
       const self = this;
       this.list.textContent = '';
-      this.grid.getManagedColumns().forEach(function (column) {
+      this.grid.getManagedcolumns().forEach(function (column) {
         const field = column.getField();
         const definition = column.getDefinition();
         const state = self.grid.getColumnState(field);
@@ -386,7 +386,7 @@
     }
     /** فریز بازه‌ای: همهٔ ستون‌ها تا ستون هدف (شامل خودش) یخ می‌زنند؛ unchecked = آب‌کردن */
     async setFrozenRange(targetField, checked) {
-      const fields = this.grid.getManagedColumns().map(function (c) { return c.getField(); });
+      const fields = this.grid.getManagedcolumns().map(function (c) { return c.getField(); });
       const selectedIndex = fields.indexOf(targetField);
       if (selectedIndex < 0) return;
       const frozenThrough = checked ? selectedIndex : selectedIndex - 1;
@@ -418,7 +418,7 @@
     /** بازنشانی همهٔ ستون‌ها: نمایش همه، حذف فریز و رنگ‌ها */
     async reset() {
       const self = this;
-      for (const column of this.grid.getManagedColumns()) {
+      for (const column of this.grid.getManagedcolumns()) {
         const state = this.grid.getColumnState(column.getField());
         state.visible = true;
         state.frozen = false;
@@ -540,7 +540,7 @@
     layoutMatches(saved) {
       if (!saved || !Array.isArray(saved.columnLayout)) return false;
       const savedFields = saved.columnLayout.map(function (c) { return c && c.field; }).filter(Boolean).sort();
-      const currentFields = this.grid.getManagedColumns().map(function (c) { return c.getField(); }).sort();
+      const currentFields = this.grid.getManagedcolumns().map(function (c) { return c.getField(); }).sort();
       if (currentFields.length !== savedFields.length) return false;
       for (let i = 0; i < currentFields.length; i++) {
         if (currentFields[i] !== savedFields[i]) return false;
@@ -549,11 +549,11 @@
     }
     collect() {
       const grid = this.grid;
-      const customColumns = {};
-      grid.getManagedColumns().forEach(function (column) {
+      const customcolumns = {};
+      grid.getManagedcolumns().forEach(function (column) {
         const field = column.getField();
         const state = grid.getColumnState(field);
-        customColumns[field] = {
+        customcolumns[field] = {
           foreground: state.foreground,
           background: state.background,
           baseWidth: state.baseWidth,
@@ -564,7 +564,7 @@
         version: 1,
         savedAt: new Date().toISOString(),
         columnLayout: this.sanitizeLayout(grid.table.getColumnLayout()),
-        customColumns: customColumns,
+        customcolumns: customcolumns,
         headerFilters: grid.table.getHeaderFilters().map(function (f) {
           return { field: f.field, value: f.value };
         }),
@@ -601,10 +601,10 @@
       grid.restoring = true;
       try {
         /* ۱) رنگ‌ها و baseWidth */
-        const savedColumns = saved.customColumns || {};
-        Object.keys(savedColumns).forEach(function (field) {
+        const savedcolumns = saved.customcolumns || {};
+        Object.keys(savedcolumns).forEach(function (field) {
           if (!grid.table.getColumn(field)) return;
-          const value = savedColumns[field];
+          const value = savedcolumns[field];
           const state = grid.getColumnState(field);
           state.foreground = value?.foreground ?? null;
           state.background = value?.background ?? null;
@@ -616,7 +616,7 @@
         if (matching && saved.columnLayout.length) {
           grid.table.setColumnLayout(this.sanitizeLayout(saved.columnLayout));
           /* بعد از restore از layout، فرمت‌کنندهٔ جمع فوتر دوباره وصل می‌شود */
-          grid.getManagedColumns().forEach(function (column) {
+          grid.getManagedcolumns().forEach(function (column) {
             if (column.getDefinition().bottomCalc) {
               column.updateDefinition({
                 bottomCalcFormatter: function (cell) { return formatNumber(cell.getValue()); }
@@ -627,7 +627,7 @@
         /* ۳) فریز */
         await this._restoreFrozen(saved);
         /* ۴) رنگ‌ها روی سلول‌های موجود */
-        grid.getManagedColumns().forEach(function (column) {
+        grid.getManagedcolumns().forEach(function (column) {
           const state = grid.getColumnState(column.getField());
           if (!state.foreground && !state.background) return;
           column.getCells().forEach(function (cell) {
@@ -658,11 +658,11 @@
     }
     async _restoreFrozen(saved) {
       const grid = this.grid;
-      const savedColumns = saved.customColumns || {};
-      const ordered = grid.getManagedColumns();
+      const savedcolumns = saved.customcolumns || {};
+      const ordered = grid.getManagedcolumns();
       let lastFrozenField = null;
       ordered.forEach(function (column) {
-        if (savedColumns[column.getField()]?.frozen === true) lastFrozenField = column.getField();
+        if (savedcolumns[column.getField()]?.frozen === true) lastFrozenField = column.getField();
       });
       if (lastFrozenField) {
         await grid.columnManager.setFrozenRange(lastFrozenField, true);
@@ -854,7 +854,7 @@
     }
   }
   /* ═══════════════ ۷) BinaGrid — کامپوننت اصلی ═══════════════ */
-  /* عرض/نوع پیش‌فرض فیلدهای شناخته‌شدهٔ بینا — قابل بازنویسی با options.presetColumns */
+  /* عرض/نوع پیش‌فرض فیلدهای شناخته‌شدهٔ بینا — قابل بازنویسی با options.presetcolumns */
   const PRESET_COLUMNS = {
     EsmSherkat: { width: 120, minWidth: 80, kind: 'number' },
     SalMali: { width: 110, minWidth: 75, kind: 'number' },
@@ -939,7 +939,7 @@
     /**
      * @param {string|HTMLElement} container — جای قرارگیری کامپوننت
      * @param {object} [options] — pageSize, pageSizeOptions, rtl, height, storagePrefix,
-     *                             presetColumns, locale, movableColumns, resizableColumns,
+     *                             presetcolumns, locale, movablecolumns, resizablecolumns,
      *                             captions {field: 'عنوان'} (v1.2 — عنوان ستون؛ پیش‌فرض خود نام فیلد),
      *                             noTranslateBody (v1.2 — translate="no" روی بدنهٔ سلول‌ها؛ عنوان‌ها ترجمه‌پذیر می‌مانند)
      */
@@ -957,9 +957,9 @@
         height: '560px',
         storagePrefix: 'BinaGrid',
         locale: 'fa-fa',
-        presetColumns: PRESET_COLUMNS,
-        movableColumns: true,
-        resizableColumns: true,
+        presetcolumns: PRESET_COLUMNS,
+        movablecolumns: true,
+        resizablecolumns: true,
         showToolbar: true,
         captions: null,
         noTranslateBody: false
@@ -1033,8 +1033,8 @@
         index: '__id',
         layout: 'fitData',
         height: '100%',
-        movableColumns: this.options.movableColumns,
-        resizableColumns: this.options.resizableColumns,
+        movablecolumns: this.options.movablecolumns,
+        resizablecolumns: this.options.resizablecolumns,
         renderVertical: 'virtual',
         pagination: 'local',
         paginationSize: this.options.pageSize,
@@ -1069,7 +1069,7 @@
     _wireEvents() {
       const table = this.table;
       const self = this;
-      /* منوی راست‌کلیک هدر → مدیر ستون‌ها (delegation — بعد از setColumns هم پابرجاست) */
+      /* منوی راست‌کلیک هدر → مدیر ستون‌ها (delegation — بعد از setcolumns هم پابرجاست) */
       this.tableEl.addEventListener('contextmenu', function (event) {
         if (event.target.closest && event.target.closest('.tabulator-header')) {
           event.preventDefault();
@@ -1277,7 +1277,7 @@
     }
     /* ─────────── ستون‌ها ─────────── */
     _makeColumnDef(field, rows) {
-      const preset = this.options.presetColumns[field];
+      const preset = this.options.presetcolumns[field];
       const kind = preset ? preset.kind : inferKind(field, rows);
       const definition = {
         field: field,
@@ -1318,18 +1318,18 @@
       return this.columnState.get(field);
     }
     /** ستون‌های دارای فیلد (بدون ستون‌های سیستمی) */
-    getManagedColumns() {
-      console.log('00000000000000000');
+    getManagedcolumns() {
+     
       return this.table.getColumns().filter(function (c) { return Boolean(c.getField()); });
     }
     /** نام فیلدهای ستون‌های نمایان (به ترتیب فعلی) */
     getVisibleFields() {
-      return this.getManagedColumns().filter(function (c) { return c.isVisible(); })
+      return this.getManagedcolumns().filter(function (c) { return c.isVisible(); })
         .map(function (c) { return c.getField(); });
     }
     /** ترتیب فعلی ستون‌ها: [{field, visible, width, frozen}] */
     getColumnOrder() {
-      return this.getManagedColumns().map(function (c) {
+      return this.getManagedcolumns().map(function (c) {
         return {
           field: c.getField(), visible: c.isVisible(),
           width: c.getWidth(), frozen: c.getDefinition().frozen === true
@@ -1346,7 +1346,7 @@
     /** فریز همهٔ ستون‌ها تا field (شامل خودش) — field=null یعنی آب‌کردن همه */
     async freezeTo(field) {
       if (field === null || field === undefined) {
-        const fields = this.getManagedColumns().map(function (c) { return c.getField(); });
+        const fields = this.getManagedcolumns().map(function (c) { return c.getField(); });
         if (fields.length) await this.columnManager.setFrozenRange(fields[0], false);
         return;
       }
@@ -1367,7 +1367,7 @@
       this.stateStore.schedule();
     }
     /** بازنشانی همهٔ ستون‌ها (نمایش/فریز/رنگ) */
-    resetColumns() { return this.columnManager.reset(); }
+    resetcolumns() { return this.columnManager.reset(); }
     openColumnManager() { this.columnManager.open(); }
     closeColumnManager() { this.columnManager.close(); }
     /* ─────────── فیلتر، جست‌وجو، مرتب‌سازی ─────────── */
@@ -1464,7 +1464,7 @@
     }
     /** کپی همهٔ نتایج فیلترشده (همهٔ صفحات) با هدر */
     async copyAll() {
-      const cols = this.getVisibleColumns();
+      const cols = this.getVisiblecolumns();
       const data = this.getActiveData();
       if (!cols.length || !data.length) throw new Error('چیزی برای کپی نیست — اول کویری بزن.');
       const lines = [cols.map(c => c.getField()).join('\t')];
@@ -1476,7 +1476,7 @@
       return data.length;
     }
     /* ─────────── خروجی ─────────── */
-    getVisibleColumns() {
+    getVisiblecolumns() {
       return this.table.getColumns().filter(function (c) {
         return Boolean(c.getField()) && c.isVisible();
       });
@@ -1506,7 +1506,7 @@
       if (typeof ExcelJS === 'undefined') {
         throw new Error('ExcelJS بارگذاری نشده — exceljs.min.js را ضمیمه کن یا از CSV استفاده کن.');
       }
-      const styles = this.getVisibleColumns().map(c => this._getExportStyle(c));
+      const styles = this.getVisiblecolumns().map(c => this._getExportStyle(c));
       const data = this.getActiveData();
       if (!styles.length) throw new Error('هیچ ستون قابل خروجی نیست.');
       const workbook = new ExcelJS.Workbook();
@@ -1753,8 +1753,8 @@
      ■ چرخهٔ حیات
        new BinaGrid(container, options)   options: pageSize=500,
          pageSizeOptions=[100,500,1000,5000,همه], rtl=true, height='560px',
-         storagePrefix='BinaGrid', presetColumns=PRESET_COLUMNS,
-         locale='fa-fa', movableColumns=true, resizableColumns=true, showToolbar=true
+         storagePrefix='BinaGrid', presetcolumns=PRESET_COLUMNS,
+         locale='fa-fa', movablecolumns=true, resizablecolumns=true, showToolbar=true
        grid.destroy()
      ■ داده
        گزینه‌های سازنده v1.2: captions={field:'عنوان فارسی'} · noTranslateBody=true
@@ -1771,7 +1771,7 @@
        toggleColumn(field) → visible جدید
        freezeTo(field | null)
        setColumnColor(field, fg, bg)
-       resetColumns() · openColumnManager() · closeColumnManager()
+       resetcolumns() · openColumnManager() · closeColumnManager()
      ■ فیلتر / جست‌وجو / مرتب‌سازی
        setFilter(field, type, value) | setFilter([{field,type,value},…])
        search(text)              → جست‌وجو در همهٔ ستون‌های نمایان

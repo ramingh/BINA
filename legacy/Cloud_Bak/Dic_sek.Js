@@ -1,7 +1,7 @@
 /* ============================================================
    WebTranslator — نسخه‌ی کامل
    بانک: public
-   استور: Tk_dic
+   استور: tk_dic
    ============================================================ */
 class WebTranslator {
   constructor(dbName = 'public', storeName = 'tk_dic', dbVersion = 3, options = {}) {
@@ -75,7 +75,7 @@ class WebTranslator {
   /* ============================================================
      بارگذاری دیکشنری از IndexedDB
      بانک: public
-     استور: Tk_dic
+     استور: tk_dic
      ساختار Value: [EnglishName, countryCode, PersianText, position]
      ============================================================ */
   async init() {

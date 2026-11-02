@@ -27,5 +27,5 @@ assert.equal(q.query({sql:'SELECT s.ID,c.name FROM Sanad_1395_1500 s INNER JOIN 
 res=await q.ensureTablesForSQL({sql:'SELECT * FROM sanad_1395_1500',maxRows:5000,allowPartial:true});
 assert.equal(loads,2);assert.equal(res.reused.length,1);
 try{await q.ensureTablesForSQL({sql:'SELECT * FROM Sanad_1395_9999',maxRows:5000});assert.fail('Expected absent table error');}
-catch(e){assert.match(e.message,/Public\.Catalog/);}
+catch(e){assert.match(e.message,/public\.Catalog/);}
 console.log('AUTO LOAD TESTS PASSED');

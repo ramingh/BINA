@@ -9,7 +9,7 @@ app/                       ← همان‌طور که هست روی پوشهٔ s
   bina/                    کتابخانه‌ها
     bina-local-sql.js      BinaLocalSql — موتور (بافر رم + کویری)
     bina-grid.js           BinaGrid v1.2.0
-    bina-query-view.js     BinaQueryView — پارامتر + کویری + گرید (هر منو)
+    b ina-query-view.js     BinaQueryView — پارامتر + کویری + گرید (هر منو)
     bina-pages.js          ثبت کویری هر منو (اینجا ویرایش می‌کنی)
     bina-page.js           چسب سمت صفحه (داخل iframe هر تب)
     bina-tabs.js           BinaTabFrames — یک iframe زنده برای هر تب
@@ -36,7 +36,7 @@ tests/ + package.json      npm i && npm test
   - `sql: "SELECT … FROM Sanad_{year}_{company} …"` → `query()` با جانشین `{company}` و `{year}`.
   - فقط `params:['year']` + `Sanad_{year}_ALL` → همهٔ شرکت‌ها در یک سال (۲۰٪ مورد).
   - فیلتر ستون روی **همهٔ** ردیف‌های نتیجه کار می‌کند؛ صفحه‌بندی ۵۰۰تایی فقط نمایش است.
-- **مترجم و بانک `public`:** مترجم دیگر شماره‌ی نسخه‌ی دیتابیس را سخت‌کد نمی‌کند (`dbVersion = null` = هر نسخه‌ای که بانک دارد). نام دیتابیس و استور بدون حساسیت به حروف تطبیق داده می‌شود (`public`/`Public`، `tk_dic`/`tk_dic`)،
+- **مترجم و بانک `public`:** مترجم دیگر شماره‌ی نسخه‌ی دیتابیس را سخت‌کد نمی‌کند (`dbVersion = null` = هر نسخه‌ای که بانک دارد). نام دیتابیس و استور بدون حساسیت به حروف تطبیق داده می‌شود (`public`/`public`، `tk_dic`/`tk_dic`)،
   علت واقعی خطا چاپ می‌شود (مثلاً `VersionError`) و اتصال بعد از خواندن دیکشنری بسته می‌شود. موتور هم نام استورها را بدون حساسیت به حروف می‌شناسد (`Sanad`/`sanad`، `catalog`/`catalog`).
 - **مترجم (`dic_sek.Js`):** هر چیزی داخل `translate="no"` یا `.notranslate` دست‌نخورده می‌ماند (پیمایش متن، attributeها و MutationObserver).
   گرید با `noTranslateBody` همین ویژگی را روی بدنهٔ سلول‌ها می‌گذارد؛ عنوان ستون‌ها و فوتر ترجمه‌پذیر می‌مانند. گزینهٔ `noTranslateSelector: ''` رفتار قبلی را برمی‌گرداند.
@@ -51,7 +51,7 @@ tests/ + package.json      npm i && npm test
 ## ساختار بانک لوکال (فرض‌های کد)
 هر شرکت یک دیتابیس (نام = کد شرکت) با `Sanad [سال, شرکت, بلوک]` و `Coding [شرکت, Id]`؛ مقدار = `Uint8Array` gzip‌شدهٔ `{ids, rows}` یا آرایهٔ ردیفی.
 ردیف Sanad: `ShomarehSanad, Tarikh, KOl_Code, Moien_Code, Tafsil_Code, SharhSanad, Bedehkar, Bestankar` (Id از `ids`). ستون‌های Coding: `C0, C1, …` (یا `codingcolumns`).
-دیتابیس‌های دارای استور `catalog` (Public، Bina_Bank قدیمی) نادیده گرفته می‌شوند.
+دیتابیس‌های دارای استور `catalog` (public، Bina_Bank قدیمی) نادیده گرفته می‌شوند.
 ## BinaGrid v1.2.0 (تغییرات نسبت به v1.0 — همه اختیاری، پیش‌فرض‌ها دست‌نخورده)
 - `setData(rows, name, { own:true })` بدون کپی ردیف‌ها (فقط برای خروجی تازهٔ کویری، نه برای بافر موتور؛ در حالت ناامن خودکار به کپی برمی‌گردد). `__id` عمداً قابل‌شمارش است (`Tabulator.getIndex` با deepClone فقط قابل‌شمارش‌ها را می‌بیند).
 - `captions: {field:'عنوان'}` عنوان ستون؛ `noTranslateBody: true` → `translate="no"` روی بدنه.

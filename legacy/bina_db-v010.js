@@ -711,7 +711,7 @@ console.log('persisted=', await navigator.storage.persisted());
     /* ────────────────────────────────────────────────────────────
      * columns (Schema)
      * ──────────────────────────────────────────────────────────── */
-    async getcolumns(family) {
+    async getColumns(family) {
       return this._get("columns", String(family));
     }
     async _saveSchemaFromStats(stats) {
@@ -739,7 +739,7 @@ console.log('persisted=', await navigator.storage.persisted());
     }
     async _schema(info) {
       if (this._schemaCache.has(info.family)) return this._schemaCache.get(info.family);
-      let schema = await this.getcolumns(info.family);
+      let schema = await this.getColumns(info.family);
       if (!schema) throw new Error(`Schema خانواده ${info.family} موجود نیست. ابتدا bootstrap را اجرا کنید.`);
       this._schemaCache.set(info.family, schema);
       return schema;
@@ -1362,7 +1362,7 @@ console.log('persisted=', await navigator.storage.persisted());
         year: family === "Coding" ? null : Number(year),
         table: family === "Sanad" ? `Sanad_${Number(year)}_${code}` : `Coding_${code}`
       };
-      const schema = await this.getcolumns(family);
+      const schema = await this.getColumns(family);
       if (!schema) throw new Error(`Schema ${family} موجود نیست.`);
       const db = await this._companyDB(code);
       const state = await this._get("catalog", info.table);

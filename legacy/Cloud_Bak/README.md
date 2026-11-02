@@ -9,7 +9,7 @@ app/                       ← همان‌طور که هست روی پوشهٔ s
   bina/                    کتابخانه‌ها
     bina-local-sql.js      BinaLocalSql — موتور (بافر رم + کویری)
     bina-grid.js           BinaGrid v1.2.0
-    bina-query-view.js     BinaQueryView — پارامتر + کویری + گرید (هر منو)
+    bi na-query-view.js     BinaQueryView — پارامتر + کویری + گرید (هر منو)
     bina-pages.js          ثبت کویری هر منو (اینجا ویرایش می‌کنی)
     bina-page.js           چسب سمت صفحه (داخل iframe هر تب)
     bina-tabs.js           BinaTabFrames — یک iframe زنده برای هر تب

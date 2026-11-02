@@ -18,7 +18,7 @@ cp -r BINA_admin/tests/* admin/tests/
 mkdir -p app/core app/components app/shell app/pages app/assets
 cp Cloud/app/bina/bina-local-sql.js app/core/
 cp Cloud/app/bina/bina-grid.js app/components/
-cp Cloud/app/bina/bina-query-view.js app/components/
+cp Cloud/app/bina/bina-query -view.js app/components/
 cp Cloud/app/bina/bina-pages.js app/components/
 cp Cloud/app/bina/bina-page.js app/components/
 cp Cloud/app/bina/bina-tabs.js app/components/

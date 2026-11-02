@@ -135,6 +135,7 @@
     if (info.family==='sanad' && !Object.hasOwn(row,'__FiscalYear')) row.__FiscalYear=info.year;
     return row;
   }
+
   // SQL tokenizer: quotations, escapes, comments, numbers and operators.
   function lex(sql) {
     const out=[];let i=0;
@@ -601,6 +602,7 @@
     const start=ast.offset||0;
     return {rows:projected.slice(start,ast.limit==null?undefined:start+ast.limit).map(x=>x.row),total};
   }
+
   class BinaQuery {
     constructor({maxRowsPerTable=5000,maxTotalRows=100000,maxJoinRows=150000,onProgress=()=>{}}={}){
       this.maxRowsPerTable=maxRowsPerTable;this.maxTotalRows=maxTotalRows;this.maxJoinRows=maxJoinRows;
@@ -799,6 +801,7 @@
       }
       throw Error('فرم این دستور ویرایشی در نسخه فعلی پشتیبانی نمی‌شود.');
     }
+
     listLoaded(){return [...this.loaded.values()].map(v=>({table:v.table,rows:v.rows.length,known:v.known,partial:v.partial}));}
     unloadTable(name){return this.loaded.delete(String(name).toLowerCase());}
     clear(){this.loaded.clear();return {cleared:true};}

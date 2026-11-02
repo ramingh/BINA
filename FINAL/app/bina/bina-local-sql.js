@@ -4,7 +4,7 @@
    ساختار بانک لوکال:
      هر شرکت یک دیتابیس IndexedDB:  Coding [شرکت, Id]   Sanad [سال, شرکت, Id]
      مقدار: Uint8Array = gzip({ids, rows})   یا   آرایهٔ ردیفی (بدون Id)
-     دیتابیس‌هایی که استور catalog دارند (Public و   قدیمی) نادیده گرفته می‌شوند.
+     دیتابیس‌هایی که استور catalog دارند (public و   قدیمی) نادیده گرفته می‌شوند.
    const sql = new BinaLocalSql({ onProgress: m => console.log(m) });
    const r = await sql.query("SELECT TOP 100 * FROM [Bina].[dbo].[vw_All_Sanad] WHERE [_SrcTable] LIKE '%1200%'");
    // r = { rows, ms, loadMs, used, loaded, warnings, sql }
@@ -156,7 +156,7 @@ class BinaLocalSql {
         const db = await openDb(info.name);
         try {
           const names = db.objectStoreNames;
-          if (findStore(names, 'catalog')) continue;                    /* Public /   قدیمی */
+          if (findStore(names, 'catalog')) continue;                    /* public /   قدیمی */
           for (const fam of ['Sanad', 'Coding']) {
             const store = findStore(names, fam);                        /* sanad هم قبول است */
             if (!store) continue;

@@ -30,10 +30,10 @@
   };
   // یک بانک قدیمی با نام‌های دارای حروف بزرگ و شماره نسخه بالا می‌سازیم.
   const created=await new Promise((yes,no)=>{
-    const r=indexedDB.open('Public',9);
+    const r=indexedDB.open('public',9);
     r.onupgradeneeded=()=>{
       const db=r.result;
-      for(const store of ['Catalog','ServerTables','Columns','tk_dic','tk_sherkat'])db.createObjectStore(store,{keyPath:'key'});
+      for(const store of ['Catalog','servertables','columns','tk_dic','tk_sherkat'])db.createObjectStore(store,{keyPath:'key'});
     };
     r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);
   });
@@ -46,11 +46,11 @@
   const extra=await manager.getCatalog();
   assert(extra.some(x=>x.table==='tk_test_extra'&&x.received===1),'Catalog مربوط به TK اضافه خالی است');
   const shared=await manager._publicDB();
-  assert(shared.name==='Public'&&shared.version>=initialVersion,'نام یا نسخه بانک قدیمی حفظ نشد');
+  assert(shared.name==='public'&&shared.version>=initialVersion,'نام یا نسخه بانک قدیمی حفظ نشد');
   assert(shared.objectStoreNames.contains('tk_dic'),'استور قدیمی حذف شد');
   assert(shared.objectStoreNames.contains('tk_test_extra'),'استور جدید TK ساخته نشد');
   const columnList=await new Promise((yes,no)=>{
-    const r=shared.transaction('Columns','readonly').objectStore('Columns').getAll();r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);
+    const r=shared.transaction('columns','readonly').objectStore('columns').getAll();r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error);
   });
   assert(columnList.length===2,'بیش از دو Schema ساخته شد: '+columnList.length);
   assert(columnList.every(x=>x.columns.every(c=>c.name===c.name.toLowerCase())),'فیلدهای Schema lowercase نشد');
@@ -67,7 +67,7 @@
   const durable=await manager.requestPersistence();
   assert(typeof durable.persisted==='boolean','requestPersistence نتیجه معتبر ندارد');
   const publicNameList=(await indexedDB.databases()).map(x=>x.name);
-  assert(!publicNameList.includes('public'),'پایگاه جدید تکراری در کنار Public قدیمی ساخته شد');
+  assert(!publicNameList.includes('public'),'پایگاه جدید تکراری در کنار public قدیمی ساخته شد');
   output.textContent='PASS: TK FIRST; 3 TK STORES; DYNAMIC VERSION; OLD PUBLIC PRESERVED; 2 SHARED SCHEMAS; GZIP; JOIN; PERSISTENCE API '+JSON.stringify({boot,sync,version:shared.version,persisted:durable.persisted});
   document.documentElement.setAttribute('data-result','PASS');
   await manager.close();

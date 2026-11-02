@@ -11,7 +11,7 @@
 - در مراحل طراحی گفته «کد نده، اول الگوریتم را درست کنیم». فقط بعد از تأیید الگوریتم کد بنویس.
 - این پروژه جاوااسکریپت مرورگری است (نه Java/Android).
 ## ساختار بانک لوکال (از خود کاربر)
-- هر شرکت یک دیتابیس IndexedDB (نام = کد شرکت مثل `1100`)؛ دیتابیس `public` شامل `catalog, columns, ServerTables, tk_dic`.
+- هر شرکت یک دیتابیس IndexedDB (نام = کد شرکت مثل `1100`)؛ دیتابیس `public` شامل `catalog, columns, servertables, tk_dic`.
 - `Sanad` کلید `[سال, شرکت, شمارهٔ بلوک]`، `Coding` کلید `[شرکت, Id]`.
 - مقدار: `Uint8Array` = gzip(JSON `{ids, rows}`) یا آرایهٔ ردیفی بدون Id.
 - ردیف Sanad: `ShomarehSanad, Tarikh, KOl_Code, Moien_Code, Tafsil_Code, SharhSanad, Bedehkar, Bestankar` (نگاشت از `bina-sql-grid.js` کاربر).
@@ -22,7 +22,7 @@
 |---|---|
 | `app/bina/bina-local-sql.js` BinaLocalSql | موتور: کشف منبع از کلیدها، بافر LRU، `rows()`, `query()` با پیش‌فیلتر `_SrcTable`. روی بانک واقعی «کار کرد» (گزارش کاربر) |
 | `app/bina/bina-grid.js` BinaGrid v1.2.0 | گرید کاربر + گزینه‌های اختیاری: `setData(...,{own:true})`، `captions`، `noTranslateBody`. پیش‌فرض‌ها همان v1.0 |
-| `app/bina/bina-query-view.js` BinaQueryView | هر منو: پارامتر (شرکت/سال) + `sql` یا مسیر سریع + گرید؛ `getState/setState/onShow` |
+| `app/bina/bi na-query-view.js` BinaQueryView | هر منو: پارامتر (شرکت/سال) + `sql` یا مسیر سریع + گرید؛ `getState/setState/onShow` |
 | `app/bina/bina-pages.js` | descriptor هر منو؛ فعلاً فقط `tab-13` (اسناد حسابداری) تعریف شده |
 | `app/bina/bina-page.js`, `bina-shell.js`, `bina-tabs.js` | چسب صفحه، موتور مشترک در shell (`window.BinaBank`)، iframe زندهٔ هر تب با سقف و انجماد |
 | `app/side_bar.html`, `app.js`, `dic_sek.Js` | فایل‌های کاربر با حداقل تغییر (diff: +17/−6، +8/−6، +17/−0)؛ مترجم `translate="no"` را رعایت می‌کند |

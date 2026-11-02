@@ -1,1 +1,31 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>اسناد حسابداری</title><link rel="stylesheet" href="page.css"></head><body><main class="sample-page"><div class="sample-page__box"><h1 class="sample-page__title">اسناد حسابداری</h1><p class="sample-page__path">اسنادو مرور حساب شرکتها ← اسناد حسابداری</p></div></main></body></html>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>اسناد حسابداری</title>
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css"
+    onerror="this.href='../tabulator.min.css'">
+  <style>
+    html, body { height: 100%; margin: 0; background: #f2f5fa }
+    body { padding: 10px; box-sizing: border-box }
+    #view { height: 100% }
+  </style>
+</head>
+<body>
+  <div id="view"></div>
+  <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+  <script>if (typeof Tabulator === 'undefined') document.write('<scr' + 'ipt src="../tabulator.min.js"><\/scr' + 'ipt>');</script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- موتور از shell می‌آید (parent.BinaBank)؛ فقط برای باز کردن مستقل همین صفحه، AlaSQL و موتور هم لود می‌شوند -->
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+  <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="../bina/alasql.min.js"><\/scr' + 'ipt>');</script>
+  <script src="../app/bina/bina-grid.js"></script>
+  <script src="../bina/bina-local-sql.js"></script>
+  <script src="../bina/bina-query-view0.js?ver0.01"></script>
+  <script src="../bina/bina-pages.js"></script>
+  <script src="../bina/bina-page.js"></script>
+  <script src="../dic_sek.Js"></script>
+  <script>BinaPage.mount('tab-13');</script>
+</body>
+</html>

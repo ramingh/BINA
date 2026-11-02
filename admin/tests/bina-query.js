@@ -2,7 +2,7 @@
  * BINA Query — v3.3 — standalone, pure JavaScript, MIT-style example.
  * No SQLite, WASM, CDN, installation, WebService or write to source IndexedDB.
  *
- * Public API:
+ * public API:
  *   new BinaQuery({maxRowsPerTable, maxTotalRows, maxJoinRows, onProgress})
  *   await listTables()
  *   await getSchema({table})
@@ -31,10 +31,10 @@
     return Array.from(db.objectStoreNames).find(x=>canonical(x)===canonical(desired)) || desired;
   }
   async function publicName(){
-    if (typeof indexedDB.databases !== 'function') return 'Public';
+    if (typeof indexedDB.databases !== 'function') return 'public';
     const dbs=await indexedDB.databases();
     const names=dbs.map(x=>x.name);
-    return names.includes('Public')?'Public':names.includes('public')?'public':'public';
+    return names.includes('public')?'public':names.includes('public')?'public':'public';
   }
   async function openExisting(name, requiredStore) {
     if(canonical(name)==='public') name=await publicName();
@@ -486,7 +486,7 @@
     return JSON.stringify(values.map(v=>String(v)));
   }
   // Fail explicitly on misspelled qualified JOIN columns instead of returning 0 rows.
-  function checkJoinColumns(on,schemas){
+  function checkJoincolumns(on,schemas){
     function check(node){
       if(!node || typeof node!=='object')return;
       if(Array.isArray(node)){node.forEach(check);return;}
@@ -512,20 +512,20 @@
       return table;
     };
     const resolve=name=>resolveMeta(name).rows;
-    const knownColumns=name=>{
+    const knowncolumns=name=>{
       const meta=resolveMeta(name);
       const fields=meta.schema?.columns?.map(c=>c.name) || Object.keys(meta.rows[0]||{});
       return new Set([...fields,'__CompanyCode','__FiscalYear'].map(x=>String(x).toLowerCase()));
     };
-    const aliasSchemas=new Map([[ast.from.alias,knownColumns(ast.from.name)]]);
+    const aliasSchemas=new Map([[ast.from.alias,knowncolumns(ast.from.name)]]);
     const aliases=[ast.from.alias];
     let contexts=resolve(ast.from.name).map(r=>({[ast.from.alias]:r}));
     if(contexts.length>maxJoinRows)throw Error('تعداد رکوردهای ورودی از سقف ایمنی عبور کرده است.');
     for(const join of ast.joins){
       if(aliases.some(a=>a.toLowerCase()===join.table.alias.toLowerCase()))throw Error('Alias تکراری در JOIN.');
       const rightRows=resolve(join.table.name);
-      aliasSchemas.set(join.table.alias,knownColumns(join.table.name));
-      checkJoinColumns(join.on,aliasSchemas);
+      aliasSchemas.set(join.table.alias,knowncolumns(join.table.name));
+      checkJoincolumns(join.on,aliasSchemas);
       const equis=findJoinEquis(join.on,aliases,join.table.alias);
       const next=[];
       if(equis.length){
@@ -608,7 +608,7 @@
           const candidate=infoFromValue(key,null,c);
           if(!prev||candidate.received>prev.received||(candidate.finished&&!prev.finished))map.set(key,candidate);
         }
-        // TK مستقیماً از استورهای public خوانده می‌شود؛ Schema اختصاصی در Columns ذخیره نمی‌کنیم.
+        // TK مستقیماً از استورهای public خوانده می‌شود؛ Schema اختصاصی در columns ذخیره نمی‌کنیم.
         for(const name of ['tk_dic','tk_sherkat']){
           const store=storeName(db,name);
           if(!Array.from(db.objectStoreNames).includes(store))continue;
@@ -636,7 +636,7 @@
           const all=await getAll(db,'columns');
           found=all.find(x=>keys.some(k=>canonical(k)===canonical(x.key)));
         }
-        if(!found?.columns?.length)throw Error(`${info.table}: Schema در Public.Columns موجود نیست.`);
+        if(!found?.columns?.length)throw Error(`${info.table}: Schema در public.columns موجود نیست.`);
         const columns=found.columns.map(c=>({name:String(c.name),type:String(c.type??'text')}));
         let idIndex=Number.isInteger(found.idIndex)?found.idIndex:columns.findIndex(x=>x.name.toLowerCase()==='id');
         if(idIndex<0||idIndex>=columns.length)throw Error(`ستون ID در Schema ${info.table} پیدا نشد.`);
@@ -712,7 +712,7 @@
       for(const name of names){
         if(this.loaded.has(name.toLowerCase())){reused.push(name);continue;}
         const found=catalog.find(x=>x.table.toLowerCase()===name.toLowerCase());
-        if(!found)throw Error(`جدول «${name}» در Public.Catalog این Origin پیدا نشد. ابتدا آدرس و پورت برنامه، سپس فهرست جداول را بررسی کنید.`);
+        if(!found)throw Error(`جدول «${name}» در public.Catalog این Origin پیدا نشد. ابتدا آدرس و پورت برنامه، سپس فهرست جداول را بررسی کنید.`);
         if(!found.available)throw Error(`جدول «${found.table}» در Catalog موجود است، اما رکورد دریافت‌شده ندارد.`);
         const info=await this.loadTable({table:found.table,maxRows,allowPartial});
         loaded.push(info);

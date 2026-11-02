@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
    bina-pages.js — ثبت توصیف‌گر (descriptor) هر منو
    هر برگ منو (pages/tab-NN.html) یک ورودی با کلید همان شناسه (مثلاً 'tab-13') دارد.
-   فیلدها: BinaQueryView (bina-query-view.js) را ببین.
+   فیلدها: BinaQueryView (bina -query-view.js) را ببین.
    اضافه کردن کویری برای یک منو: یک ورودی بساز و در pages/tab-NN.html بنویس  BinaPage.mount('tab-NN').
      P['tab-15'] = { id: 'tab-15', title: 'نمایش کلی اسناد', family: 'Sanad', params: ['company', 'year'],
        sql: "SELECT KOl_Code, COUNT(*) AS Tedad, SUM(Bedehkar) AS Bed, SUM(Bestankar) AS Bes FROM Sanad_{year}_{company} GROUP BY KOl_Code ORDER BY KOl_Code",
@@ -21,7 +21,7 @@ const P = root.BinaPages = root.BinaPages || {};
 /* ۱۳ — اسناد حسابداری: کمبوی شرکت + سال مالی، همهٔ ردیف‌های آن شرکت/سال، ۵۰۰ ردیف در هر صفحه */
 P['tab-13'] = {
   id: 'tab-13', title: 'اسناد حسابداری', family: 'Sanad', params: ['company', 'year'],
-  sql: null, captions: SANAD_CAPTIONS, hiddenColumns: ['_SrcTable']
+  sql: null, captions: SANAD_CAPTIONS, hiddencolumns: ['_SrcTable']
 };
 /* ۰۱ — معرفی شرکت‌ها: فعلاً همان نمای «شرکت + سال مالی + گرید» (ردیف‌های Sanad).
    وقتی کویری مخصوص این منو مشخص شد، فقط sql (و params/captions) همین ورودی را عوض کن. id یکتاست (تنظیمات گرید جدا می‌ماند). */

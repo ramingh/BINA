@@ -155,11 +155,11 @@ class Index_db {
         const db = e.target.result;
         const oldVersion = e.oldVersion;
         if (oldVersion < 5) {
-          if (db.objectStoreNames.contains('ServerTables')) db.deleteObjectStore('ServerTables');
+          if (db.objectStoreNames.contains('servertables')) db.deleteObjectStore('servertables');
           if (db.objectStoreNames.contains('catalog')) db.deleteObjectStore('catalog');
           if (db.objectStoreNames.contains('columns')) db.deleteObjectStore('columns');
         }
-        if (!db.objectStoreNames.contains('ServerTables')) db.createObjectStore('ServerTables', {
+        if (!db.objectStoreNames.contains('servertables')) db.createObjectStore('servertables', {
           keyPath: 'table'
         });
         if (!db.objectStoreNames.contains('catalog')) db.createObjectStore('catalog', {
@@ -248,8 +248,8 @@ class Index_db {
   /* ─── متدهای ذخیره متادیتا ─── */
   async save_table_list(results) {
     const db = await this._openpublic();
-    const tx = db.transaction('ServerTables', 'readwrite');
-    const store = tx.objectStore('ServerTables');
+    const tx = db.transaction('servertables', 'readwrite');
+    const store = tx.objectStore('servertables');
     store.clear();
     for (const r of results) {
       store.put({
@@ -297,7 +297,7 @@ class Index_db {
   }
   async get_tables_list() {
     const db = await this._openpublic();
-    return await this._req(db.transaction('ServerTables', 'readonly').objectStore('ServerTables').getAll());
+    return await this._req(db.transaction('servertables', 'readonly').objectStore('servertables').getAll());
   }
   async get_columns(family) {
     const db = await this._openpublic();
@@ -531,7 +531,7 @@ class Index_db {
     };
   }
   async _sync_tk_tables(localTables) {
-    const tkdikTable = localTables.find(t => t.table === 'tk_dic_FieldName');
+    const tkdikTable = localTables.find(t => t.table === 'TK_Dic_FieldName);
     const tksherkatTable = localTables.find(t => t.table === 'tk_EsmSherkatHolding');
     if (tkdikTable) {
       const schema = {
@@ -539,7 +539,7 @@ class Index_db {
         idcolumn: tkdikTable.idcolumn,
         idIndex: tkdikTable.idIndex
       };
-      for await (const batch of this.ws.get_deta_tbl('tk_dic_FieldName', 50000, tkdikTable.count, {
+      for await (const batch of this.ws.get_deta_tbl('TK_Dic_FieldName', 50000, tkdikTable.count, {
         idIndex: tkdikTable.idIndex
       })) {
         await this.save_tk_dic(batch, schema);
