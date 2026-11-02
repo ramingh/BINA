@@ -9,9 +9,9 @@
     <title>Simple Operational Sidebar</title>
     <link href="style.css" rel="stylesheet" />
     <link href="palette.css" rel="stylesheet" />
- 
-        <script src="./Dic_sek.Js"></script>
-        <!-- <script src="./Dic_gem.Js"></script> -->
+
+    <script src="./Dic_sek.Js"></script>
+    <!-- <script src="./Dic_gem.Js"></script> -->
 
     <script>
         (function () {
@@ -160,8 +160,10 @@
                     <div class="submenu submenu--level-2">
                         <a class="menu-item menu-item--level-2" href="pages/tab-01.html"><span
                                 class="menu-item__bullet"></span><span class="menu-item__label">معرفی شرکتها</span></a>
-                        <a class="menu-item menu-item--level-2" href="pages/tab-02.html"><span
-                                class="menu-item__bullet"></span><span class="menu-item__label">کدینگ شرکتها</span></a>
+                        <a class="menu-item" href="pages/tab-02.html">کدینگ شرکتها</a>
+                        <!-- <a class="menu-item menu-item--level-2" href="pages/tab-02.html"> -->
+                        <span class="menu-item__bullet"></span>
+                        <span class="menu-item__label">کدینگ شرکتها</span></a>
                         <a class="menu-item menu-item--level-2" href="pages/tab-03.html"><span
                                 class="menu-item__bullet"></span><span class="menu-item__label">اسناد حسابداری
                                 شرکتها</span></a>
@@ -425,7 +427,7 @@
 
 
             var lang = localStorage.getItem('sidebarLanguage') || 'fa';
-        
+
             document.documentElement.lang = lang;
             document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
         })();

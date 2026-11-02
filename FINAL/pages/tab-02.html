@@ -1,0 +1,43 @@
+<!--
+  tab-02.html — کدینگ شرکتها
+  این فایل را از _template.html یا tab-13.html کپی کرده‌اید.
+  فقط BinaPage.mount('tab-02') فرق می‌کند.
+
+  ⚠️ اگر مسیر CSS/JS در پروژه‌ی شما متفاوت است، مسیرها را اصلاح کنید.
+  مسیرهای زیر فرض می‌کنند که این فایل در FINAL/pages/ است:
+    ../css/Form_Design.css  →  FINAL/css/Form_Design.css
+    ../app/bina/bina-*.js   →  FINAL/app/bina/bina-*.js
+-->
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>کدینگ شرکتها</title>
+<link rel="stylesheet" href="../css/Form_Design.css">
+<link rel="stylesheet" href="../css/page.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  #view { height: 100%; }
+</style>
+</head>
+<body>
+<div id="view"></div>
+
+<!-- کتابخانه‌های خارجی (اگر از CDN استفاده می‌کنید، مسیر را عوض کنید) -->
+<!-- <script src="../tabula tor.min.js"></script> -->
+<!-- <script src="../alasql.min.js"></script> -->
+
+<!-- کتابخانه‌های bina -->
+<script src="../app/bina/bina-shell.js"></script>
+<script src="../app/bina/bina-local-sql.js"></script>
+<script src="../app/bina/bina-grid.js"></script>
+<script src="../app/bina/bina-query-view.js"></script>
+<script src="../app/bina/bina-pages.js"></script>
+<script src="../app/bina/bina-page.js"></script>
+
+<!-- mount کردن صفحه -->
+<script>
+  BinaPage.mount('tab-02');
+</script>
+</body>
+</html>

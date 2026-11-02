@@ -7,7 +7,7 @@
 app/                       ← همان‌طور که هست روی پوشهٔ shell برنامه‌ات کپی شود (فایل‌های هم‌نام جایگزین می‌شوند)
   side_bar.html            (اصلاح‌شده)     app.js (اصلاح‌شده)     dic_sek.Js (اصلاح‌شده)
   bina/                    کتابخانه‌ها
-    bina-local-sql.js      BinaLocalSql — موتور (بافر رم + کویری)
+    bina-local-sql. js      BinaLocalSql — موتور (بافر رم + کویری)
     bina-grid.js           BinaGrid v1.2.0
     b ina-query-view.js     BinaQueryView — پارامتر + کویری + گرید (هر منو)
     bina-pages.js          ثبت کویری هر منو (اینجا ویرایش می‌کنی)

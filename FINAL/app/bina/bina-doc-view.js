@@ -2,7 +2,7 @@
 bina-doc-view.js — BinaDocView v1.0.0 (PATCHED — ترمیم سرعت گرید)
 «نمایش اسناد»: دو کمبو (شرکت، سال مالی) + BinaGrid؛ داده از BinaLocalSql.
 وابستگی‌ها (به همین ترتیب لود شوند):
-Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql.js · bina-doc-view.js
+Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql. js · bina-doc-view.js
 
 ═══ تغییرات این نسخه (PATCH) ═══
 تاریخ: 2026-11-02

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   bina-local-sql.js — کویری SQL روی بانک لوکال (بلوک‌های gzip) — بدون UI، مستقل از گرید
+   bina-local-sql. js — کویری SQL روی بانک لوکال (بلوک‌های gzip) — بدون UI، مستقل از گرید
    وابستگی: AlaSQL (اگر در صفحه نباشد خودش از CDN لود می‌کند)
    ساختار بانک لوکال:
      هر شرکت یک دیتابیس IndexedDB:  Coding [شرکت, Id]   Sanad [سال, شرکت, Id]
@@ -33,7 +33,7 @@ function ensureAlasql() {
     const s = document.createElement('script');
     s.src = ALASQL_URL;
     s.onload = res;
-    s.onerror = () => { alasqlLoading = null; rej(new Error('بارگذاری AlaSQL ناموفق بود (alasql.min.js را کنار صفحه بگذار)')); };
+    s.onerror = () => { alasqlLoading = null; rej(new Error('بارگذاری AlaSQL ناموفق بود (alasql.min.-js را کنار صفحه بگذار)')); };
     document.head.append(s);
   }));
 }

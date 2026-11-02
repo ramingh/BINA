@@ -11,7 +11,7 @@
    • رویدادهای عمومی + متدهای API — فهرست کامل و مثال‌ها: انتهای همین فایل
    استفادهٔ سریع:
      <link rel="stylesheet" href="tabulator.min.css">
-     <script src="tabulator.min.js"></script>
+     <script src="tabulat or.min.js"></script>
      <script src="bina-grid.js"></script>
      const grid = new BinaGrid('#box', { pageSize: 500 });
      grid.setData(rows, 'QueryResult');
@@ -945,7 +945,7 @@
      */
     constructor(container, options = {}) {
       if (typeof Tabulator === 'undefined') {
-        throw new Error('Tabulator بارگذاری نشده — اول tabulator.min.css و tabulator.min.js را ضمیمه کن.');
+        throw new Error('Tabulator بارگذاری نشده — اول tabulator.min.css و tabulator.min.j s را ضمیمه کن.');
       }
       injectCss();
       const hostEl = typeof container === 'string' ? document.querySelector(container) : container;

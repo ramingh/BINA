@@ -20,7 +20,7 @@
 ## آنچه ساخته شد (همه در README توضیح داده شده؛ چیدمان: `app/` = ریشهٔ shell برنامه، `demos/`، `tests/`)
 | فایل | وضعیت |
 |---|---|
-| `app/bina/bina-local-sql.js` BinaLocalSql | موتور: کشف منبع از کلیدها، بافر LRU، `rows()`, `query()` با پیش‌فیلتر `_SrcTable`. روی بانک واقعی «کار کرد» (گزارش کاربر) |
+| `app/bina/bina-local-sql. js` BinaLocalSql | موتور: کشف منبع از کلیدها، بافر LRU، `rows()`, `query()` با پیش‌فیلتر `_SrcTable`. روی بانک واقعی «کار کرد» (گزارش کاربر) |
 | `app/bina/bina-grid.js` BinaGrid v1.2.0 | گرید کاربر + گزینه‌های اختیاری: `setData(...,{own:true})`، `captions`، `noTranslateBody`. پیش‌فرض‌ها همان v1.0 |
 | `app/bina/bi na-query-view.js` BinaQueryView | هر منو: پارامتر (شرکت/سال) + `sql` یا مسیر سریع + گرید؛ `getState/setState/onShow` |
 | `app/bina/bina-pages.js` | descriptor هر منو؛ فعلاً فقط `tab-13` (اسناد حسابداری) تعریف شده |
