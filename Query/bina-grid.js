@@ -1167,14 +1167,11 @@
      * @param {object} [opts] — { own: true } = «این ردیف‌ها مال گرید است» → بدون کپی (فقط __id روی همان
      *        آبجکت‌ها ثبت می‌شود). پیش‌فرض (بدون opts) مثل v1.0: ورودی دست‌نخورده می‌ماند و هر ردیف کپی می‌شود.
      */
-
-
     async setData(rows, tableName, opts) {
       if (!Array.isArray(rows)) throw new Error('setData: آرایه‌ای از آبجکت بده.');
       if (rows.length && typeof rows[0] !== 'object') {
         throw new Error('setData: هر ردیف باید آبجکت باشد (خروجی کویری SQL).');
       }
-
       this.tableName = tableName || this.tableName || 'QueryResult';
       const first = rows[0] || {};
       const fields = Object.keys(first).filter(function (f) { return f !== '__id'; });
@@ -1209,7 +1206,6 @@
       this._toggleEmpty();
       this.emit('dataLoaded', { tableName: this.tableName, rows: rows.length });
     }
-
     /**
      * آمادهٔ‌سازی ردیف‌ها برای Tabulator (کلید ردیف = __id، انتخاب سلول/ردیف به آن وابسته است).
      * پیش‌فرض (v1.0): هر ردیف کپی می‌شود → ورودی هیچ‌وقت تغییر نمی‌کند.
@@ -1236,7 +1232,6 @@
       for (let i = 0; i < rows.length; i++) rows[i].__id = i + 1;   /* پاس ۲: ثبت */
       return rows;
     }
-
     /** پاک کردن کامل گرید */
     async clearData() {
       this.tableName = '';
@@ -1272,7 +1267,6 @@
       this.emptyEl.style.display = empty ? 'flex' : 'none';
     }
     /* ─────────── ستون‌ها ─────────── */
-
     _makecolumnDef(field, rows) {
       const preset = this.options.presetcolumns[field];
       const kind = preset ? preset.kind : inferKind(field, rows);
@@ -1289,7 +1283,6 @@
         variableHeight: true
       };
       /* ═══════ ستون‌هایی که عددی‌اند اما نباید جمع فوتر بگیرند ═══════ */
-
       this.fieldKinds.set(field, kind);
       if (kind === 'text') definition.headerFilterFunc = 'like';
       if (kind === 'number') {
@@ -1302,17 +1295,6 @@
       }
       return definition;
     }
-
-
-
-
-
-
-
-
-
-
-
     /** نوع ستون — بعد از restore از layout از نگاشت جانبی خوانده می‌شود */
     columnKind(definition) {
       return definition._kind || this.fieldKinds.get(definition.field) || 'text';

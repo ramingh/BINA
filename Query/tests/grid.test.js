@@ -27,7 +27,6 @@ const mk = n => Array.from({
   Name: 'n' + i,
   Bed: i * 10
 }));
-
 (async () => {
   const grid = new w.BinaGrid('#g', {
     height: '300px',
@@ -41,7 +40,6 @@ const mk = n => Array.from({
   ok(grid.table.getRows().length === 2000, 'پیش‌فرض: ۲۰۰۰ ردیف');
   ok(!('__id' in a[0]) && Object.keys(a[0]).join() === 'Id,Name,Bed', 'پیش‌فرض: ورودی دست‌نخورده');
   ok(grid.selection.rowKey(grid.table.getRows()[3]) === '4', 'پیش‌فرض: rowKey = 4');
-
   // ۲) own:true بدون کپی
   const b = mk(2000);
   await grid.setData(b, 'T2', {
@@ -56,18 +54,15 @@ const mk = n => Array.from({
   await new Promise(r => setTimeout(r, 50));
   ok(grid.table.getDataCount('active') === 1, 'فیلتر روی کل داده');
   grid.table.clearHeaderFilter();
-
   // ۳) انتخاب واقعی: سلول → کلید → دادهٔ ردیف
   grid.selection.rows.add('4');
   ok(grid.getSelectedData().length === 1 && grid.getSelectedData()[0].Id === 4, 'getSelectedData درست');
   grid.selection.clear();
-
   // ۴) idempotent: همان آرایه دوباره
   await grid.setData(b, 'T2', {
     own: true
   });
   ok(grid.table.getRows()[0].getData() === b[0], 'own دوباره با همان آرایه: بدون کپی');
-
   // ۵) آبجکت‌های مشترک با ترتیب دیگر → کپی امن، شناسه‌های صاحب دست‌نخورده
   const g2 = new w.BinaGrid('#g', {
     height: '300px',
@@ -81,7 +76,6 @@ const mk = n => Array.from({
   });
   ok(g2.table.getRows()[0].getData() !== rev[0] && g2.table.getRows()[0].getData().__id === 1, 'ترتیب متفاوت → کپی');
   ok(b[5].__id === 6, 'شناسه‌ی گرید اول خراب نشد');
-
   // ۶) frozen / null → کپی
   const fr = mk(3).map(Object.freeze);
   await g2.setData(fr, 'T4', {

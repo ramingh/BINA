@@ -1,19 +1,14 @@
 <!DOCTYPE html>
-
 <html dir="rtl" lang="fa">
-
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <title>Simple Operational Sidebar</title>
     <link href="style.css" rel="stylesheet" />
     <link href="palette.css" rel="stylesheet" />
- 
 </head>
-
 <body>
     <div class="app-layout">
-  
         <aside aria-label="منوی اصلی" class="sidebar">
             <header class="sidebar__header">
                 <button aria-label="بستن سایدبار" class="header-action-button sidebar-toggle-button"
@@ -36,7 +31,6 @@
                             <span class="language-status" id="languageStatus">فارسی</span>
                         </button>
 <div class="language-popup" id="languagePopup" hidden>
-
     <button data-language="fa" type="button">فارسی</button>
     <button data-language="en" type="button">English</button>
     <button data-language="ar" type="button">العربية</button>
@@ -366,7 +360,6 @@
         <span aria-hidden="true" class="status-bar__separator"></span>
         <span class="status-bar__item" id="statusTime"></span>
     </footer>
-          
     <!-- موتور مشترک بانک لوکال (یک‌بار در shell؛ تب‌ها از parent.BinaBank می‌گیرند) -->
     <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
     <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="bina/alasql.min.js"><\/scr' + 'ipt>');</script>
@@ -377,11 +370,9 @@
     <script src="./app/bina/bina-pages.js"></script>
       <script src="./dic_sek.Js"></script>
    <site-translator></site-translator>
-
     <script>
       // ۱. ساخت نمونه از کلاس مترجم
       window.translator = new WebTranslator();
-
       // ۲. آماده‌سازی دیتابیس
       window.addEventListener('DOMContentLoaded', async () => {
         try {
@@ -391,21 +382,17 @@
           console.error("❌ خطا در راه‌اندازی مترجم:", err);
         }
       });
-
       // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ بدون دستکاری app.js
       const langPopup = document.getElementById('languagePopup');
       if (langPopup) {
         langPopup.addEventListener('click', (event) => {
           const btn = event.target.closest('[data-language]');
           if (!btn) return;
-
           const langCode = btn.dataset.language; // fa, en, ar
-
           // اجرای ترجمه روی صفحه اصلی
           if (window.translator) {
             window.translator.setLanguage(langCode);
           }
-
           // ترجمه محتوای همهٔ تب‌های زنده (هر تب یک iframe دارد)
           if (window.BinaFrames) {
             window.BinaFrames.liveFrames().forEach((frame) => {
@@ -421,5 +408,4 @@
     </script>
 </body>
 </html>
- 
  

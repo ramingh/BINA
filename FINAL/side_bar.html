@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 
-<html dir="rtl" lang="fa">
+<html  lang="fa">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <link rel="preload" href="IRANYekanX-Light.ttf" as="font" type="font/ttf" crossorigin>
     <title>Simple Operational Sidebar</title>
     <link href="style.css" rel="stylesheet" />
     <link href="palette.css" rel="stylesheet" />
- 
+      <script src="../Cloud/Dic_sek.Js"></script>
+      <script>
+  (function() {
+    var lang = localStorage.getItem('sidebarLanguage') || 'fa';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
+  })();
+</script>
 </head>
 
 <body>
@@ -355,8 +363,8 @@
                     title="بستن همه تب‌ها" type="button">×</button>
             </div>
             <section class="content-panel" id="contentPanel">
-                <div class="content-welcome" id="contentWelcome">یک گزینه از منو انتخاب کنید</div><div class="content-frames" id="contentFrames"
-                    style="flex:1 1 auto;min-height:0;width:100%;height:100%;position:relative"></div>
+                <div class="content-welcome" id="contentWelcome">یک گزینه از منو انتخاب کنید</div><iframe
+                    class="content-frame" hidden="" id="contentFrame" title="محتوای تب فعال"></iframe>
             </section>
         </main>
     </div>
@@ -366,31 +374,26 @@
         <span aria-hidden="true" class="status-bar__separator"></span>
         <span class="status-bar__item" id="statusTime"></span>
     </footer>
-          
-    <!-- موتور مشترک بانک لوکال (یک‌بار در shell؛ تب‌ها از parent.BinaBank می‌گیرند) -->
-    <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
-    <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="bina/alasql.min.js"><\/scr' + 'ipt>');</script>
-    <script src="bina/bina-local-sql.js"></script>
-    <script src="bina/bina-shell.js"></script>
-    <script src="bina/bina-tabs.js"></script>
+            <site-translator></site-translator>
     <script src="app.js"></script>
-    <script src="./dic_sek.Js"></script>
-   <site-translator></site-translator>
+    
+ 
 
     <script>
       // ۱. ساخت نمونه از کلاس مترجم
       window.translator = new WebTranslator();
 
       // ۲. آماده‌سازی دیتابیس
-      window.addEventListener('DOMContentLoaded', async () => {
-        try {
-          await window.translator.init();
-          console.log("✅ سیستم ترجمه آماده است.");
-        } catch (err) {
-          console.error("❌ خطا در راه‌اندازی مترجم:", err);
-        }
-      });
-
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await window.translator.init();
+    const savedLang = localStorage.getItem('sidebarLanguage') || 'fa';
+    await window.translator.setLanguage(savedLang);
+    console.log("✅ سیستم ترجمه آماده است. زبان:", savedLang);
+  } catch (err) {
+    console.error("❌ خطا در راه‌اندازی مترجم:", err);
+  }
+});
       // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ بدون دستکاری app.js
       const langPopup = document.getElementById('languagePopup');
       if (langPopup) {
@@ -405,19 +408,33 @@
             window.translator.setLanguage(langCode);
           }
 
-          // ترجمه محتوای همهٔ تب‌های زنده (هر تب یک iframe دارد)
-          if (window.BinaFrames) {
-            window.BinaFrames.liveFrames().forEach((frame) => {
-              try {
-                if (frame.contentWindow && frame.contentWindow.translator) {
-                  frame.contentWindow.translator.setLanguage(langCode);
-                }
-              } catch (_) { /* iframe هنوز بارگذاری نشده */ }
-            });
+          // ترجمه محتوای تب فعال (iframe) در صورت باز بودن
+          const frame = document.getElementById('contentFrame');
+          if (frame && frame.contentWindow && frame.contentWindow.translator) {
+            frame.contentWindow.translator.setLanguage(langCode);
           }
         });
       }
     </script>
+
+     <script>
+    (function() {
+      
+    
+      var lang = localStorage.getItem('sidebarLanguage') || 'fa';
+   console.log('---------------------------' ,lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
+    })();
+  </script>
+  <script>
+  (function() {
+    var lang = localStorage.getItem('sidebarLanguage') || 'fa';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
+    if (lang !== 'fa') document.documentElement.classList.add('translating');
+  })();
+</script>
 </body>
 </html>
  

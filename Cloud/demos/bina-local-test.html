@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -22,10 +21,8 @@
     .warn { background: #fdf3e7; color: #b54708; border: 1px solid #f3d9b5; border-radius: 10px; padding: 8px 14px; margin: 6px 0 }
   </style>
 </head>
-
 <body>
   <main class="page">
-
     <section class="card">
       <h2>حافظه</h2>
       <button id="bSrc">منبع‌های موجود</button>
@@ -33,7 +30,6 @@
       <div id="prog" class="msg">آماده</div>
       <div id="chips"></div>
     </section>
-
     <section class="card">
       <h2>کویری</h2>
       <textarea id="q" spellcheck="false">SELECT  [Id],[ShomarehSanad],[Tarikh],[KOl_Code],[Moien_Code],[Tafsil_Code],[SharhSanad],[Bedehkar],[Bestankar],[_SrcTable]
@@ -44,9 +40,7 @@ WHERE [_SrcTable] LIKE '%1200%'</textarea>
       <div id="out"></div>
       <div id="grid"></div>
     </section>
-
   </main>
-
   <!-- همهٔ فایل‌ها در یک پوشه و روی همان origin بانک لوکال اجرا شوند -->
   <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
   <script>if (typeof Tabulator === 'undefined') document.write('<scr' + 'ipt src="tabulator.min.js"><\/scr' + 'ipt>');</script>
@@ -61,7 +55,6 @@ WHERE [_SrcTable] LIKE '%1200%'</textarea>
       const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
       const engine = new BinaLocalSql({ onProgress: m => { $('#prog').textContent = m; } });
       const grid = new BinaGrid('#grid', { height: '56vh', pageSize: 500, storagePrefix: 'BinaLocal' });
-
       function showRam() {
         const st = engine.status();
         let heap = '';
@@ -69,7 +62,6 @@ WHERE [_SrcTable] LIKE '%1200%'</textarea>
         $('#chips').innerHTML = st.tables.map(t => '<span class="chip">' + t.table + ' (' + t.rows.toLocaleString('en-US') + ')</span>').join('') +
           '<div class="msg">در رم: ' + st.tables.length + ' جدول · ' + st.totalRows.toLocaleString('fa-IR') + ' ردیف' + heap + '</div>';
       }
-
       async function run() {
         const btn = $('#run');
         btn.disabled = true;
@@ -92,7 +84,6 @@ WHERE [_SrcTable] LIKE '%1200%'</textarea>
         btn.disabled = false;
         showRam();
       }
-
       $('#run').addEventListener('click', run);
       $('#q').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run(); });
       $('#bClear').addEventListener('click', () => { engine.clear(); $('#prog').textContent = 'حافظه آزاد شد'; showRam(); });
@@ -107,5 +98,4 @@ WHERE [_SrcTable] LIKE '%1200%'</textarea>
     })();
   </script>
 </body>
-
 </html>

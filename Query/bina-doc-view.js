@@ -1,10 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════
    bina-doc-view.js — BinaDocView v1.0.0
    «نمایش اسناد»: دو کمبو (شرکت، سال مالی) + BinaGrid؛ داده از BinaLocalSql.
-
    وابستگی‌ها (به همین ترتیب لود شوند):
      Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql.js · bina-doc-view.js
-
    const view = new BinaDocView('#box', {
      engine: new BinaLocalSql(),            // اختیاری؛ اگر ندهی خودش می‌سازد
      defaultYear: 'first',                  // 'first' | 'last'
@@ -17,13 +15,11 @@
    await view.select('1200', '1399');       // برنامه‌ای انتخاب کن
    view.getGrid();                          // خود BinaGrid
    view.destroy();
-
    رفتار: فیلتر/مرتب‌سازی ستون روی «همهٔ» ردیف‌های همان شرکت و سال کار می‌کند؛
    صفحه‌بندی (۵۰۰ ردیف در هر صفحه) فقط نمایش است.
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
 'use strict';
-
 const CSS = [
   '.bdv{font-family:IRANYekanX,Tahoma,system-ui,sans-serif;font-size:14px;line-height:1.8;color:#1c2b3a}',
   '.bdv-bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px 16px;margin-bottom:14px}',
@@ -33,7 +29,6 @@ const CSS = [
   '.bdv-info{font-size:13px;color:#64748b}',
   '.bdv-err{background:#fdeceb;color:#b42318;border:1px solid #f4c5c1;border-radius:10px;padding:8px 14px;margin:0 0 14px;white-space:pre-wrap}'
 ].join('\n');
-
 function injectCss() {
   if (document.getElementById('bdv-css')) return;
   const st = document.createElement('style');
@@ -41,10 +36,8 @@ function injectCss() {
   st.textContent = CSS;
   document.head.append(st);
 }
-
 const numCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
 class BinaDocView {
   /**
    * @param {string|Element} target  — المنت یا سلکتور
@@ -70,7 +63,6 @@ class BinaDocView {
     this._busy = false;
     this._build();
   }
-
   _build() {
     injectCss();
     this.root.classList.add('bdv');
@@ -93,7 +85,6 @@ class BinaDocView {
     this.coEl.addEventListener('change', this._onCo);
     this.yrEl.addEventListener('change', this._onYr);
   }
-
   _info(m) { if (this.infoEl) this.infoEl.textContent = m || ''; }
   _error(e) {
     this._info('');
@@ -109,11 +100,9 @@ class BinaDocView {
     this._fill(this.yrEl, years);
     if (years.length) this.yrEl.value = this.defaultYear === 'last' ? years[years.length - 1] : years[0];
   }
-
   /** رویدادها: 'loaded' · 'error' */
   on(name, fn) { (this._on[name] = this._on[name] || []).push(fn); return this; }
   _emit(name, data) { (this._on[name] || []).forEach(fn => { try { fn(data); } catch (e) { /* noop */ } }); }
-
   /** کمبوها را از روی بانک لوکال پر می‌کند و اولین شرکت/سال را نشان می‌دهد */
   async init() {
     try {
@@ -131,7 +120,6 @@ class BinaDocView {
       await this._show();
     } catch (e) { this._error(e); }
   }
-
   /** انتخاب برنامه‌ای؛ مقدار ناموجود → خطا */
   async select(company, year) {
     company = String(company); year = String(year);
@@ -142,11 +130,9 @@ class BinaDocView {
     this.yrEl.value = year;
     await this._show();
   }
-
   get company() { return this.coEl.value; }
   get year() { return this.yrEl.value; }
   getGrid() { return this.grid; }
-
   async _show() {
     const company = this.coEl.value, year = this.yrEl.value;
     if (!company || !year || this._busy) return;
@@ -178,7 +164,6 @@ class BinaDocView {
     this.coEl.disabled = this.yrEl.disabled = false;
     this._busy = false;
   }
-
   destroy() {
     this.coEl.removeEventListener('change', this._onCo);
     this.yrEl.removeEventListener('change', this._onYr);
@@ -186,9 +171,7 @@ class BinaDocView {
     this.root.innerHTML = '';
     this.root.classList.remove('bdv');
   }
-
   static get version() { return '1.0.0'; }
 }
-
 root.BinaDocView = BinaDocView;
 })(typeof window !== 'undefined' ? window : globalThis);

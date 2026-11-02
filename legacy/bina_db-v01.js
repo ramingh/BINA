@@ -9,9 +9,6 @@
  *   ۲) Index_db    - ذخیره و مدیریت در IndexedDB
  * ============================================================================
  */
-
-
-
 /* ============================================================================
  * کلاس webservice
  * ============================================================================ */
@@ -22,19 +19,15 @@ class webservice {
     this.retryDelay = options.retryDelay ?? 1000;
     this._userSignal = null;
   }
-
   setSignal(signal) {
     this._userSignal = signal;
   }
-
   async get_list_tbl(options = {}) {
     const signal = this._userSignal || options.signal;
     const tablesList = await this._fetchApi('tables', {}, signal);
     if (!Array.isArray(tablesList)) throw new Error('پاسخ mode=tables آرایه نیست');
-
     const results = [];
     const errors = [];
-
     for (const item of tablesList) {
       if (signal?.aborted) throw new DOMException('توقف', 'AbortError');
       const tableName = item.table;
@@ -67,11 +60,9 @@ class webservice {
       errors
     };
   }
-
   async *get_deta_tbl(tableName, batchSize, count = 0, options = {}) {
     const signal = this._userSignal || options.signal;
     let idIndex = options.idIndex;
-
     if (typeof idIndex !== 'number' || idIndex < 0) {
       const stats = await this._fetchApi('stats', {
         table: tableName
@@ -79,11 +70,9 @@ class webservice {
       if (!stats || typeof stats.idIndex !== 'number') throw new Error('idIndex قابل دریافت نیست');
       idIndex = stats.idIndex;
     }
-
     let lastId = 0;
     let received = 0;
     let batchNo = 0;
-
     while (count === 0 || received < count) {
       if (signal?.aborted) throw new DOMException('توقف', 'AbortError');
       const data = await this._fetchApi('data', {
@@ -91,24 +80,19 @@ class webservice {
         lastId,
         batchSize
       }, signal);
-
       let rows;
       if (Array.isArray(data)) rows = data;
       else if (data && Array.isArray(data.rows)) rows = data.rows;
       else rows = [];
-
       if (rows.length === 0) break;
-
       batchNo++;
       received += rows.length;
-
       const lastRow = rows[rows.length - 1];
       if (Array.isArray(lastRow) && typeof lastRow[idIndex] !== 'undefined') {
         lastId = lastRow[idIndex];
       } else {
         break;
       }
-
       yield {
         batchNo,
         rows,
@@ -116,11 +100,9 @@ class webservice {
         received,
         total: count
       };
-
       if (rows.length < batchSize) break;
     }
   }
-
   async _fetchApi(mode, params = {}, signal) {
     const url = new URL(this.endpoint);
     url.searchParams.set('mode', mode);
@@ -145,9 +127,6 @@ class webservice {
     throw lastError;
   }
 }
-
-
-
 /* ============================================================================
  * کلاس Index_db
  * ============================================================================ */
@@ -158,9 +137,7 @@ class Index_db {
     this._public = null;
     this._company = null;
   }
-
   /* ─── متدهای اتصال به دیتابیس ─── */
-
   async _requestPersistence() {
     try {
       if (!navigator.storage?.persist) return false;
@@ -170,7 +147,6 @@ class Index_db {
       return false;
     }
   }
-
   async _openpublic() {
     if (this._public) return this._public;
     this._public = await new Promise((resolve, reject) => {
@@ -178,13 +154,11 @@ class Index_db {
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
         const oldVersion = e.oldVersion;
-
         if (oldVersion < 5) {
           if (db.objectStoreNames.contains('ServerTables')) db.deleteObjectStore('ServerTables');
           if (db.objectStoreNames.contains('catalog')) db.deleteObjectStore('catalog');
           if (db.objectStoreNames.contains('columns')) db.deleteObjectStore('columns');
         }
-
         if (!db.objectStoreNames.contains('ServerTables')) db.createObjectStore('ServerTables', {
           keyPath: 'table'
         });
@@ -203,7 +177,6 @@ class Index_db {
     });
     return this._public;
   }
-
   async _openCompany(companyCode) {
     if (this._company?.code === String(companyCode)) return this._company.db;
     this._closeCompany();
@@ -212,13 +185,11 @@ class Index_db {
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
         const oldVersion = e.oldVersion;
-
         if (oldVersion < 5) {
           if (db.objectStoreNames.contains('Coding')) db.deleteObjectStore('Coding');
           if (db.objectStoreNames.contains('Sanad')) db.deleteObjectStore('Sanad');
         }
         if (db.objectStoreNames.contains('BlockIndex')) db.deleteObjectStore('BlockIndex');
-
         if (!db.objectStoreNames.contains('Coding')) db.createObjectStore('Coding');
         if (!db.objectStoreNames.contains('Sanad')) db.createObjectStore('Sanad');
       };
@@ -232,7 +203,6 @@ class Index_db {
     };
     return db;
   }
-
   _closeCompany() {
     if (this._company) {
       try {
@@ -241,7 +211,6 @@ class Index_db {
       this._company = null;
     }
   }
-
   close() {
     this._closeCompany();
     if (this._public) {
@@ -251,16 +220,13 @@ class Index_db {
       this._public = null;
     }
   }
-
   /* ─── توابع کمکی IndexedDB ─── */
-
   _req(request) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
-
   _txDone(tx) {
     return new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve();
@@ -268,23 +234,18 @@ class Index_db {
       tx.onerror = () => {};
     });
   }
-
   /* ─── متدهای فشرده‌سازی ─── */
-
   async _gzip(obj) {
     const enc = new TextEncoder();
     const stream = new Blob([enc.encode(JSON.stringify(obj))]).stream().pipeThrough(new CompressionStream('gzip'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-
   async _gunzip(bytes) {
     const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     const dec = new TextDecoder();
     return JSON.parse(dec.decode(await new Response(stream).arrayBuffer()));
   }
-
   /* ─── متدهای ذخیره متادیتا ─── */
-
   async save_table_list(results) {
     const db = await this._openpublic();
     const tx = db.transaction('ServerTables', 'readwrite');
@@ -301,7 +262,6 @@ class Index_db {
     }
     await this._txDone(tx);
   }
-
   async save_columns(results) {
     const db = await this._openpublic();
     const tx = db.transaction('columns', 'readwrite');
@@ -322,12 +282,10 @@ class Index_db {
     for (const fam of Object.values(families)) store.put(fam);
     await this._txDone(tx);
   }
-
   async get_checkpoint(tableName) {
     const db = await this._openpublic();
     return (await this._req(db.transaction('catalog', 'readonly').objectStore('catalog').get(tableName))) || null;
   }
-
   async _save_checkpoint(state) {
     const db = await this._openpublic();
     const tx = db.transaction('catalog', 'readwrite');
@@ -337,26 +295,20 @@ class Index_db {
     });
     await this._txDone(tx);
   }
-
   async get_tables_list() {
     const db = await this._openpublic();
     return await this._req(db.transaction('ServerTables', 'readonly').objectStore('ServerTables').getAll());
   }
-
   async get_columns(family) {
     const db = await this._openpublic();
     return await this._req(db.transaction('columns', 'readonly').objectStore('columns').get(family));
   }
-
   /* ─── متد ذخیره بسته داده ─── */
-
   async save_batch(tableName, batch, schema) {
     const info = this._parseTableName(tableName);
     if (!info) throw new Error(`نام جدول نامعتبر: ${tableName}`);
-
     const db = await this._openCompany(info.company);
     const family = info.family;
-
     const ids = [];
     const vals = [];
     for (const row of batch.rows) {
@@ -365,18 +317,15 @@ class Index_db {
       ids.push(id);
       vals.push(values);
     }
-
     const packed = await this._gzip({
       ids,
       rows: vals
     });
     const blockNo = batch.batchNo - 1;
     const blockKey = family === 'Sanad' ? [info.year, info.company, blockNo] : [info.company, blockNo];
-
     const tx = db.transaction([family], 'readwrite');
     tx.objectStore(family).put(packed, blockKey);
     await this._txDone(tx);
-
     const state = await this.get_checkpoint(tableName) || {
       table: tableName,
       family,
@@ -399,30 +348,23 @@ class Index_db {
     });
     await this._save_checkpoint(state);
   }
-
   /* ─── متد خواندن داده ─── */
-
   async get_rows(tableName, afterId = -1, limit = 50) {
     const info = this._parseTableName(tableName);
     if (!info) throw new Error(`نام جدول نامعتبر: ${tableName}`);
-
     const schema = await this.get_columns(info.family);
     if (!schema) throw new Error(`Schema یافت نشد`);
-
     const state = await this.get_checkpoint(tableName);
     if (!state || !state.blocks || state.blocks.length === 0) return [];
-
     const db = await this._openCompany(info.company);
     const neededBlocks = state.blocks.filter(b => b.lastId > afterId);
     if (neededBlocks.length === 0) return [];
-
     const tx = db.transaction(info.family, 'readonly');
     const store = tx.objectStore(info.family);
     const blockKeys = neededBlocks.map(b =>
       info.family === 'Sanad' ? [info.year, info.company, b.n] : [info.company, b.n]
     );
     const packedList = await Promise.all(blockKeys.map(k => this._req(store.get(k))));
-
     const out = [];
     for (let b = 0; b < packedList.length && out.length < limit; b++) {
       if (!packedList[b]) continue;
@@ -440,16 +382,13 @@ class Index_db {
     }
     return out;
   }
-
   /* ─── متدهای جداول tk_ ─── */
-
   async save_tk_dic(batch, schema) {
     const db = await this._openpublic();
     const ccIdx = schema.columns.findIndex(c => c.name.toLowerCase() === 'countrycode');
     const fnIdx = schema.columns.findIndex(c => c.name.toLowerCase() === 'fieldname');
     const capIdx = schema.columns.findIndex(c => c.name.toLowerCase() === 'caption');
     if (ccIdx < 0 || fnIdx < 0 || capIdx < 0) throw new Error('ستون‌های tk_dic یافت نشد');
-
     const tx = db.transaction('tk_dic', 'readwrite');
     const store = tx.objectStore('tk_dic');
     for (const row of batch.rows) {
@@ -457,13 +396,11 @@ class Index_db {
     }
     await this._txDone(tx);
   }
-
   async save_tk_sherkat(batch, schema) {
     const db = await this._openpublic();
     const csIdx = schema.columns.findIndex(c => c.name.toLowerCase() === 'codesherkat');
     const esIdx = schema.columns.findIndex(c => c.name.toLowerCase() === 'esmsherkat');
     if (csIdx < 0 || esIdx < 0) throw new Error('ستون‌های tk_sherkat یافت نشد');
-
     const tx = db.transaction('tk_sherkat', 'readwrite');
     const store = tx.objectStore('tk_sherkat');
     for (const row of batch.rows) {
@@ -471,12 +408,10 @@ class Index_db {
     }
     await this._txDone(tx);
   }
-
   async get_translation(fieldName, countryCode = 2) {
     const db = await this._openpublic();
     return (await this._req(db.transaction('tk_dic', 'readonly').objectStore('tk_dic').get([countryCode, fieldName]))) || null;
   }
-
   async get_company_name(codeSherkat) {
     const db = await this._openpublic();
     return new Promise((resolve, reject) => {
@@ -492,20 +427,15 @@ class Index_db {
       req.onerror = () => reject(req.error);
     });
   }
-
   /* ─── Orchestrator: sync_all ─── */
-
   async sync_all(onProgress = null) {
     const emit = (event, data) => onProgress && onProgress({
       event,
       ...data
     });
-
     await this._requestPersistence();
     await this._openpublic();
-
     let localTables = await this.get_tables_list();
-
     if (localTables.length === 0) {
       emit('phase', {
         phase: 'fetching-public',
@@ -515,9 +445,7 @@ class Index_db {
         results,
         errors
       } = await this.ws.get_list_tbl();
-
       if (results.length === 0) throw new Error('هیچ جدولی دریافت نشد');
-
       await this.save_table_list(results);
       await this.save_columns(results);
       localTables = results.map(r => ({
@@ -527,27 +455,22 @@ class Index_db {
         idIndex: r.value.idIndex,
         columns: r.value.columns
       }));
-
       emit('phase', {
         phase: 'fetching-tk',
         message: 'دریافت جداول ترجمه و شرکت‌ها...'
       });
       await this._sync_tk_tables(localTables);
     }
-
     emit('phase', {
       phase: 'comparing',
       message: 'بررسی جداول ناقص...'
     });
     const toSync = [];
-
     for (const t of localTables) {
       const info = this._parseTableName(t.table);
       if (!info) continue;
-
       const state = await this.get_checkpoint(t.table);
       const isComplete = state?.finished && state?.received >= t.count;
-
       if (!isComplete) {
         toSync.push({
           table: t.table,
@@ -557,7 +480,6 @@ class Index_db {
         });
       }
     }
-
     if (toSync.length === 0) {
       emit('phase', {
         phase: 'done',
@@ -568,23 +490,19 @@ class Index_db {
         total: 0
       };
     }
-
     emit('phase', {
       phase: 'downloading',
       message: `دانلود ${toSync.length} جدول ناقص...`,
       total: toSync.length
     });
     let done = 0;
-
     for (const t of toSync) {
       emit('table-start', {
         table: t.table,
         done,
         total: toSync.length
       });
-
       const schema = await this.get_columns(t.info.family);
-
       for await (const batch of this.ws.get_deta_tbl(t.table, this.blockSize, t.count, {
         idIndex: t.idIndex
       })) {
@@ -596,7 +514,6 @@ class Index_db {
           total: batch.total
         });
       }
-
       done++;
       emit('table-done', {
         table: t.table,
@@ -604,7 +521,6 @@ class Index_db {
         total: toSync.length
       });
     }
-
     emit('phase', {
       phase: 'done',
       message: 'همگام‌سازی کامل شد.'
@@ -614,11 +530,9 @@ class Index_db {
       total: toSync.length
     };
   }
-
   async _sync_tk_tables(localTables) {
     const tkdikTable = localTables.find(t => t.table === 'tk_dic_FieldName');
     const tksherkatTable = localTables.find(t => t.table === 'tk_EsmSherkatHolding');
-
     if (tkdikTable) {
       const schema = {
         columns: tkdikTable.columns,
@@ -631,7 +545,6 @@ class Index_db {
         await this.save_tk_dic(batch, schema);
       }
     }
-
     if (tksherkatTable) {
       const schema = {
         columns: tksherkatTable.columns,
@@ -645,9 +558,7 @@ class Index_db {
       }
     }
   }
-
   /* ─── متد کمکی ─── */
-
   _parseTableName(tableName) {
     const name = String(tableName || '').trim();
     let m = /^coding_(\d+)$/i.exec(name);
@@ -657,7 +568,6 @@ class Index_db {
       family: 'Coding',
       year: null
     };
-
     m = /^sanad_(\d{4})_(\d+)$/i.exec(name);
     if (m) return {
       table: name,
@@ -665,13 +575,9 @@ class Index_db {
       family: 'Sanad',
       year: Number(m[1])
     };
-
     return null;
   }
 }
-
-
-
 /* ============================================================================
  * اتصال به window
  * ============================================================================ */

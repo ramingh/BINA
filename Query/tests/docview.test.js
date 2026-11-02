@@ -9,7 +9,6 @@ const {
   indexedDB,
   IDBKeyRange
 } = require('fake-indexeddb');
-
 const dom = new JSDOM('<!doctype html><html><head></head><body><div id="box"></div></body></html>', {
   runScripts: 'outside-only',
   pretendToBeVisual: true,
@@ -33,7 +32,6 @@ w.alasql = require('alasql');
 const load = f => w.eval(fs.readFileSync(f, 'utf8'));
 load(require.resolve('tabulator-tables/dist/js/tabulator.js'));
 ['bina-grid.js', 'bina-local-sql.js', 'bina-doc-view.js'].forEach(f => load(path.join(__dirname, '..', f)));
-
 const ok = (c, m) => {
   console.log((c ? 'PASS ' : 'FAIL ') + m);
   if (!c) process.exitCode = 1;
@@ -55,7 +53,6 @@ const put = (db, store, key, val) => new Promise((res, rej) => {
 const rowsOf = (n, tag) => Array.from({
   length: n
 }, (_, i) => [String(i + 1), '1399/01/01', 13, 1322, 132145, tag + i, i % 2 ? 0 : 1000, i % 2 ? 500 : 0]);
-
 (async () => {
   /* شرکت 1200: سال‌های 1399 و 1398 (به‌عمد نامرتب ساخته می‌شوند) ؛ شرکت 1100: فقط 1400 */
   const plan = {
@@ -86,7 +83,6 @@ const rowsOf = (n, tag) => Array.from({
   }
   const pub = await open('public', ['catalog']);
   pub.close();
-
   const view = new w.BinaDocView('#box', {
     gridOptions: {
       height: '300px',
@@ -97,17 +93,14 @@ const rowsOf = (n, tag) => Array.from({
   view.on('loaded', e => events.push(e));
   await view.init();
   await sleep(100);
-
   const opts = sel => [...sel.options].map(o => o.value).join(',');
   ok(opts(view.coEl) === '1100,1200', 'کمبوی شرکت مرتب: ' + opts(view.coEl));
   ok(view.company === '1100' && view.year === '1400', 'پیش‌فرض: اولین شرکت و اولین سال');
   ok(events.length === 1 && events[0].rows === 150 && events[0].fromDb === true, 'اولین نمایش: 150 ردیف از بانک');
   ok(view.getGrid().table.getRows().length === 150, 'گرید 150 ردیف دارد');
-
   await view.select('1200', '1398');
   ok(opts(view.yrEl) === '1398,1399', 'کمبوی سال فقط سال‌های همان شرکت و مرتب: ' + opts(view.yrEl));
   ok(view.getGrid().table.getRows().length === 300, 'select(1200,1398): 300 ردیف');
-
   /* تغییر کمبو توسط کاربر */
   view.coEl.value = '1200';
   view.coEl.dispatchEvent(new w.Event('change'));
@@ -118,27 +111,22 @@ const rowsOf = (n, tag) => Array.from({
   await sleep(300);
   const g = view.getGrid();
   ok(g.table.getRows().length === 600, 'change سال → 600 ردیف');
-
   /* فیلتر ستون روی همهٔ ردیف‌های همان شرکت/سال، نه فقط صفحهٔ جاری */
   g.table.setHeaderFilterValue('SharhSanad', '12001399_99');
   await sleep(60);
   ok(g.table.getDataCount('active') === 6, 'فیلتر ستون در همهٔ ۶۰۰ ردیف (۶ صفحه) می‌گردد، نه فقط صفحهٔ جاری: ' + g.table.getDataCount('active'));
   g.table.clearHeaderFilter();
-
   const cols = g.table.getcolumns().map(c => c.getField());
   ok(cols.includes('Bedehkar') && !cols.includes('__id'), 'ستون‌ها: ' + cols.join(','));
   const sc = g.getcolumnOrder().find(x => x.field === '_SrcTable');
   ok(!sc || sc.visible === false, '_SrcTable پنهان است');
-
   /* دوباره همان انتخاب → از رم */
   events.length = 0;
   await view.select('1200', '1399');
   ok(events.length === 1 && events[0].fromDb === false, 'بار دوم از رم');
-
   /* بافر موتور آلوده نشده */
   const rows = (await view.engine.rows('Sanad_1399_1200')).rows;
   ok(!('__id' in rows[0]) && Object.keys(rows[0]).join() === 'Id,ShomarehSanad,Tarikh,KOl_Code,Moien_Code,Tafsil_Code,SharhSanad,Bedehkar,Bestankar,_SrcTable', 'ردیف‌های بافر دست‌نخورده');
-
   /* خطا */
   let err = null;
   try {

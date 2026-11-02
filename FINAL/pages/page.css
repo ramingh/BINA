@@ -3,24 +3,20 @@
     src: url("../IRANYekanX-Light.ttf") format("truetype");
     font-weight: 300
 }
-
 * {
     box-sizing: border-box
 }
-
 html,
 body {
     height: 100%;
     margin: 0
 }
-
 body {
     font: 300 10px IRANYekanX, Tahoma, Arial, sans-serif;
     background: transparent;
     color: #26323c;
     padding: 18px
 }
-
 .sample-page {
     height: 100%;
     display: grid;
@@ -29,17 +25,14 @@ body {
     border-radius: 8px;
     background: #ffffff80
 }
-
 .sample-page__box {
     text-align: center
 }
-
 .sample-page__title {
     margin: 0 0 6px;
     font-size: 14px;
     font-weight: 700
 }
-
 .sample-page__path {
     margin: 0;
     color: #74808b

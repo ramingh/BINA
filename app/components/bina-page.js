@@ -8,7 +8,6 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
 'use strict';
-
 function parentBank() {
   try { return root.parent && root.parent !== root && root.parent.BinaBank ? root.parent.BinaBank : null; }
   catch (e) { return null; }            /* parent از origin دیگر */
@@ -16,10 +15,8 @@ function parentBank() {
 function parentLang() {
   try { return root.parent && root.parent !== root ? root.parent.document.documentElement.lang : ''; } catch (e) { return ''; }
 }
-
 const BinaPage = {
   view: null, engine: null, id: null,
-
   async mount(id, opts) {
     opts = opts || {};
     const target = typeof opts.target === 'string' || !opts.target ? document.querySelector(opts.target || '#view') : opts.target;
@@ -43,7 +40,6 @@ const BinaPage = {
     this._setupTranslator();
     return this._ready.then(() => this.view);
   },
-
   _setupTranslator() {
     if (typeof root.WebTranslator === 'undefined' || root.translator) return;
     try {
@@ -54,12 +50,10 @@ const BinaPage = {
       }).catch(() => { /* مترجم اختیاری است */ });
     } catch (e) { /* noop */ }
   },
-
   whenReady() { return this._ready || Promise.resolve(); },
   getState() { return this.view ? this.view.getState() : null; },
   setState(s) { return this.view ? this.view.setState(s) : Promise.resolve(); },
   onShow() { if (this.view) this.view.onShow(); }
 };
-
 root.BinaPage = BinaPage;
 })(typeof window !== 'undefined' ? window : globalThis);

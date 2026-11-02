@@ -1,10 +1,8 @@
 import asyncio, subprocess, time, json, os
 from pathlib import Path
 from playwright.async_api import async_playwright
-
 ROOT='/mnt/data/BINA_Professional_Components'
 server=subprocess.Popen(['python','-m','http.server','5901','--bind','127.0.0.1','--directory',ROOT],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-
 async def main():
   async with async_playwright() as p:
     browser=await p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'])
@@ -47,6 +45,5 @@ async def main():
     assert len(res['got'])==3
     assert all(x['table'].islower() for x in res['tab'])
     await browser.close()
-
 try: asyncio.run(main())
 finally: server.terminate();server.wait()

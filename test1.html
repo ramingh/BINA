@@ -105,7 +105,6 @@
 </head>
 <body>
 <div class="wrap">
-
   <!-- TOPBAR -->
   <div class="topbar">
     <h1>BINA | مدیریت بانک محلی</h1>
@@ -116,7 +115,6 @@
       <button id="btnStop" class="danger" style="padding:3px 9px;font-size:11px" disabled>توقف</button>
     </div>
   </div>
-
   <!-- ۱: راه‌اندازی اولیه -->
   <section class="panel">
     <h2><span class="dot"></span> ۱) راه‌اندازی اولیه</h2>
@@ -128,7 +126,6 @@
     <div id="bootMsg"></div>
     <div class="pills" id="bootPills"></div>
   </section>
-
   <!-- ۲: جداول -->
   <section class="panel">
     <h2><span class="dot"></span> ۲) جداول (انتخاب و دانلود)</h2>
@@ -177,7 +174,6 @@
       </table>
     </div>
   </section>
-
   <!-- ۳: TK -->
   <section class="panel">
     <h2><span class="dot"></span> ۳) جداول کمکی TK</h2>
@@ -199,7 +195,6 @@
       </table>
     </div>
   </section>
-
   <!-- ۴: موجودی لوکال -->
   <section class="panel">
     <h2><span class="dot"></span> ۴) موجودی لوکال</h2>
@@ -213,7 +208,6 @@
     <div id="invMsg"></div>
     <div class="tree" id="invTree"></div>
   </section>
-
   <!-- لاگ -->
   <section class="panel">
     <h2><span class="dot"></span> لاگ</h2>
@@ -222,19 +216,15 @@
     </div>
     <pre class="log" id="log"></pre>
   </section>
-
   <footer>BINA v3 · webservice + Index_db · gzip بلوکی · tk_ ردیفی در public</footer>
 </div>
-
 <script src="bina_db-v010.js"></script>
 <script>
 (function(){
   "use strict";
-
   const $ = id => document.getElementById(id);
   const fa = n => (n==null||n==="") ? "—" : Number(n).toLocaleString("fa-IR");
   const logBox = $("log");
-
   function log(line){
     logBox.textContent = "[" + new Date().toLocaleTimeString("fa-IR") + "] " + line + "\n" + logBox.textContent;
   }
@@ -247,15 +237,12 @@
     ].forEach(id => { $(id).disabled = on; });
     $("btnStop").disabled = !on;
   }
-
   if (typeof webservice === "undefined" || typeof Index_db === "undefined"){
     msg("bootMsg","err","کلاس‌ها بارگذاری نشدند.");
     return;
   }
-
   // endpoint در کد ثابت است
   const ENDPOINT = "http://localhost/grid/FastDataHandler.ashx";
-
   const ws = new webservice({
     endpoint: ENDPOINT,
     onProgress: p => {
@@ -280,7 +267,6 @@
       else if (p.event === "table-skip") log("رد " + p.table);
   else if (p.event === "table-error")
   log("خطای " + p.table + ": [" + (p.errorName||"?") + "] " + (p.error || "بدون پیام") + " @ " + (p.errorStack||""));
- 
   else if (p.event === "chunk") log(p.table + " → " + p.received + " (lastId="+p.lastId+")");
       else if (p.event === "job-done") log("پیشرفت: " + p.done + "/" + p.total + " — " + p.table);
       else if (p.event === "checkpoint-recovered") log("بازیابی چک‌پوینت " + p.table);
@@ -288,7 +274,6 @@
       else if (p.event === "refresh-done") log("فهرست بروزرسانی شد: " + p.total + " جدول");
     }
   });
-
   // ── Storage ──
   async function refreshStorage(){
     try{
@@ -307,7 +292,6 @@
     } finally { busy(false); }
   };
   $("btnStop").onclick = () => { db.stop(); log("درخواست توقف"); };
-
   // ── bootstrap ──
   $("btnBootstrap").onclick = async () => {
     busy(true);
@@ -331,7 +315,6 @@
       else { msg("bootMsg","err",err.message); log("خطا: " + err.message); }
     }finally { busy(false); }
   };
-
   $("btnRefreshTables").onclick = async () => {
     busy(true);
     msg("bootMsg","info","بروزرسانی فهرست جداول از سرور…");
@@ -345,7 +328,6 @@
       else { msg("bootMsg","err",err.message); log("خطا: " + err.message); }
     }finally { busy(false); }
   };
-
   // ── شرکت‌ها ──
   async function loadCompanies(){
     try{
@@ -361,7 +343,6 @@
       if (codes.includes(cur)) sel.value = cur;
     }catch(_){}
   }
-
   // ── لیست جداول ──
   let tableCache = [];
   async function loadTableList(){
@@ -405,7 +386,6 @@
       log("خطا فهرست: " + err.message);
     }
   }
-
   function statusLabel(st){
     if (st === "ok") return '<span class="st-ok">کامل</span>';
     if (st === "missing") return '<span class="st-missing">نیست</span>';
@@ -413,12 +393,10 @@
     if (st === "diff") return '<span class="st-diff">اختلاف تعداد</span>';
     return st;
   }
-
   $("btnApplyFilter").onclick = () => loadTableList();
   $("fCompany").onchange = () => loadTableList();
   $("fFamily").onchange = () => loadTableList();
   $("fStatus").onchange = () => loadTableList();
-
   $("chkAll").onchange = function(){
     document.querySelectorAll(".cb-tbl").forEach(c => c.checked = this.checked);
   };
@@ -431,7 +409,6 @@
       c.checked = row && (row.status === "missing" || row.status === "incomplete" || row.status === "diff");
     });
   };
-
   $("btnSyncSelected").onclick = async () => {
     const names = [...document.querySelectorAll(".cb-tbl:checked")].map(c => c.getAttribute("data-table"));
     if (!names.length){ msg("tblMsg","warn","هیچ جدولی انتخاب نشده."); return; }
@@ -449,7 +426,6 @@
       else { msg("tblMsg","err",err.message); log("خطا sync: " + err.message); console.error(err); }
     }finally{ busy(false); }
   };
-
   // ── TK ──
   $("btnLoadTK").onclick = async () => {
     busy(true);
@@ -479,7 +455,6 @@
     }catch(err){ msg("tkMsg","err",err.message); }
     finally{ busy(false); }
   };
-
   // ── موجودی لوکال ──
   function renderInventory(list){
     const root = $("invTree");
@@ -514,7 +489,6 @@
       root.appendChild(item);
     });
   }
-
   async function refreshInventory(){
     msg("invMsg","info","در حال خواندن IndexedDB…");
     try{
@@ -525,11 +499,9 @@
       msg("invMsg","err",err.message);
     }
   }
-
   $("btnRefreshInv").onclick = refreshInventory;
   $("btnSelectAllDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = true);
   $("btnSelectNoneDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = false);
-
   $("btnDeleteSelected").onclick = async () => {
     const names = [...document.querySelectorAll(".cb-db:checked")].map(c => c.getAttribute("data-db"));
     if (!names.length){ msg("invMsg","warn","چیزی انتخاب نشده است."); return; }
@@ -544,7 +516,6 @@
     }catch(err){ msg("invMsg","err",err.message); }
     finally{ busy(false); }
   };
-
   $("btnWipeAll").onclick = async () => {
     if (!confirm("همهٔ بانک‌های IndexedDB این origin حذف شوند؟")) return;
     busy(true);
@@ -562,9 +533,7 @@
     }catch(err){ msg("invMsg","err",err.message); }
     finally{ busy(false); }
   };
-
   $("btnClearLog").onclick = () => { logBox.textContent = ""; };
-
   // ── شروع ──
   (async function init(){
     await refreshStorage();

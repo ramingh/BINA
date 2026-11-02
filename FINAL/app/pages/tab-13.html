@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>معرفی شرکتها</title>
+  <title>اسناد حسابداری</title>
   <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css"
     onerror="this.href='../tabulator.min.css'">
   <style>
@@ -13,26 +12,20 @@
     #view { height: 100% }
   </style>
 </head>
-
 <body>
   <div id="view"></div>
-
   <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
   <script>if (typeof Tabulator === 'undefined') document.write('<scr' + 'ipt src="../tabulator.min.js"><\/scr' + 'ipt>');</script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <!-- موتور از shell می‌آید (parent.BinaBank)؛ فقط برای باز کردن مستقل همین صفحه، AlaSQL و موتور هم لود می‌شوند -->
   <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
   <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="../bina/alasql.min.js"><\/scr' + 'ipt>');</script>
-
   <script src="../app/bina/bina-grid.js"></script>
-  
-
-  <script src="../app/bina/bina-local-sql.js"></script>
-  <script src="../app/bina/bina-query-view.js"></script>
-  <script src="../app/bina/bina-pages.js"></script>
-  <script src="../app/bina/bina-page.js"></script>
+  <script src="../bina/bina-local-sql.js"></script>
+  <script src="../bina/bina-query-view.js"></script>
+  <script src="../bina/bina-pages.js"></script>
+  <script src="../bina/bina-page.js"></script>
   <script src="../dic_sek.Js"></script>
-  <script>BinaPage.mount('tab-01');</script>
+  <script>BinaPage.mount('tab-13');</script>
 </body>
-
 </html>

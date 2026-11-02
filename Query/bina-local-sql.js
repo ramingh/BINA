@@ -1,21 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════════
    bina-local-sql.js — کویری SQL روی بانک لوکال (بلوک‌های gzip) — بدون UI، مستقل از گرید
    وابستگی: AlaSQL (اگر در صفحه نباشد خودش از CDN لود می‌کند)
-
    ساختار بانک لوکال:
      هر شرکت یک دیتابیس IndexedDB:  Coding [شرکت, Id]   Sanad [سال, شرکت, Id]
      مقدار: Uint8Array = gzip({ids, rows})   یا   آرایهٔ ردیفی (بدون Id)
      دیتابیس‌هایی که استور catalog دارند (public و Bina_Bank قدیمی) نادیده گرفته می‌شوند.
-
    const sql = new BinaLocalSql({ onProgress: m => console.log(m) });
    const r = await sql.query("SELECT TOP 100 * FROM [Bina].[dbo].[vw_All_Sanad] WHERE [_SrcTable] LIKE '%1200%'");
    // r = { rows, ms, loadMs, used, loaded, warnings, sql }
-
    جدول‌ها (View):
      vw_All_Sanad  (= Sanad = Sanad_ALL_ALL)   همهٔ سندها ؛ ستون مجازی _SrcTable = Sanad_سال_شرکت
      Sanad_1399_ALL ، Sanad_ALL_1200 ، Sanad_1399_1200
      vw_All_Coding (= Coding = Coding_ALL) ، Coding_1200
-
    سرعت و حافظه:
      • فقط (سال، شرکت)هایی که کویری لازم دارد باز و در رم نگه داشته می‌شوند؛ بار دوم از رم می‌آید.
      • اگر کویری تک‌جدولی باشد و در WHERE شرطِ AND ی  _SrcTable LIKE '…' / = '…'  داشته باشد،
@@ -24,15 +20,12 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
 'use strict';
-
 const ALASQL_URL = 'https://cdn.jsdelivr.net/npm/alasql@4';
 const tick = () => new Promise(r => setTimeout(r, 8));
 const DEC = new TextDecoder();
-
 /* نگاشت قطعی ستون‌های Sanad (همان bina-sql-grid.js) */
 const SANAD_COLS = ['ShomarehSanad', 'Tarikh', 'KOl_Code', 'Moien_Code', 'Tafsil_Code', 'SharhSanad', 'Bedehkar', 'Bestankar'];
 const NUMERIC = new Set(['ShomarehSanad', 'KOl_Code', 'Moien_Code', 'Tafsil_Code', 'Bedehkar', 'Bestankar']);
-
 let alasqlLoading = null;
 function ensureAlasql() {
   if (typeof alasql !== 'undefined') return Promise.resolve();
@@ -44,7 +37,6 @@ function ensureAlasql() {
     document.head.append(s);
   }));
 }
-
 const isBinary = v => v instanceof Uint8Array || v instanceof ArrayBuffer || ArrayBuffer.isView(v);
 async function gunzipJSON(v) {
   const bytes = v instanceof ArrayBuffer ? new Uint8Array(v) : v;
@@ -52,7 +44,6 @@ async function gunzipJSON(v) {
   return JSON.parse(DEC.decode(await new Response(stream).arrayBuffer()));
 }
 const toNum = x => (typeof x === 'string' && x.trim() !== '' && isFinite(x)) ? +x : x;
-
 function openDb(name) {
   return new Promise((res, rej) => {
     const q = indexedDB.open(name);                  /* بدون نسخه — هیچ‌وقت upgrade نمی‌کند */
@@ -61,7 +52,6 @@ function openDb(name) {
     q.onblocked = () => rej(new Error('IndexedDB در تب دیگری بلوکه است.'));
   });
 }
-
 /* ───────── تحلیل SQL ───────── */
 /* محتوای رشته‌ها و [..] را با فاصله پر می‌کند (طول ثابت) تا کلیدواژه‌های داخلشان دیده نشوند */
 function blank(s) {
@@ -69,14 +59,12 @@ function blank(s) {
           .replace(/\[[^\]]*\]/g, m => '[' + ' '.repeat(m.length - 2) + ']');
 }
 const blankStrings = s => s.replace(/'(?:[^']|'')*'/g, m => "'" + ' '.repeat(m.length - 2) + "'");
-
 /* [Bina].[dbo]. ، Bina.dbo. ، dbo. */
 function stripDb(sql) {
   return String(sql || '')
     .replace(/(?:\[[^\]]+\]|\w+)\s*\.\s*(?:\[dbo\]|dbo)\s*\.\s*/gi, '')
     .replace(/(?:\[dbo\]|\bdbo)\s*\.\s*/gi, '');
 }
-
 /* نام جدول‌های بعد از FROM / JOIN (نام همان‌طور که تایپ شده) */
 function findRefs(sql) {
   const flat = blankStrings(sql), seen = new Map();
@@ -88,7 +76,6 @@ function findRefs(sql) {
   }
   return [...seen.values()];
 }
-
 function resolveRef(raw) {
   let m;
   const all = x => /^all$/i.test(x) ? null : String(x);
@@ -98,7 +85,6 @@ function resolveRef(raw) {
   if ((m = /^coding_(all|\d+)$/i.exec(raw))) return { family: 'Coding', y: null, co: all(m[1]) };
   return null;
 }
-
 /* شرط‌های AND ی روی _SrcTable (فقط کویری تک‌جدولی و بدون OR/UNION/زیرکویری) → آرایهٔ توابع تست نام جدول.
    همیشه «ابرمجموعهٔ» ردیف‌های لازم را نگه می‌دارد؛ خود WHERE بعداً توسط AlaSQL کامل اعمال می‌شود. */
 function srcFilters(sql) {
@@ -142,7 +128,6 @@ function srcFilters(sql) {
   }
   return out;
 }
-
 class BinaLocalSql {
   constructor(opts) {
     opts = opts || {};
@@ -156,9 +141,7 @@ class BinaLocalSql {
     this._ready = null;
     this._chain = Promise.resolve();
   }
-
   _emit(m) { if (this.onProgress) { try { this.onProgress(m); } catch (e) { /* noop */ } } }
-
   /* کشف منبع‌ها فقط از روی کلیدها — هیچ بلوکی باز نمی‌شود */
   init() {
     if (this._ready) return this._ready;
@@ -197,7 +180,6 @@ class BinaLocalSql {
     })().catch(e => { this._ready = null; throw e; });
     return this._ready;
   }
-
   /* فهرست منبع‌ها + وضعیت رم */
   async sources() {
     await this.init();
@@ -205,17 +187,14 @@ class BinaLocalSql {
       .map(s => ({ table: s.table, family: s.family, year: s.year, company: s.company, blocks: s.blocks, loaded: this._cache.has(s.table) }))
       .sort((a, b) => a.table.localeCompare(b.table, undefined, { numeric: true }));
   }
-
   /* چه چیزی الان در رم است */
   status() {
     const tables = [...this._cache.entries()].map(([table, e]) => ({ table, rows: e.rows.length }));
     return { tables, totalRows: tables.reduce((a, t) => a + t.rows, 0) };
   }
-
   clear(name) {
     if (name == null) this._cache.clear(); else this._cache.delete(name);
   }
-
   _toRows(src, ids, raw) {
     const n = raw.length, out = new Array(n), name = src.table, isS = src.family === 'Sanad';
     for (let i = 0; i < n; i++) {
@@ -232,7 +211,6 @@ class BinaLocalSql {
     }
     return out;
   }
-
   /* یک منبع (سال، شرکت) — فقط یک‌بار از IndexedDB */
   async _load(src, pos) {
     const hit = this._cache.get(src.table);
@@ -267,7 +245,6 @@ class BinaLocalSql {
     this._cache.set(src.table, { rows, t: ++this._clock });
     return { rows, fresh: true };
   }
-
   _evict(keep) {
     let total = 0;
     this._cache.forEach(e => { total += e.rows.length; });
@@ -279,7 +256,6 @@ class BinaLocalSql {
       total -= e.rows.length;
     }
   }
-
   /* یک منبع (مثلاً 'Sanad_1399_1200') مستقیم، بدون AlaSQL و بدون کپی — آرایهٔ بافرشده را برمی‌گرداند.
      نتیجه را تغییر نده (همان آرایهٔ داخل رم است). خروجی: { rows, fresh } */
   rows(table) {
@@ -294,14 +270,12 @@ class BinaLocalSql {
     this._chain = run.catch(() => { });
     return run;
   }
-
   /* کویری‌ها پشت‌سرهم اجرا می‌شوند (جدول‌های موقت AlaSQL مشترک‌اند) */
   query(sql) {
     const run = this._chain.then(() => this._query(sql));
     this._chain = run.catch(() => { });
     return run;
   }
-
   async _query(sqlIn) {
     await this.init();
     const sql = stripDb(sqlIn).trim();
@@ -311,7 +285,6 @@ class BinaLocalSql {
     const t0 = performance.now();
     const registered = [], keep = new Set();
     let total = 0;
-
     try {
       for (const raw of refs) {
         const r = resolveRef(raw);
@@ -356,7 +329,6 @@ class BinaLocalSql {
     }
   }
 }
-
 root.BinaLocalSql = BinaLocalSql;
 BinaLocalSql._internals = { srcFilters, stripDb, findRefs, resolveRef };   /* برای تست */
 })(typeof window !== 'undefined' ? window : globalThis);

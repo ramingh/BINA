@@ -2,11 +2,9 @@
    bina-query-view.js — BinaQueryView v1.0.0
    نمای عمومی «پارامتر + کویری + گرید» برای هر منو. تعمیم BinaDocView.
    وابستگی: Tabulator · AlaSQL · bina-grid.js (≥1.2) · bina-local-sql.js
-
    const view = new BinaQueryView('#view', descriptor, { engine });
    await view.init(state?);            // state اختیاری (از getState قبلی)
    view.getState() / view.setState(s) / view.onShow() / view.getGrid() / view.on('loaded'|'error', fn)
-
    descriptor = {
      id: 'tab-13',                      // کلید تنظیمات گرید (storagePrefix) — برای هر منو یکتا
      family: 'Sanad',                   // 'Sanad' | 'Coding'
@@ -23,7 +21,6 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
 'use strict';
-
 const CSS = [
   '.bqv{font-family:IRANYekanX,Tahoma,system-ui,sans-serif;font-size:14px;line-height:1.8;color:#1c2b3a;height:100%;display:flex;flex-direction:column}',
   '.bqv-bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:8px 16px;margin-bottom:10px;flex:0 0 auto}',
@@ -33,7 +30,6 @@ const CSS = [
   '.bqv-info{font-size:13px;color:#64748b}',
   '.bqv-err{background:#fdeceb;color:#b42318;border:1px solid #f4c5c1;border-radius:10px;padding:8px 14px;margin:0 0 10px;white-space:pre-wrap}'
 ].join('\n');
-
 function injectCss() {
   if (document.getElementById('bqv-css')) return;
   const st = document.createElement('style');
@@ -41,11 +37,9 @@ function injectCss() {
   st.textContent = CSS;
   document.head.append(st);
 }
-
 const numCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const SAFE = /^[\w\-]+$/;          /* مقدار پارامتر داخل کویری می‌نشیند؛ فقط حروف/عدد/_/- */
- 
 class BinaQueryView {
   constructor(target, descriptor, opts) {
     opts = opts || {};
@@ -74,7 +68,6 @@ class BinaQueryView {
     this._busy = false;
     this._build();
   }
-
   _build() {
     injectCss();
     this.root.classList.add('bqv');
@@ -95,7 +88,6 @@ class BinaQueryView {
     if (this.coEl) this.coEl.addEventListener('change', this._onCo);
     if (this.yrEl) this.yrEl.addEventListener('change', this._onYr);
   }
-
   _info(m) { if (this.infoEl) this.infoEl.textContent = m || ''; }
   _error(e) {
     this._info('');
@@ -111,10 +103,8 @@ class BinaQueryView {
     this._fill(this.yrEl, years);
     if (years.length) this.yrEl.value = this.desc.defaultYear === 'last' ? years[years.length - 1] : years[0];
   }
-
   on(name, fn) { (this._on[name] = this._on[name] || []).push(fn); return this; }
   _emit(name, data) { (this._on[name] || []).forEach(fn => { try { fn(data); } catch (e) { /* noop */ } }); }
-
   /** کمبوها را از بانک پر می‌کند؛ state اختیاری (از getState) را اعمال و اولین نمایش را انجام می‌دهد */
   async init(state) {
     try {
@@ -140,7 +130,6 @@ class BinaQueryView {
       await this._show(state);
     } catch (e) { this._error(e); }
   }
-
   /** حالت قابل ذخیره: پارامترها + صفحهٔ جاری + اسکرول (فیلتر/مرتب‌سازی ستون‌ها را خود گرید در localStorage نگه می‌دارد) */
   getState() {
     const st = { params: {}, page: 1, scrollTop: 0 };
@@ -153,7 +142,6 @@ class BinaQueryView {
     } catch (e) { /* noop */ }
     return st;
   }
-
   async setState(state) {
     if (!state || !state.params) return;
     const p = state.params;
@@ -168,14 +156,11 @@ class BinaQueryView {
     }
     await this._show(state);
   }
-
   /** بعد از دوباره‌دیده‌شدن (مخفی بودن iframe) — Tabulator اندازه‌ها را از نو حساب کند */
   onShow() { try { this.grid.table.redraw(true); } catch (e) { /* noop */ } }
-
   get company() { return this.coEl ? this.coEl.value : null; }
   get year() { return this.yrEl ? this.yrEl.value : null; }
   getGrid() { return this.grid; }
-
   _template(sql) {
     const sub = (name, val) => {
       if (val == null) return;
@@ -185,7 +170,6 @@ class BinaQueryView {
     return sql.replace(/\{company\}/g, this.company == null ? '' : this.company)
               .replace(/\{year\}/g, this.year == null ? '' : this.year);
   }
-
   async _show(restore) {
     if (this._busy) return;
     this._busy = true;
@@ -231,7 +215,6 @@ class BinaQueryView {
     [this.coEl, this.yrEl].forEach(e => { if (e) e.disabled = false; });
     this._busy = false;
   }
-
   destroy() {
     if (this.coEl) this.coEl.removeEventListener('change', this._onCo);
     if (this.yrEl) this.yrEl.removeEventListener('change', this._onYr);
@@ -239,9 +222,7 @@ class BinaQueryView {
     this.root.innerHTML = '';
     this.root.classList.remove('bqv');
   }
-
   static get version() { return '1.0.0'; }
 }
-
 root.BinaQueryView = BinaQueryView;
 })(typeof window !== 'undefined' ? window : globalThis);

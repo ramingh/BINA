@@ -15,7 +15,7 @@ class WebTranslator {
     // نگاشت countryCode به کد زبان
     this.countryCodeMap = { '1': 'en', '2': 'ar', '3': 'fa' };
     this.dictionaries = { en: {}, ar: {}, fa: {} };
-    this.originalTexts = new Map();
+this.originalTexts = new WeakMap();
     this.originalAttrs = new WeakMap();
     this.currentLanguage = 'fa';
     this.isLoaded = false;
@@ -29,6 +29,8 @@ class WebTranslator {
       minPersianChars: 1,
       /* هر چیزی داخل این سلکتورها دست‌نخورده می‌ماند (مثلاً بدنهٔ سلول‌های گرید). ویژگی استاندارد translate="no" */
       noTranslateSelector: '[translate="no"], .notranslate',
+      /* رکوردهای آبجکتی ({FieldName, Caption, CountryCode}): کد کشور → زبان. 2 و 3 از داده‌ی واقعی بانک؛ 1 فرض است */
+      countryCodeMapObject: { '1': 'fa', '2': 'en', '3': 'ar' },
       ...options
     };
 
@@ -47,8 +49,8 @@ class WebTranslator {
     try {
       return JSON.parse(localStorage.getItem(this.options.cacheKey) || '{}');
     } catch (_) { return {}; }
-  }
-
+  } 
+ 
   _saveCache() {
     if (!this.options.cacheEnabled) return;
     try {
@@ -111,7 +113,7 @@ class WebTranslator {
 
   async init() {
     if (this.isLoaded) return true;
-   console.log('----4-------4-------44---------');
+
     const dbName = await this._resolveDbName();
     return new Promise((resolve, reject) => {
       const req = this.dbVersion ? indexedDB.open(dbName, this.dbVersion) : indexedDB.open(dbName);
@@ -122,7 +124,7 @@ class WebTranslator {
           (why === 'VersionError' ? ' — نسخهٔ دیتابیس بالاتر از dbVersion است؛ dbVersion را null بگذار.' : '')));
       };
       req.onblocked = () => console.warn('⚠️ باز کردن دیتابیس ' + dbName + ' توسط اتصال دیگری بلوکه شده است.');
-   console.log('---------------------------', why);
+
       req.onupgradeneeded = (e) => {
         // اگر دیتابیس وجود نداشت، استور را بساز
         const db = e.target.result;
@@ -134,14 +136,14 @@ class WebTranslator {
       req.onsuccess = (e) => {
         const db = e.target.result;
         const storeName = this._resolveStoreName(db);
-console.log( '000000000000000000000000000000',storeName);
 
         if (!storeName) {
-          console.warn(`⚠️ استور ${this.storeName} در دیتابیس ${dbName} یافت نشد.`);
           db.close();
-          return resolve(false);
+          return reject(new Error(
+            `استور «${this.storeName}» در دیتابیس «${dbName}» پیدا نشد. ` +
+            `استورهای موجود: ${Array.from(db.objectStoreNames).join('، ') || 'هیچ'}.`
+          ));
         }
-
         const tx = db.transaction(storeName, 'readonly');
         const store = tx.objectStore(storeName);
         const cursorReq = store.openCursor();
@@ -152,7 +154,6 @@ console.log( '000000000000000000000000000000',storeName);
 
         cursorReq.onsuccess = (event) => {
           const cursor = event.target.result;
-               console.log('---------------------------', cursor);
           if (cursor) {
             totalRecords++;
             const key = cursor.key;
@@ -165,28 +166,41 @@ console.log( '000000000000000000000000000000',storeName);
               ? k0 === 'tk_dic_fieldname' || k0 === 'tk_dic'
               : true; // اگر کلید رشته‌ای بود، آن را بپذیر (حروف کوچک/بزرگ فرقی ندارد)
 
+            // دو شکل رکورد پشتیبانی می‌شود:
+            //  ۱) آرایه‌ای (قدیمی): [translatedText, countryCode, originalText, position]
+            //     نگاشت countryCodeMap: 1=en, 2=ar, 3=fa
+            //  ۲) آبجکتی (بانک بازسازی‌شده): { FieldName: متن فارسی, Caption: ترجمه, CountryCode, Id, ... }
+            //     نگاشت options.countryCodeMapObject: 2=en, 3=ar (از داده‌ی واقعی)، 1=fa (فرض)
+            let translatedText = '', countryCode = '', originalText = '', codeMap = this.countryCodeMap, parsed = false;
             if (isValidKey && Array.isArray(row) && row.length >= 3) {
-              // ✅ ساختار داده:
-              // row[0] = translatedText (نام انگلیسی فیلد)
-              // row[1] = countryCode    (1=en, 2=ar, ...)
-              // row[2] = originalText   (متن فارسی)
-              // row[3] = position       (نادیده گرفته می‌شود)
-              console.log('---------------------------', row);
-              
-              const translatedText = String(row[0] || '').trim();
-              const countryCode    = String(row[1] || '').trim();
-              const originalText   = String(row[2] || '').trim();
+              translatedText = String(row[0] || '').trim();
+              countryCode    = String(row[1] || '').trim();
+              originalText   = String(row[2] || '').trim();
+              parsed = true;
+            } else if (row && typeof row === 'object' && !Array.isArray(row)) {
+              const pick = (name) => {
+                const k = Object.keys(row).find((x) => x.toLowerCase() === name);
+                return k === undefined || row[k] == null ? '' : String(row[k]).trim();
+              };
+              translatedText = pick('caption');
+              countryCode    = pick('countrycode');
+              originalText   = pick('fieldname');
+              codeMap = this.options.countryCodeMapObject;
+              parsed = true;
+            } 
 
+            if (parsed) {
               if (originalText && translatedText && countryCode) {
                 const normKey = this.normalize(originalText);
-                const langCode = this.countryCodeMap[countryCode];
+                const langCode = codeMap[countryCode];
 
                 if (langCode && this.dictionaries[langCode] && normKey) {
                   this.dictionaries[langCode][normKey] = translatedText;
                   matchedRecords++;
                 } else if (!rejectedSample) rejectedSample = { key, row, why: 'countryCode ناشناخته یا متن خالی' };
-              } else if (!rejectedSample) rejectedSample = { key, row, why: 'originalText/translatedText/countryCode خالی' };
-            } else if (!rejectedSample) rejectedSample = { key, row, why: 'کلید یا شکل ردیف نامعتبر (انتظار: [EnglishName, countryCode, PersianText, position])' };
+              } else if (!rejectedSample) rejectedSample = { key, row, why: 'FieldName/Caption/CountryCode (یا ستون‌های آرایه‌ای) خالی' };
+            } else if (!rejectedSample) rejectedSample = { key, row, why: 'شکل رکورد نامعتبر (آرایه [EnglishName, countryCode, PersianText, position] یا آبجکت {FieldName, Caption, CountryCode})' };
+
             cursor.continue();
           } else {
             this.isLoaded = true;
@@ -228,7 +242,7 @@ console.log( '000000000000000000000000000000',storeName);
       waits.push(new Promise((res) => {
         const onLoad = () => { iframe.removeEventListener('load', onLoad); res(); };
         iframe.addEventListener('load', onLoad);
-        setTimeout(res, 2000);
+        setTimeout(res, 200);
       }));
     }
     if (waits.length) await Promise.all(waits);
@@ -321,7 +335,9 @@ console.log( '000000000000000000000000000000',storeName);
         if (childDoc.readyState && childDoc.readyState !== 'complete') continue;
 
         if (childDoc.body) {
-          childDoc.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
+          console.log( '11111111111l' , langCode);
+
+    //       childDoc.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
         }
         this._translateRoot(childDoc, langCode, activedict, visited);
       }
@@ -346,6 +362,20 @@ console.log( '000000000000000000000000000000',storeName);
       return;
     }
 
+    // اگر body هنوز آماده نیست، منتظر DOMContentLoaded بمان
+    if (!document.body) {
+      await new Promise((resolve) => {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', resolve, { once: true });
+          
+        } else {
+          resolve();
+        }
+      });
+    }
+ document.documentElement.classList.remove('translating');
+    // ... بقیهٔ کد مثل قبل
+
     this.currentLanguage = langCode;
     const activedict = this.dictionaries[langCode] || {};
     if (langCode !== 'fa' && !Object.keys(activedict).length) {
@@ -353,7 +383,7 @@ console.log( '000000000000000000000000000000',storeName);
         (this.isLoaded ? ' — رکوردی با countryCode این زبان در استور نیست.' : ' — init() هنوز تمام نشده یا ناموفق بوده است.'));
     }
 
-    document.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
+ //  document.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
 
     await this._waitForIframes(document);
 
@@ -378,11 +408,12 @@ console.log( '000000000000000000000000000000',storeName);
   _startObserver() {
     if (this._observer) return;
 
-    const processNode = (node) => {
+    const processNode = (node, sharedVisited) => {
       const activedict = this.dictionaries[this.currentLanguage] || {};
-      const visited = new Set();
+      const visited = sharedVisited || new Set();
 
       if (this._isNoTranslate(node)) return;
+      // ... بقیهٔ بدنه مثل قبل
       if (node.nodeType === Node.ELEMENT_NODE) {
         if (node.tagName === 'IFRAME') this._attachIframeObserver(node);
         this._translateRoot(node, this.currentLanguage, activedict, visited);
@@ -401,8 +432,9 @@ console.log( '000000000000000000000000000000',storeName);
     };
 
     this._observer = new MutationObserver((mutations) => {
+      const sharedVisited = new Set();
       for (const m of mutations) {
-        for (const node of m.addedNodes) processNode(node);
+        for (const node of m.addedNodes) processNode(node, sharedVisited);
         if (m.type === 'characterData' && m.target.nodeType === Node.TEXT_NODE) {
           const t = m.target;
           if (this._isNoTranslate(t)) continue;
@@ -488,37 +520,10 @@ console.log( '000000000000000000000000000000',storeName);
 
 
 
-
-   async requestPersistentStorage() {
-  // ۱. بررسی پشتیبانی مرورگر
-  if (!navigator.storage || !navigator.storage.persist) {
-    console.warn('⚠️ مرورگر از Persistent Storage پشتیبانی نمی‌کند.');
-    return false;
-  }
-
-  // ۲. بررسی اینکه آیا قبلاً ماندگار شده یا نه
-  if (await navigator.storage.persisted()) {
-    console.log('✅ ذخیره‌سازی از قبل ماندگار است.');
-    return true;
-  }
-
-  // ۳. درخواست ماندگاری
-  const isGranted = await navigator.storage.persist();
-  
-  if (isGranted) {
-    console.log('✅ ذخیره‌سازی ماندگار شد. داده‌ها پاک نخواهند شد.');
-  } else {
-    console.warn('⚠️ مرورگر درخواست ماندگاری را رد کرد.');
-    
-    // راه‌حل جایگزین: نمایش راهنما به کاربر
-    console.log('💡 برای ماندگاری، کاربر باید با سایت تعامل داشته باشد (کلیک، اسکرول و ...)');
-  }
-  
-  return isGranted;
-}
+ 
 
 // بررسی میزان فضای استفاده شده و باقیمانده
-  async  checkStorageEstimate() {
+  async checkStorageEstimate() {
   if (navigator.storage && navigator.storage.estimate) {
     const estimate = await navigator.storage.estimate();
     const usedMB = (estimate.usage / 1024 / 1024).toFixed(2);
@@ -536,26 +541,19 @@ console.log( '000000000000000000000000000000',storeName);
   }
   return null;
 }
-async   requestPersistentStorage() {
-  if (!navigator.storage || !navigator.storage.persist) {
-    console.warn('StorageManager.persist() پشتیبانی نمی‌شود.');
-    return false;
+   async requestPersistentStorage() {
+    if (!navigator.storage || !navigator.storage.persist) {
+      console.warn('⚠️ StorageManager.persist() پشتیبانی نمی‌شود.');
+      return false;
+    }
+    if (await navigator.storage.persisted()) {
+      console.log('✅ Storage از قبل persistent است.');
+      return true;
+    }
+    const granted = await navigator.storage.persist();
+    if (granted) console.log('✅ Storage اکنون persistent است. داده‌ها به‌صورت خودکار پاک نمی‌شوند.');
+    else console.log('⚠️ Storage همچنان best-effort است.');
+    return granted;
   }
-
-  const alreadyPersisted = await navigator.storage.persisted();
-  if (alreadyPersisted) {
-    console.log('✅ Storage از قبل persistent است.');
-    return true;
-  }
-
-  const granted = await navigator.storage.persist();
-  if (granted) {
-    console.log('✅ Storage اکنون persistent است. داده‌ها به‌صورت خودکار پاک نمی‌شوند.');
-  } else {
-    console.log('⚠️ Storage همچنان best-effort است. مرورگر ممکن است زیر فشار فضا داده را حذف کند.');
-  }
-  return granted;
-}
-
  
 }

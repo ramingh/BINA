@@ -9,7 +9,6 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
 'use strict';
-
 class BinaTabFrames {
   constructor(container, opts) {
     opts = opts || {};
@@ -21,18 +20,15 @@ class BinaTabFrames {
     this._active = '';
     this._clock = 0;
   }
-
   has(key) { return this._recs.has(key); }
   isFrozen(key) { const r = this._recs.get(key); return !!r && !r.frame; }
   liveFrames() { return [...this._recs.values()].filter(r => r.frame).map(r => r.frame); }
-
   open(key, page) {
     if (this._recs.has(key)) return;
     const rec = { key, page, frame: null, state: null, last: 0 };
     this._recs.set(key, rec);
     this._create(rec);
   }
-
   activate(key) {
     this._active = key || '';
     this._recs.forEach(rec => { if (rec.key !== this._active && rec.frame) this._setVisible(rec.frame, false); });
@@ -45,7 +41,6 @@ class BinaTabFrames {
     const after = root.requestAnimationFrame ? root.requestAnimationFrame.bind(root) : fn => setTimeout(fn, 0);
     after(() => this._notifyShow(rec));
   }
-
   close(key) {
     const rec = this._recs.get(key);
     if (!rec) return;
@@ -53,13 +48,11 @@ class BinaTabFrames {
     this._recs.delete(key);
     if (this._active === key) this._active = '';
   }
-
   closeAll() {
     this._recs.forEach(rec => { if (rec.frame) rec.frame.remove(); });
     this._recs.clear();
     this._active = '';
   }
-
   _create(rec) {
     const f = document.createElement('iframe');
     f.className = 'content-frame';
@@ -72,12 +65,10 @@ class BinaTabFrames {
     this.container.append(f);
     rec.frame = f;
   }
-
   _setVisible(frame, on) {
     frame.hidden = !on;
     frame.style.display = on ? '' : 'none';          /* اگر CSS برنامه display را override کرد، hidden کافی نیست */
   }
-
   _freeze(rec) {
     try {
       const w = rec.frame.contentWindow;
@@ -89,7 +80,6 @@ class BinaTabFrames {
     rec.frame.remove();
     rec.frame = null;
   }
-
   _enforceCap() {
     for (;;) {
       const live = [...this._recs.values()].filter(r => r.frame);
@@ -99,7 +89,6 @@ class BinaTabFrames {
       this._freeze(victim);
     }
   }
-
   _notifyShow(rec) {
     try {
       const w = rec.frame && rec.frame.contentWindow;
@@ -107,6 +96,5 @@ class BinaTabFrames {
     } catch (e) { /* noop */ }
   }
 }
-
 root.BinaTabFrames = BinaTabFrames;
 })(typeof window !== 'undefined' ? window : globalThis);

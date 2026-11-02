@@ -10,12 +10,10 @@
   --color-active: color-mix(in srgb, var(--palette-color) 84%, #111827);
   --color-sidebar: color-mix(in srgb, var(--palette-color) 4%, #f8fafc);
 }
-
 .palette-control {
   position: relative;
   margin-inline-start: auto;
 }
-
 .palette-button {
   width: 32px;
   height: 32px;
@@ -27,7 +25,6 @@
   background: transparent;
   cursor: pointer;
 }
-
 .palette-button svg {
   width: 23px;
   height: 23px;
@@ -36,18 +33,15 @@
   stroke-linejoin: round;
   transition: transform 140ms ease, filter 140ms ease;
 }
-
 .palette-button:hover svg {
   transform: scale(1.08);
   filter: drop-shadow(0 2px 2px rgb(0 0 0 / 18%));
 }
-
 .palette-button__outline { stroke: #6d28d9; stroke-width: 1.8; }
 .palette-button__color { stroke: none; }
 .palette-button__color--red { fill: #ef4444; }
 .palette-button__color--yellow { fill: #facc15; }
 .palette-button__color--blue { fill: #3b82f6; }
-
 .palette-popup {
   position: absolute;
   z-index: 20;
@@ -60,15 +54,12 @@
   background: #fff;
   box-shadow: 0 8px 22px rgb(0 0 0 / 16%);
 }
-
 .palette-popup[hidden] { display: none; }
-
 .palette-grid {
   display: grid;
   grid-template-columns: repeat(6, 20px);
   gap: 6px;
 }
-
 .palette-swatch {
   width: 20px;
   height: 20px;
@@ -80,13 +71,11 @@
   cursor: pointer;
   transition: transform 100ms ease, box-shadow 100ms ease;
 }
-
 .palette-swatch:hover,
 .palette-swatch.is-selected {
   transform: scale(1.12);
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px #334155;
 }
-
 .palette-more-button {
   width: 100%;
   margin-top: 8px;
@@ -99,21 +88,17 @@
   text-align: start;
   cursor: pointer;
 }
-
 .palette-more-button:hover { background: #eef2f6; }
 .palette-color-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-
 .tab--active {
   background: color-mix(in srgb, var(--palette-color) 10%, white);
   color: var(--color-active);
   box-shadow: inset 0 -2px var(--color-active);
 }
-
 .tab:not(.tab--active):hover {
   border-color: color-mix(in srgb, var(--palette-color) 38%, #bcc5cd);
   background: color-mix(in srgb, var(--palette-color) 5%, #f7f9fa);
 }
-
 html[data-theme="dark"] {
   --color-level-1: color-mix(in srgb, var(--palette-color) 24%, #2a3540);
   --color-level-2: color-mix(in srgb, var(--palette-color) 15%, #222d36);

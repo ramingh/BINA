@@ -16,14 +16,12 @@
  */
 (function (root) {
   "use strict";
-
   // ────────────────────────────────────────────────────────────────
   // تنظیمات retry
   // ────────────────────────────────────────────────────────────────
   const RETRY_MAX = 2; // حداکثر تلاش مجدد
   const RETRY_DELAYS = [300, 800]; // تأخیر بین تلاش‌ها (ms)
   const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
-
   function sleep(ms, signal) {
     return new Promise((resolve, reject) => {
       const t = setTimeout(resolve, ms);
@@ -39,7 +37,6 @@
       }
     });
   }
-
   // ────────────────────────────────────────────────────────────────
   // خواندن پاسخ JSON + بررسی خطا
   // خطاهای قابل‌retry با flag retryable مشخص می‌شوند
@@ -59,7 +56,6 @@
     }
     return data;
   }
-
   // ────────────────────────────────────────────────────────────────
   // fetch با retry
   // ────────────────────────────────────────────────────────────────
@@ -92,7 +88,6 @@
       }
     }
   }
-
   // ────────────────────────────────────────────────────────────────
   // کلاس اصلی
   // ────────────────────────────────────────────────────────────────
@@ -106,7 +101,6 @@
         typeof options.onProgress === "function" ? options.onProgress : () => {};
       this._idIndexCache = new Map();
     }
-
     _buildURL(params) {
       const url = new URL(this.endpoint, document.baseURI);
       for (const [k, v] of Object.entries(params)) {
@@ -114,7 +108,6 @@
       }
       return url.href;
     }
-
     // ────────────────────────────────────────────────────────────
     // گرفتن stats یک جدول (با retry داخلی)
     // ────────────────────────────────────────────────────────────
@@ -127,7 +120,6 @@
         signal,
         label: `stats ${table}`,
       });
-
       let idIndex = -1;
       if (Number.isInteger(data.idIndex) && data.idIndex >= 0) {
         idIndex = data.idIndex;
@@ -145,9 +137,7 @@
       if (idIndex < 0) {
         throw new Error(`stats ${table}: ستون Id پیدا نشد.`);
       }
-
       this._idIndexCache.set(table, idIndex);
-
       return {
         count: Number(data.count) || 0,
         columns: Array.isArray(data.columns) ?
@@ -158,7 +148,6 @@
         idIndex,
       };
     }
-
     // ════════════════════════════════════════════════════════════
     // متد ۱: کشف جداول (pool موازی + retry)
     // ════════════════════════════════════════════════════════════
@@ -167,7 +156,6 @@
       concurrency = 6
     } = {}) {
       const limit = Math.max(1, Math.floor(Number(concurrency) || 6));
-
       const listURL = this._buildURL({
         mode: "tables"
       });
@@ -175,29 +163,23 @@
         signal,
         label: "tables",
       });
-
       if (!Array.isArray(listData)) {
         throw new Error("پاسخ mode=tables باید آرایه باشد.");
       }
-
       const entries = listData.filter(
         (e) => e && typeof e.table === "string" && e.table.trim()
       );
-
       this.onProgress({
         event: "discover-start",
         total: entries.length
       });
-
       const results = new Array(entries.length);
       let next = 0;
       let completed = 0;
-
       const worker = async () => {
         while (true) {
           const i = next++;
           if (i >= entries.length) return;
-
           const table = entries[i].table.trim();
           try {
             const stats = await this._fetchStats(table, signal);
@@ -234,12 +216,10 @@
           }
         }
       };
-
       const workerCount = Math.min(limit, entries.length);
       await Promise.all(Array.from({
         length: workerCount
       }, () => worker()));
-
       const ok = results.filter((r) => r && !r.error);
       this.onProgress({
         event: "discover-done",
@@ -247,7 +227,6 @@
       });
       return ok;
     }
-
     // ════════════════════════════════════════════════════════════
     // متد ۲: دریافت داده یک جدول (async generator، هر بچ با retry)
     // ════════════════════════════════════════════════════════════
@@ -263,14 +242,11 @@
       if (!Number.isInteger(size) || size <= 0) {
         throw new Error("batchSize باید عدد صحیح مثبت باشد.");
       }
-
       if (!this._idIndexCache.has(table)) {
         await this._fetchStats(table, signal);
       }
       const idIndex = this._idIndexCache.get(table);
-
       let lastId = 0;
-
       while (true) {
         const url = this._buildURL({
           mode: "data",
@@ -278,17 +254,14 @@
           lastId,
           batchSize: size,
         });
-
         // هر بچ با retry داخلی؛ یک بچ شکست‌خورده کل جدول را خراب نمی‌کند
         const data = await fetchWithRetry(url, {
           signal,
           label: `data ${table}`,
         });
-
         if (!Array.isArray(data)) {
           throw new Error(`data ${table}: پاسخ باید آرایه باشد.`);
         }
-
         if (data.length === 0) {
           this.onProgress({
             event: "table-end",
@@ -297,7 +270,6 @@
           });
           return;
         }
-
         const lastRow = data[data.length - 1];
         const newLastId = Number(
           Array.isArray(lastRow) ? lastRow[idIndex] : lastRow
@@ -307,27 +279,22 @@
             `data ${table}: مقدار Id در آخرین ردیف معتبر نیست (index=${idIndex}).`
           );
         }
-
         this.onProgress({
           event: "batch",
           table,
           count: data.length,
           lastId: newLastId,
         });
-
         yield {
           lastId: newLastId,
           rows: data
         };
-
         lastId = newLastId;
       }
     }
   }
-
   root.webservice = webservice;
 })(window);
-
 /*
  * ═══════════════════════════════════════════════════════════════════════
  *  Index_db — لایه ذخیره‌سازی محلی (IndexedDB) برای داده‌های BINA
@@ -362,7 +329,6 @@
  */
 (function (root) {
   "use strict";
-
   /* ────────────────────────────────────────────────────────────────
    * ثابت‌ها
    * ──────────────────────────────────────────────────────────────── */
@@ -374,7 +340,6 @@
   const MAX_ID = Number.MAX_SAFE_INTEGER;
   const ENC = new TextEncoder();
   const DEC = new TextDecoder();
-
   /* ────────────────────────────────────────────────────────────────
    * ابزارهای IndexedDB
    * ──────────────────────────────────────────────────────────────── */
@@ -384,7 +349,6 @@
       req.onerror = () => bad(req.error || new Error("IndexedDB request failed"));
     });
   }
-
 function txResult(tx) {
   return new Promise((ok, bad) => {
     tx.oncomplete = () => ok();
@@ -392,7 +356,6 @@ function txResult(tx) {
     tx.onerror = () => {};
   });
 }
-
   /** ساخت استورهای ناقص در رویداد upgrade */
   function ensureStores(db, stores) {
     for (const [storeName, keyPath] of stores) {
@@ -403,7 +366,6 @@ function txResult(tx) {
       }
     }
   }
-
   /**
    * باز کردن DB بدون اجبار به VERSION ثابت.
    * - اگر بانک از قبل نسخهٔ بالاتر (مثلاً 5) دارد → همان نسخه باز می‌شود.
@@ -457,41 +419,33 @@ function txResult(tx) {
       };
     });
   }
-
   function codeOf(code) {
     const s = String(code ?? "").trim();
     if (!/^\d+$/.test(s)) throw new Error("کد شرکت باید فقط عدد باشد.");
     return s;
   }
-
   function numericID(value, table) {
     const n = typeof value === "number" ? value : Number(value);
     if (!Number.isSafeInteger(n) || n <= 0 || n > MAX_ID || String(value).trim() === "")
       throw new Error(`${table}: ID نامعتبر: ${String(value)}`);
     return n;
   }
-
   function keyRange(info, after = -1) {
     const prefix = info.family === "Sanad" ? [info.year, info.company] : [info.company];
     return IDBKeyRange.bound([...prefix, Math.max(0, after + 1)], [...prefix, MAX_ID]);
   }
-
   function fullRange(info) {
     return keyRange(info, -1);
   }
-
   function blockKey(info, blockNo) {
     return info.family === "Sanad" ? [info.year, info.company, blockNo] : [info.company, blockNo];
   }
-
   function lastPart(key) {
     return key[key.length - 1];
   }
-
   function blocksOf(state) {
     return Array.isArray(state?.blocks) ? state.blocks : [];
   }
-
   async function gzipJSON(obj) {
     const stream = new Blob([ENC.encode(JSON.stringify(obj))]).stream()
       .pipeThrough(new CompressionStream("gzip"));
@@ -503,7 +457,6 @@ function txResult(tx) {
     return JSON.parse(DEC.decode(await new Response(stream).arrayBuffer()));
   }
   const yieldUI = () => new Promise(ok => setTimeout(ok, 0));
-
   function blankState(info, serverCount = 0) {
     return {
       ...info,
@@ -519,7 +472,6 @@ function txResult(tx) {
       error: null
     };
   }
-
   /* ────────────────────────────────────────────────────────────────
    * کلاس Index_db
    * ──────────────────────────────────────────────────────────────── */
@@ -543,7 +495,6 @@ function txResult(tx) {
       this.maxYear = Math.floor(Number(options.maxYear) || 1420);
       if (this.minYear > this.maxYear) throw new Error("minYear نمی‌تواند از maxYear بزرگ‌تر باشد.");
       this.onProgress = typeof options.onProgress === "function" ? options.onProgress : () => {};
-
       this._public = null;
       this._company = null;
       this._schemaCache = new Map();
@@ -551,28 +502,23 @@ function txResult(tx) {
       this._busy = false;
       this._stopRequested = false;
     }
-
     get busy() {
       return this._busy;
     }
-
     _emit(event, fields = {}) {
       this.onProgress({
         event,
         ...fields
       });
     }
-
     _checkStop() {
       if (this._stopRequested || this._controller?.signal.aborted)
         throw new DOMException("عملیات متوقف شد.", "AbortError");
     }
-
     stop() {
       this._stopRequested = true;
       this._controller?.abort();
     }
-
     async _run(fn) {
       if (this._busy) throw new Error("عملیات دیگری در حال اجرا است.");
       this._busy = true;
@@ -586,7 +532,6 @@ function txResult(tx) {
         this._closeCompany();
       }
     }
-
     /* ────────────────────────────────────────────────────────────
      * ماندگاری Storage
      * ──────────────────────────────────────────────────────────── */
@@ -601,7 +546,6 @@ console.log('persisted=', await navigator.storage.persisted());
         return false;
       }
     }
-
     /**
      * وضعیت ماندگاری و مصرف فضای ذخیره‌سازی
      */
@@ -630,7 +574,6 @@ console.log('persisted=', await navigator.storage.persisted());
       }
       return status;
     }
-
     /* ────────────────────────────────────────────────────────────
      * مدیریت اتصال دیتابیس‌ها
      * ──────────────────────────────────────────────────────────── */
@@ -662,7 +605,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._company?.db.close();
       this._company = null;
     }
-
     async close() {
       this.stop();
       this._closeCompany();
@@ -670,7 +612,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._public = null;
       this._schemaCache.clear();
     }
-
     /* ────────────────────────────────────────────────────────────
      * initialize: ساخت استورها + ماندگاری
      * ──────────────────────────────────────────────────────────── */
@@ -688,7 +629,6 @@ console.log('persisted=', await navigator.storage.persisted());
         persisted
       };
     }
-
     /* ────────────────────────────────────────────────────────────
      * ابزار پایه public
      * ──────────────────────────────────────────────────────────── */
@@ -703,7 +643,6 @@ console.log('persisted=', await navigator.storage.persisted());
       tx.objectStore(store).put(item);
       await done;
     }
-
     /* ────────────────────────────────────────────────────────────
      * تشخیص نوع جدول
      * ──────────────────────────────────────────────────────────── */
@@ -732,7 +671,6 @@ console.log('persisted=', await navigator.storage.persisted());
       };
       return null;
     }
-
     /* ────────────────────────────────────────────────────────────
      * ServerTables
      * ──────────────────────────────────────────────────────────── */
@@ -745,7 +683,6 @@ console.log('persisted=', await navigator.storage.persisted());
           ...x.info
         }));
     }
-
     async _saveServerTables(rows) {
       if (!Array.isArray(rows)) throw new Error("mode=tables باید آرایه باشد.");
       const entries = [],
@@ -771,14 +708,12 @@ console.log('persisted=', await navigator.storage.persisted());
       await done;
       return entries;
     }
-
     /* ────────────────────────────────────────────────────────────
      * columns (Schema)
      * ──────────────────────────────────────────────────────────── */
     async getcolumns(family) {
       return this._get("columns", String(family));
     }
-
     async _saveSchemaFromStats(stats) {
       const info = this._tableInfo(stats.table);
       if (!info || info.family === "TK") return null;
@@ -802,7 +737,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._schemaCache.set(info.family, schema);
       return schema;
     }
-
     async _schema(info) {
       if (this._schemaCache.has(info.family)) return this._schemaCache.get(info.family);
       let schema = await this.getcolumns(info.family);
@@ -810,7 +744,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._schemaCache.set(info.family, schema);
       return schema;
     }
-
     /* ────────────────────────────────────────────────────────────
      * catalog
      * ──────────────────────────────────────────────────────────── */
@@ -821,7 +754,6 @@ console.log('persisted=', await navigator.storage.persisted());
       const all = await reqResult(db.transaction("catalog", "readonly").objectStore("catalog").getAll());
       return companyCode == null ? all : all.filter(x => x.company === codeOf(companyCode));
     }
-
     /* ────────────────────────────────────────────────────────────
      * بازیابی چک‌پوینت واقعی (blocks mode)
      * ──────────────────────────────────────────────────────────── */
@@ -843,7 +775,6 @@ console.log('persisted=', await navigator.storage.persisted());
       });
       return out;
     }
-
     async _realTipBlocks(info, state, db) {
       const metas = blocksOf(state).map(m => ({
         n: Number(m.n),
@@ -858,7 +789,6 @@ console.log('persisted=', await navigator.storage.persisted());
       if (lastNo !== null && metas.length && metas[metas.length - 1].n === lastNo &&
         Number(state?.lastId ?? 0) === metas[metas.length - 1].lastId) return state;
       if (lastNo === null && !metas.length && Number(state?.lastId ?? 0) === 0) return state;
-
       const known = new Map(metas.map(m => [m.n, m]));
       const actual = await this._actualBlockNos(db, info);
       const merged = [];
@@ -904,14 +834,12 @@ console.log('persisted=', await navigator.storage.persisted());
       });
       return next;
     }
-
     async _clearTable(db, info) {
       const tx = db.transaction([info.family], "readwrite");
       const done = txResult(tx);
       tx.objectStore(info.family).delete(fullRange(info));
       await done;
     }
-
     /* ────────────────────────────────────────────────────────────
      * ذخیره بلوکی (gzip)
      * ──────────────────────────────────────────────────────────── */
@@ -925,7 +853,6 @@ console.log('persisted=', await navigator.storage.persisted());
         return ks;
       })();
       const val = (row, i) => isArray ? row[i] : row[keys[i]];
-
       const ids = [],
         vals = [];
       let lastId = startId;
@@ -945,7 +872,6 @@ console.log('persisted=', await navigator.storage.persisted());
         vals
       };
     }
-
     /* ────────────────────────────────────────────────────────────
      * دریافت و ذخیره یک جدول (بلوکی gzip)
      * ──────────────────────────────────────────────────────────── */
@@ -953,7 +879,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._checkStop();
       const db = await this._companyDB(info.company);
       const schema = await this._schema(info);
-
       let state = await this._get("catalog", info.table);
       if (state && (state.storageMode !== "blocks" || state.refreshMode === "replace")) {
         this._emit("table-reset", {
@@ -976,7 +901,6 @@ console.log('persisted=', await navigator.storage.persisted());
       } else {
         state = await this._realTipBlocks(info, state, db);
       }
-
       if (state.finished && !state.needsRefresh) {
         this._emit("table-skip", {
           table: info.table,
@@ -984,7 +908,6 @@ console.log('persisted=', await navigator.storage.persisted());
         });
         return state;
       }
-
       this._emit("table-start", {
         table: info.table,
         company: info.company,
@@ -993,10 +916,8 @@ console.log('persisted=', await navigator.storage.persisted());
       });
       return this._pullBlocks(db, info, schema, state);
     }
-
     async _pullBlocks(db, info, schema, state) {
       const bs = this.blockSize;
-
       // آماده‌سازی دنباله (tail) برای ادامه/ادغام
       let tail = {
         n: 0,
@@ -1023,25 +944,21 @@ console.log('persisted=', await navigator.storage.persisted());
           };
         }
       }
-
       // حلقه دریافت از webservice با async generator
       const iterator = this.webservice.fetchTable({
         table: info.table,
         batchSize: this.batchSize,
         signal: this._controller?.signal
       });
-
       for await (const {
         rows
       } of iterator) {
         this._checkStop();
         const extracted = await this._extractBatch(info, schema, rows, state.lastId);
-
         for (let i = 0; i < extracted.ids.length; i++) {
           tail.ids.push(extracted.ids[i]);
           tail.vals.push(extracted.vals[i]);
         }
-
         // مهر و موم بلوک‌های کامل
         const sealed = [];
         while (tail.ids.length >= bs) {
@@ -1052,7 +969,6 @@ console.log('persisted=', await navigator.storage.persisted());
           });
           tail.n++;
         }
-
         // فشرده‌سازی خارج از تراکنش
         const jobs = sealed.map(b => ({
           n: b.n,
@@ -1075,14 +991,12 @@ console.log('persisted=', await navigator.storage.persisted());
           });
         }
         const packedList = await Promise.all(jobs.map(j => j.payload));
-
         // نوشتن بلوک‌ها در یک تراکنش
         const tx = db.transaction([info.family], "readwrite");
         const done = txResult(tx);
         const ds = tx.objectStore(info.family);
         for (let j = 0; j < jobs.length; j++) ds.put(packedList[j], blockKey(info, jobs[j].n));
         await done;
-
         // به‌روزرسانی متادیتای catalog.blocks
         const byN = new Map(blocksOf(state).map(b => [Number(b.n), b]));
         for (let j = 0; j < jobs.length; j++) {
@@ -1115,7 +1029,6 @@ console.log('persisted=', await navigator.storage.persisted());
         });
         await yieldUI();
       }
-
       // پایان
       state = {
         ...state,
@@ -1135,7 +1048,6 @@ console.log('persisted=', await navigator.storage.persisted());
       });
       return state;
     }
-
     /* ────────────────────────────────────────────────────────────
      * دریافت tk_* (یک‌بار، کامل، ردیفی)
      * ──────────────────────────────────────────────────────────── */
@@ -1145,7 +1057,6 @@ console.log('persisted=', await navigator.storage.persisted());
      * - خواندن ستون‌ها case-insensitive است تا Codesherkat/CodeSherkat
      *   یا CountryCode/countrycode مشکلی ایجاد نکند
      * ──────────────────────────────────────────────────────────── */
-
         /* ────────────────────────────────────────────────────────────
      * دریافت tk_* (یک‌بار، کامل، ردیفی)
      * - از stats برای گرفتن اسم و ترتیب ستون‌ها استفاده می‌شود
@@ -1161,14 +1072,12 @@ console.log('persisted=', await navigator.storage.persisted());
         this._emit("tk-skip", { store: storeName, count: existing });
         return existing;
       }
-
       // گرفتن Schema جدول از stats
       const stats = await this.webservice._fetchStats(tableName, this._controller?.signal);
       const columns = stats.columns.map(c => String(c.name));
       const idIndex = stats.idIndex >= 0 ? stats.idIndex :
         columns.findIndex(c => c.toLowerCase() === "id");
       if (idIndex < 0) throw new Error(`${tableName}: ستون Id پیدا نشد.`);
-
       // دریافت همه ردیف‌ها
       const rows = [];
       const iterator = this.webservice.fetchTable({
@@ -1177,7 +1086,6 @@ console.log('persisted=', await navigator.storage.persisted());
         signal: this._controller?.signal
       });
       for await (const { rows: batch } of iterator) rows.push(...batch);
-
       // نوشتن در یک تراکنش، کلید = Id
       const db = await this._publicDB();
       const tx = db.transaction(storeName, "readwrite");
@@ -1200,8 +1108,6 @@ console.log('persisted=', await navigator.storage.persisted());
       this._emit("tk-loaded", { store: storeName, count: written });
       return written;
     }
-
-
     /* ────────────────────────────────────────────────────────────
      * bootstrap: راه‌اندازی اولیه (online) یا ادامه لوکال (offline)
      * ──────────────────────────────────────────────────────────── */
@@ -1215,11 +1121,9 @@ console.log('persisted=', await navigator.storage.persisted());
     async bootstrap() {
       return this._run(async () => {
         await this.initialize();
-
         const localTables = await this.getServerTables();
         const isFirstRun = localTables.length === 0;
         let discovered = 0;
-
         if (isFirstRun) {
           this._emit("bootstrap-online", {});
           const result = await this.webservice.discoverTables({
@@ -1229,7 +1133,6 @@ console.log('persisted=', await navigator.storage.persisted());
             table: d.key, count: d.value.count
           })));
           discovered = result.length;
-
           // ذخیره Schema برای خانواده‌ها (Coding / Sanad)
           for (const d of result) {
             const info = this._tableInfo(d.key);
@@ -1246,7 +1149,6 @@ console.log('persisted=', await navigator.storage.persisted());
             }
           }
         }
-
         // tk_ همیشه چک شود (فقط اگه خالی باشد پر می‌کند)
         let tkdic = 0, tksherkat = 0;
         try {
@@ -1255,12 +1157,10 @@ console.log('persisted=', await navigator.storage.persisted());
         } catch (err) {
           this._emit("tk-error", { error: err.message });
         }
-
         this._emit("bootstrap-done", { firstRun: isFirstRun, discovered, tkdic, tksherkat });
         return { firstRun: isFirstRun, discovered, tkdic, tksherkat };
       });
     }
-
     /* ────────────────────────────────────────────────────────────
      * refreshServerTables: فقط فهرست جداول و Schema را از سرور تازه کن
      * (داده‌های Coding/Sanad دست نمی‌خورد)
@@ -1275,7 +1175,6 @@ console.log('persisted=', await navigator.storage.persisted());
         await this._saveServerTables(result.map(d => ({
           table: d.key, count: d.value.count
         })));
-
         // آپدیت Schema خانواده‌ها
         this._schemaCache.clear();
         for (const d of result) {
@@ -1292,12 +1191,10 @@ console.log('persisted=', await navigator.storage.persisted());
             this._emit("schema-failed", { table: d.key, error: err.message });
           }
         }
-
         this._emit("refresh-done", { total: result.length });
         return { total: result.length };
       });
     }
-
     /* ────────────────────────────────────────────────────────────
      * getTableList: لیست جداول Coding/Sanad با وضعیت لوکال
      * ──────────────────────────────────────────────────────────── */
@@ -1307,26 +1204,21 @@ console.log('persisted=', await navigator.storage.persisted());
       const catalog = await this.getcatalog();
       const states = new Map(catalog.map(s => [s.table.toLowerCase(), s]));
       const codeFilter = companyCode ? codeOf(companyCode) : null;
-
       const rows = [];
       for (const entry of tables) {
         const info = this._tableInfo(entry.table);
         if (!info || info.family === "TK") continue;
         if (codeFilter && info.company !== codeFilter) continue;
         if (family && info.family !== family) continue;
-
         const local = states.get(entry.table.toLowerCase());
         const localCount = local?.received || 0;
         const serverCount = Number(entry.count) || 0;
-
         let st;
         if (!local) st = "missing";
         else if (!local.finished) st = "incomplete";
         else if (localCount !== serverCount) st = "diff";
         else st = "ok";
-
         if (status && st !== status) continue;
-
         rows.push({
           table: entry.table,
           company: info.company,
@@ -1345,7 +1237,6 @@ console.log('persisted=', await navigator.storage.persisted());
       );
       return rows;
     }
-
     /* ────────────────────────────────────────────────────────────
      * syncTables: فقط جداول انتخاب‌شده را دانلود/تکمیل کن
      * ──────────────────────────────────────────────────────────── */
@@ -1381,10 +1272,6 @@ console.log('persisted=', await navigator.storage.persisted());
         return { requested: names.length, completed: done };
       });
     }
-
-
-
-
     /* ────────────────────────────────────────────────────────────
      * همگام‌سازی دستی
      * ──────────────────────────────────────────────────────────── */
@@ -1420,7 +1307,6 @@ console.log('persisted=', await navigator.storage.persisted());
         };
       });
     }
-
     async syncCompany(code) {
       return this.start({
         companyCode: code
@@ -1453,7 +1339,6 @@ console.log('persisted=', await navigator.storage.persisted());
         });
       });
     }
-
     /* ────────────────────────────────────────────────────────────
      * خواندن داده‌ها (Coding / Sanad) — حالت بلوکی
      * ──────────────────────────────────────────────────────────── */
@@ -1471,7 +1356,6 @@ console.log('persisted=', await navigator.storage.persisted());
       if (family === "Sanad" && (!Number.isInteger(Number(year)) ||
           Number(year) < this.minYear || Number(year) > this.maxYear))
         throw new Error(`سال مالی برای Sanad الزامی است (${this.minYear} تا ${this.maxYear}).`);
-
       const info = { 
         company: code,
         family,
@@ -1483,7 +1367,6 @@ console.log('persisted=', await navigator.storage.persisted());
       const db = await this._companyDB(code);
       const state = await this._get("catalog", info.table);
       const metas = blocksOf(state);
-
       if (!metas.length) {
         // متادیتا نیست: اگر بلوکی هست، یک‌بار بازسازی کن
         if (state?.storageMode === "blocks") {
@@ -1494,7 +1377,6 @@ console.log('persisted=', await navigator.storage.persisted());
       }
       return this._getRowsBlocks(db, info, schema, afterId, limit, metas);
     }
-
     async _getRowsBlocks(db, info, schema, afterId, limit, metas) {
       // انتخاب بلوک‌های لازم بر اساس lastId
       const usable = metas.filter(m => Number(m.lastId) > afterId);
@@ -1508,12 +1390,10 @@ console.log('persisted=', await navigator.storage.persisted());
         }
       }
       if (!chosen.length) return [];
-
       const tx = db.transaction(info.family, "readonly");
       const store = tx.objectStore(info.family);
       const pending = chosen.map(n => reqResult(store.get(blockKey(info, n))));
       const packedList = await Promise.all(pending);
-
       const out = [];
       for (let b = 0; b < chosen.length && out.length < limit; b++) {
         if (!packedList[b]) continue;
@@ -1539,7 +1419,6 @@ console.log('persisted=', await navigator.storage.persisted());
         return obj;
       });
     }
-
     /* ────────────────────────────────────────────────────────────
      * خواندن tk_dic و tk_sherkat
      * ──────────────────────────────────────────────────────────── */
@@ -1555,7 +1434,6 @@ console.log('persisted=', await navigator.storage.persisted());
         return true;
       });
     }
-
     async getTKEsmSherkat({
       codeSherkat = null
     } = {}) {
@@ -1564,7 +1442,6 @@ console.log('persisted=', await navigator.storage.persisted());
       return codeSherkat == null ? all :
         all.filter(r => Number(r.CodeSherkat) === Number(codeSherkat));
     }
-
     /* ────────────────────────────────────────────────────────────
      * کدهای شرکت
      * ──────────────────────────────────────────────────────────── */
@@ -1573,7 +1450,6 @@ console.log('persisted=', await navigator.storage.persisted());
       return [...new Set(entries.map(e => this._tableInfo(e.table)?.company).filter(Boolean))]
         .sort((a, b) => Number(a) - Number(b));
     }
-
     /* ────────────────────────────────────────────────────────────
      * خلاصه شرکت
      * ──────────────────────────────────────────────────────────── */
@@ -1597,7 +1473,6 @@ console.log('persisted=', await navigator.storage.persisted());
           state: states.get(e.table) || null
         }));
     }
-
     /* ────────────────────────────────────────────────────────────
      * مقایسه با سرور (اختیاری، فقط آنلاین)
      * ──────────────────────────────────────────────────────────── */
@@ -1616,7 +1491,6 @@ console.log('persisted=', await navigator.storage.persisted());
         const catalog = await this.getcatalog();
         const statuses = new Map(catalog.map(s => [s.table.toLowerCase(), s]));
         const changes = [];
-
         for (const d of current) {
           const name = d.key;
           const info = this._tableInfo(name);
@@ -1657,12 +1531,10 @@ console.log('persisted=', await navigator.storage.persisted());
             }
           }
         }
-
         await this._saveServerTables(current.map(d => ({
           table: d.key,
           count: d.value.count
         })));
-
         let imported = 0;
         if (apply) {
           for (const item of changes) {
@@ -1696,7 +1568,6 @@ console.log('persisted=', await navigator.storage.persisted());
         };
       });
     }
-
     /* ────────────────────────────────────────────────────────────
      * فهرست موجودی لوکال
      * ──────────────────────────────────────────────────────────── */
@@ -1748,7 +1619,6 @@ console.log('persisted=', await navigator.storage.persisted());
       out.sort((a, b) => String(a.database).localeCompare(String(b.database), "en"));
       return out;
     }
-
     /* ────────────────────────────────────────────────────────────
      * حذف بانک‌ها
      * ──────────────────────────────────────────────────────────── */
@@ -1779,12 +1649,10 @@ console.log('persisted=', await navigator.storage.persisted());
       }
       return results;
     }
-
     async wipeAllLocal() {
       const inv = await this.listLocalInventory();
       return this.deleteLocalDatabases(inv.map(x => x.database));
     }
   }
-
   root.Index_db = Index_db;
 })(window);
