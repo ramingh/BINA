@@ -14,13 +14,11 @@ let available = [],
   lastResult = null,
   working = false;
 el('origin').textContent = location.origin;
-
 function log(msg) {
   const l = el('log');
   l.textContent += `[${new Date().toLocaleTimeString('en-GB')}] ${msg}\n`;
   l.scrollTop = l.scrollHeight;
 }
-
 function setBusy(v) {
   working = v;
   ['load', 'refresh', 'run', 'reset', 'cols'].forEach(id => el(id).disabled = v);
@@ -38,17 +36,14 @@ async function safe(fn) {
     setBusy(false);
   }
 }
-
 function quote(s) {
   return '"' + String(s).replace(/"/g, '""') + '"';
 }
-
 function loadedText() {
   const list = queryEngine.listLoaded();
   el('loaded').textContent = list.length ? 'جدول‌های بارگذاری‌شده: ' + list.map(x => `${x.table} (${x.rows.toLocaleString('en-US')}${x.partial?'؛ ناقص':''})`).join(' | ') : 'هیچ جدولی بارگذاری نشده است.';
   return list;
 }
-
 function render(r) {
   lastResult = r;
   const target = el('result');
@@ -78,7 +73,6 @@ function render(r) {
   table.append(body);
   target.append(table);
 }
-
 el('refresh').onclick = () => safe(async () => {
   available = (await queryEngine.listTables()).filter(x => x.available);
   el('tables').replaceChildren();
@@ -91,7 +85,6 @@ el('refresh').onclick = () => safe(async () => {
   el('summary').textContent = `${available.length} جدول در IndexedDB همین Origin: ${location.origin}`;
   log('LOCAL CATALOG: ' + available.length + ' available tables');
          console.log('=8888====');
-
 });
 el('load').onclick = () => safe(async () => {
   const table = el('tables').value;

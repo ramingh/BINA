@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +10,6 @@
       src: url('../../IRANYekanX-Light.ttf') format('truetype');
       font-display: swap;
     }
-
     :root {
       --bg: #0b1220;
       --panel: #121a2b;
@@ -29,11 +27,9 @@
       --font: IRANYekanX, Tahoma, "Segoe UI", system-ui, sans-serif;
       --mono: ui-monospace, Consolas, monospace;
     }
-
     * {
       box-sizing: border-box
     }
-
     body {
       margin: 0;
       font-family: var(--font);
@@ -43,13 +39,11 @@
       color: var(--ink);
       min-height: 100vh;
     }
-
     .wrap {
       max-width: 1200px;
       margin: 0 auto;
       padding: 18px 16px 48px
     }
-
     .topbar {
       display: flex;
       flex-wrap: wrap;
@@ -62,12 +56,10 @@
       background: linear-gradient(135deg, #1e3a5f, #0f766e 120%);
       border: 1px solid rgba(255, 255, 255, .08);
     }
-
     .topbar h1 {
       margin: 0;
       font-size: 1.05rem
     }
-
     .topbar .storage {
       display: flex;
       gap: 8px;
@@ -80,20 +72,16 @@
       direction: ltr;
       font-family: var(--mono);
     }
-
     .topbar .storage .badge-ok {
       color: #86efac
     }
-
     .topbar .storage .badge-warn {
       color: #fcd34d
     }
-
     .topbar button {
       padding: 5px 10px;
       font-size: 12px
     }
-
     .panel {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -102,7 +90,6 @@
       margin-bottom: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
     }
-
     .panel h2 {
       margin: 0 0 10px;
       font-size: 13.5px;
@@ -110,21 +97,18 @@
       align-items: center;
       gap: 8px
     }
-
     .dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--brand), var(--brand2))
     }
-
     .row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center
     }
-
     select,
     input {
       background: var(--panel2);
@@ -135,11 +119,9 @@
       font-size: 12.5px;
       font-family: inherit;
     }
-
     select {
       min-width: 130px
     }
-
     button {
       cursor: pointer;
       border: 0;
@@ -151,82 +133,67 @@
       color: #fff;
       transition: .15s filter;
     }
-
     button:hover {
       filter: brightness(1.1)
     }
-
     button:disabled {
       opacity: .45;
       cursor: not-allowed
     }
-
     button.secondary {
       background: #334155
     }
-
     button.ok {
       background: #15803d
     }
-
     button.warn {
       background: #b45309
     }
-
     button.danger {
       background: #b91c1c
     }
-
     button.ghost {
       background: transparent;
       color: var(--ink);
       border: 1px solid var(--line)
     }
-
     .hint {
       color: var(--muted);
       font-size: 11.5px;
       margin-top: 6px
     }
-
     .banner {
       margin-top: 8px;
       border-radius: 9px;
       padding: 8px 11px;
       font-size: 12px
     }
-
     .banner.ok {
       background: rgba(34, 197, 94, .12);
       color: #86efac;
       border: 1px solid rgba(34, 197, 94, .25)
     }
-
     .banner.warn {
       background: rgba(245, 158, 11, .12);
       color: #fcd34d;
       border: 1px solid rgba(245, 158, 11, .25)
     }
-
     .banner.err {
       background: rgba(239, 68, 68, .12);
       color: #fca5a5;
       border: 1px solid rgba(239, 68, 68, .25)
     }
-
     .banner.info {
       background: rgba(59, 130, 246, .12);
       color: #93c5fd;
       border: 1px solid rgba(59, 130, 246, .25)
     }
-
     .pills {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       margin-top: 8px
     }
-
     .pill {
       background: var(--chip);
       border: 1px solid var(--line);
@@ -234,11 +201,9 @@
       padding: 3px 11px;
       font-size: 11.5px
     }
-
     .pill b {
       color: #93c5fd
     }
-
     /* جدول جداول */
     .scroll {
       overflow: auto;
@@ -247,13 +212,11 @@
       border-radius: 10px;
       margin-top: 8px
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px
     }
-
     th {
       position: sticky;
       top: 0;
@@ -264,49 +227,39 @@
       white-space: nowrap;
       z-index: 1
     }
-
     td {
       padding: 6px 9px;
       border-top: 1px solid var(--line);
       white-space: nowrap
     }
-
     td.ltr {
       direction: ltr;
       text-align: left;
       font-family: var(--mono)
     }
-
     tr:nth-child(even) td {
       background: rgba(255, 255, 255, .02)
     }
-
     tr.selected td {
       background: rgba(59, 130, 246, .12)
     }
-
     .st-ok {
       color: var(--ok)
     }
-
     .st-missing {
       color: var(--bad)
     }
-
     .st-incomplete {
       color: var(--warn)
     }
-
     .st-diff {
       color: #fb923c
     }
-
     input[type=checkbox] {
       width: 15px;
       height: 15px;
       accent-color: var(--brand)
     }
-
     /* tree */
     .db-item {
       border: 1px solid var(--line);
@@ -315,7 +268,6 @@
       overflow: hidden;
       background: var(--panel2)
     }
-
     .db-head {
       display: flex;
       align-items: center;
@@ -325,43 +277,35 @@
       user-select: none;
       font-size: 12px
     }
-
     .db-head:hover {
       background: rgba(255, 255, 255, .03)
     }
-
     .db-head .name {
       font-family: var(--mono);
       direction: ltr;
       flex: 1
     }
-
     .db-head .meta {
       color: var(--muted);
       font-size: 11px
     }
-
     .chev {
       transition: transform .2s;
       color: var(--muted);
       width: 14px;
       text-align: center
     }
-
     .db-item.open .chev {
       transform: rotate(90deg)
     }
-
     .db-body {
       display: none;
       border-top: 1px solid var(--line);
       padding: 4px 6px 8px
     }
-
     .db-item.open .db-body {
       display: block
     }
-
     .store-row {
       display: flex;
       align-items: center;
@@ -370,17 +314,14 @@
       border-radius: 6px;
       font-size: 11.5px
     }
-
     .store-row:hover {
       background: rgba(255, 255, 255, .03)
     }
-
     .store-row .sname {
       font-family: var(--mono);
       direction: ltr;
       flex: 1
     }
-
     .count-pill {
       font-family: var(--mono);
       font-size: 11px;
@@ -389,7 +330,6 @@
       padding: 1px 8px;
       direction: ltr
     }
-
     pre.log {
       margin: 6px 0 0;
       background: #060b14;
@@ -404,7 +344,6 @@
       border: 1px solid var(--line);
       white-space: pre-wrap;
     }
-
     footer {
       text-align: center;
       color: var(--muted);
@@ -413,10 +352,8 @@
     }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-
     <!-- TOPBAR -->
     <div class="topbar">
       <h1>BINA | مدیریت بانک محلی</h1>
@@ -427,7 +364,6 @@
         <button id="btnStop" class="danger" style="padding:3px 9px;font-size:11px" disabled>توقف</button>
       </div>
     </div>
-
     <!-- ۱: راه‌اندازی اولیه -->
     <section class="panel">
       <h2><span class="dot"></span> ۱) راه‌اندازی اولیه</h2>
@@ -444,7 +380,6 @@
       <div id="bootMsg"></div>
       <div class="pills" id="bootPills"></div>
     </section>
-
     <!-- ۲: جداول -->
     <section class="panel">
       <h2><span class="dot"></span> ۲) جداول (انتخاب و دانلود)</h2>
@@ -495,7 +430,6 @@
         </table>
       </div>
     </section>
-
     <!-- ۳: TK -->
     <section class="panel">
       <h2><span class="dot"></span> ۳) جداول کمکی TK</h2>
@@ -517,7 +451,6 @@
         </table>
       </div>
     </section>
-
     <!-- ۴: موجودی لوکال -->
     <section class="panel">
       <h2><span class="dot"></span> ۴) موجودی لوکال</h2>
@@ -533,7 +466,6 @@
       <div id="invMsg"></div>
       <div class="tree" id="invTree"></div>
     </section>
-
     <!-- لاگ -->
     <section class="panel">
       <h2><span class="dot"></span> لاگ</h2>
@@ -542,20 +474,16 @@
       </div>
       <pre class="log" id="log"></pre>
     </section>
-
     <footer>BINA v4.2 · دریافت اجباری tk_* در آغاز · شناسه‌های lowercase · GZIP بلوکی · نسخه داینامیک · ماندگاری
       Persistent</footer>
   </div>
-
   <script src="bina-db-manager.js?v=4.2.5"></script>
   <script>
     (function () {
       "use strict";
-
       const $ = id => document.getElementById(id);
       const fa = n => (n == null || n === "") ? "—" : Number(n).toLocaleString("fa-IR");
       const logBox = $("log");
-
       function log(line) {
         logBox.textContent = "[" + new Date().toLocaleTimeString("fa-IR") + "] " + line + "\n" + logBox.textContent;
       }
@@ -568,12 +496,10 @@
         ].forEach(id => { $(id).disabled = on; });
         $("btnStop").disabled = !on;
       }
-
       if (typeof webservice === "undefined" || typeof Index_db === "undefined") {
         msg("bootMsg", "err", "کلاس‌ها بارگذاری نشدند.");
         return;
       }
-
       // endpoint در کد ثابت است
       const ENDPOINT = localStorage.getItem('bina_manager_endpoint') || "http://localhost/grid/final/FastDataHandler.ashx";
       $("endpointField").value = ENDPOINT;
@@ -582,7 +508,6 @@
         if (!/^https?:\/\//i.test(text)) { alert("آدرس باید با http:// یا https:// شروع شود."); return; }
         localStorage.setItem('bina_manager_endpoint', text); location.reload();
       };
-
       const ws = new webservice({
         endpoint: ENDPOINT,
         onProgress: p => {
@@ -610,7 +535,6 @@
           else if (p.event === "table-skip") log("رد " + p.table);
           else if (p.event === "table-error")
             log("خطای " + p.table + ": [" + (p.errorName || "?") + "] " + (p.error || "بدون پیام") + " @ " + (p.errorStack || ""));
-
           else if (p.event === "chunk") log(p.table + " → " + p.received + " (lastId=" + p.lastId + ")");
           else if (p.event === "job-done") log("پیشرفت: " + p.done + "/" + p.total + " — " + p.table);
           else if (p.event === "checkpoint-recovered") log("بازیابی چک‌پوینت " + p.table);
@@ -618,7 +542,6 @@
           else if (p.event === "refresh-done") log("فهرست بروزرسانی شد: " + p.total + " جدول");
         }
       });
-
       // ── Storage ──
       async function refreshStorage() {
         try {
@@ -639,7 +562,6 @@
         } finally { busy(false); }
       };
       $("btnStop").onclick = () => { db.stop(); log("درخواست توقف"); };
-
       // ── bootstrap ──
       $("btnBootstrap").onclick = async () => {
         busy(true);
@@ -666,7 +588,6 @@
           else { msg("bootMsg", "err", err.message); log("خطا: " + err.message); }
         } finally { busy(false); }
       };
-
       $("btnRefreshTables").onclick = async () => {
         busy(true);
         msg("bootMsg", "info", "بروزرسانی فهرست جداول از سرور…");
@@ -680,7 +601,6 @@
           else { msg("bootMsg", "err", err.message); log("خطا: " + err.message); }
         } finally { busy(false); }
       };
-
       // ── شرکت‌ها ──
       async function loadCompanies() {
         try {
@@ -696,7 +616,6 @@
           if (codes.includes(cur)) sel.value = cur;
         } catch (_) { }
       }
-
       // ── لیست جداول ──
       let tableCache = [];
       async function loadTableList() {
@@ -740,7 +659,6 @@
           log("خطا فهرست: " + err.message);
         }
       }
-
       function statusLabel(st) {
         if (st === "ok") return '<span class="st-ok">کامل</span>';
         if (st === "missing") return '<span class="st-missing">نیست</span>';
@@ -748,12 +666,10 @@
         if (st === "diff") return '<span class="st-diff">اختلاف تعداد</span>';
         return st;
       }
-
       $("btnApplyFilter").onclick = () => loadTableList();
       $("fCompany").onchange = () => loadTableList();
       $("fFamily").onchange = () => loadTableList();
       $("fStatus").onchange = () => loadTableList();
-
       $("chkAll").onchange = function () {
         document.querySelectorAll(".cb-tbl").forEach(c => c.checked = this.checked);
       };
@@ -766,7 +682,6 @@
           c.checked = row && (row.status === "missing" || row.status === "incomplete" || row.status === "diff");
         });
       };
-
       $("btnSyncSelected").onclick = async () => {
         const names = [...document.querySelectorAll(".cb-tbl:checked")].map(c => c.getAttribute("data-table"));
         if (!names.length) { msg("tblMsg", "warn", "هیچ جدولی انتخاب نشده."); return; }
@@ -784,7 +699,6 @@
           else { msg("tblMsg", "err", err.message); log("خطا sync: " + err.message); console.error(err); }
         } finally { busy(false); }
       };
-
       // ── TK ──
       $("btnLoadTK").onclick = async () => {
         busy(true);
@@ -814,7 +728,6 @@
         } catch (err) { msg("tkMsg", "err", err.message); }
         finally { busy(false); }
       };
-
       $("btnInspectMeta").onclick = async () => {
         try {
           const r = await db.normalizeMetadata({ dryRun: true }); log("نامگذاری: " + JSON.stringify(r));
@@ -826,7 +739,6 @@
         try { const r = await db.normalizeMetadata({ dryRun: false }); log("اصلاح متادیتا: " + JSON.stringify(r)); await loadTableList(); }
         catch (e) { log("خطا اصلاح: " + e.message); }
       };
-
       // ── موجودی لوکال ──
       function renderInventory(list) {
         const root = $("invTree");
@@ -861,7 +773,6 @@
           root.appendChild(item);
         });
       }
-
       async function refreshInventory() {
         msg("invMsg", "info", "در حال خواندن IndexedDB…");
         try {
@@ -872,11 +783,9 @@
           msg("invMsg", "err", err.message);
         }
       }
-
       $("btnRefreshInv").onclick = refreshInventory;
       $("btnSelectAllDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = true);
       $("btnSelectNoneDb").onclick = () => document.querySelectorAll(".cb-db").forEach(c => c.checked = false);
-
       $("btnDeleteSelected").onclick = async () => {
         const names = [...document.querySelectorAll(".cb-db:checked")].map(c => c.getAttribute("data-db"));
         if (!names.length) { msg("invMsg", "warn", "چیزی انتخاب نشده است."); return; }
@@ -891,7 +800,6 @@
         } catch (err) { msg("invMsg", "err", err.message); }
         finally { busy(false); }
       };
-
       $("btnWipeAll").onclick = async () => {
         if (!confirm("همهٔ بانک‌های IndexedDB این origin حذف شوند؟")) return;
         busy(true);
@@ -909,9 +817,7 @@
         } catch (err) { msg("invMsg", "err", err.message); }
         finally { busy(false); }
       };
-
       $("btnClearLog").onclick = () => { logBox.textContent = ""; };
-
       // ── شروع ──
       (async function init() {
         await refreshStorage();
@@ -922,5 +828,4 @@
     })();
   </script>
 </body>
-
 </html>

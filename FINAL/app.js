@@ -86,7 +86,6 @@ function activateTab(tabKey) {
       if (activeTab && contentFrame.dataset.page !== activeTab.page) {
         contentFrame.src = activeTab.page;  // ← خط 87: صفحه در iframe لود می‌شود
     }
-    
   if (activeTab && contentFrame.dataset.page !== activeTab.page) {
     contentFrame.src = activeTab.page;
     contentFrame.dataset.page = activeTab.page;
@@ -110,7 +109,6 @@ function closeTab(tabKey) {
   const nextIndex = Math.min(closedIndex, remainingKeys.length - 1);
   activateTab(remainingKeys[nextIndex] || "");
 }
-
 function openTab(menuItem) {
   const path = getMenuPath(menuItem);
   const title =
@@ -157,14 +155,12 @@ function openTab(menuItem) {
   });
   activateTab(tabKey);
 }
-
 document.querySelectorAll(".sidebar-menu a.menu-item").forEach((menuItem) => {
   menuItem.addEventListener("click", (event) => {
     event.preventDefault();
     openTab(menuItem);
   });
 });
-
 closeAllTabsButton.addEventListener("click", () => {
   tabList.replaceChildren();
   openTabs.clear();
@@ -216,7 +212,6 @@ function applyLanguage(language) {
      ? "باز / بسته کردن سایدبار"
     : "Toggle sidebar";
   updateStatusClock();
-   
 }
 function applySidebarState(collapsed) {
   appLayout.classList.toggle("is-sidebar-collapsed", collapsed);

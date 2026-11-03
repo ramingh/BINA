@@ -3,7 +3,6 @@
    بانک: public
    استور: tk_dic
    ============================================================ */
-
 class WebTranslator {
   /* dbVersion = null → دیتابیس موجود با هر نسخه‌ای که دارد باز می‌شود (ساختار بانک مال برنامه است، مترجم نسخه‌اش را تعیین نمی‌کند).
      نام دیتابیس و استور بدون حساسیت به حروف تطبیق داده می‌شوند (public/public ، tk_dic/tk_dic). */
@@ -11,7 +10,6 @@ class WebTranslator {
     this.dbName = dbName;
     this.storeName = storeName;
     this.dbVersion = dbVersion;
-
     // نگاشت countryCode به کد زبان
     this.countryCodeMap = { '1': 'en', '2': 'ar', '3': 'fa' };
     this.dictionaries = { en: {}, ar: {}, fa: {} };
@@ -19,7 +17,6 @@ this.originalTexts = new WeakMap();
     this.originalAttrs = new WeakMap();
     this.currentLanguage = 'fa';
     this.isLoaded = false;
-
     this.options = {
       cacheEnabled: true,
       cacheKey: 'WebTranslator_cache_v1',
@@ -33,14 +30,12 @@ this.originalTexts = new WeakMap();
       countryCodeMapObject: { '1': 'fa', '2': 'en', '3': 'ar' },
       ...options
     };
-
     this._observer = null;
     this._iframeObserver = null;
     this._observedRoots = new WeakSet();
     this._stats = { translated: 0, untranslated: 0, skipped: 0 };
     this._cache = this._loadCache();
   }
-
   /* ============================================================
      کش
      ============================================================ */
@@ -50,19 +45,16 @@ this.originalTexts = new WeakMap();
       return JSON.parse(localStorage.getItem(this.options.cacheKey) || '{}');
     } catch (_) { return {}; }
   } 
- 
   _saveCache() {
     if (!this.options.cacheEnabled) return;
     try {
       localStorage.setItem(this.options.cacheKey, JSON.stringify(this._cache));
     } catch (_) { /* quota */ }
   }
-
   _clearCache() {
     this._cache = {};
     if (this.options.cacheEnabled) localStorage.removeItem(this.options.cacheKey);
   }
-
   /* ============================================================
      نواحی «بدون ترجمه» — گره یا هر یک از والدهایش با noTranslateSelector بخواند
      ============================================================ */
@@ -72,7 +64,6 @@ this.originalTexts = new WeakMap();
     const el = node.nodeType === 1 ? node : node.parentElement;
     try { return !!(el && el.closest && el.closest(sel)); } catch (_) { return false; }
   }
-
   /* ============================================================
      نرمال‌سازی
      ============================================================ */
@@ -85,7 +76,6 @@ this.originalTexts = new WeakMap();
       .replace(/\s+/g, ' ')
       .trim();
   }
-
   /* ============================================================
      بارگذاری دیکشنری از IndexedDB
      بانک: public
@@ -103,28 +93,23 @@ this.originalTexts = new WeakMap();
     } catch (_) { /* به نام داده‌شده برمی‌گردیم */ }
     return this.dbName;
   }
-
   /* نام واقعی استور داخل دیتابیس باز (بدون حساسیت به حروف) */
   _resolveStoreName(db) {
     const names = Array.from(db.objectStoreNames);
     return names.find((n) => n === this.storeName) ||
            names.find((n) => n.toLowerCase() === String(this.storeName).toLowerCase()) || null;
   }
-
   async init() {
     if (this.isLoaded) return true;
-
     const dbName = await this._resolveDbName();
     return new Promise((resolve, reject) => {
       const req = this.dbVersion ? indexedDB.open(dbName, this.dbVersion) : indexedDB.open(dbName);
-
       req.onerror = () => {
         const why = req.error && req.error.name ? req.error.name : 'نامشخص';
         reject(new Error('خطا در باز کردن دیتابیس ' + dbName + ' (' + why + ')' +
           (why === 'VersionError' ? ' — نسخهٔ دیتابیس بالاتر از dbVersion است؛ dbVersion را null بگذار.' : '')));
       };
       req.onblocked = () => console.warn('⚠️ باز کردن دیتابیس ' + dbName + ' توسط اتصال دیگری بلوکه شده است.');
-
       req.onupgradeneeded = (e) => {
         // اگر دیتابیس وجود نداشت، استور را بساز
         const db = e.target.result;
@@ -132,11 +117,9 @@ this.originalTexts = new WeakMap();
           db.createObjectStore(this.storeName);
         }
       };
-
       req.onsuccess = (e) => {
         const db = e.target.result;
         const storeName = this._resolveStoreName(db);
-
         if (!storeName) {
           db.close();
           return reject(new Error(
@@ -147,25 +130,21 @@ this.originalTexts = new WeakMap();
         const tx = db.transaction(storeName, 'readonly');
         const store = tx.objectStore(storeName);
         const cursorReq = store.openCursor();
-
         let totalRecords = 0;
         let matchedRecords = 0;
         let rejectedSample = null;           // اولین رکوردی که پذیرفته نشد (برای تشخیص)
-
         cursorReq.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
             totalRecords++;
             const key = cursor.key;
             const row = cursor.value;
-
             // بررسی اینکه کلید با 'tk_dic_FieldName' شروع می‌شود
             // (یا هر فرمت دیگر که داشته باشید)
             const k0 = Array.isArray(key) ? String(key[0]).toLowerCase() : '';
             const isValidKey = Array.isArray(key)
               ? k0 === 'tk_dic_fieldname' || k0 === 'tk_dic'
               : true; // اگر کلید رشته‌ای بود، آن را بپذیر (حروف کوچک/بزرگ فرقی ندارد)
-
             // دو شکل رکورد پشتیبانی می‌شود:
             //  ۱) آرایه‌ای (قدیمی): [translatedText, countryCode, originalText, position]
             //     نگاشت countryCodeMap: 1=en, 2=ar, 3=fa
@@ -188,19 +167,16 @@ this.originalTexts = new WeakMap();
               codeMap = this.options.countryCodeMapObject;
               parsed = true;
             } 
-
             if (parsed) {
               if (originalText && translatedText && countryCode) {
                 const normKey = this.normalize(originalText);
                 const langCode = codeMap[countryCode];
-
                 if (langCode && this.dictionaries[langCode] && normKey) {
                   this.dictionaries[langCode][normKey] = translatedText;
                   matchedRecords++;
                 } else if (!rejectedSample) rejectedSample = { key, row, why: 'countryCode ناشناخته یا متن خالی' };
               } else if (!rejectedSample) rejectedSample = { key, row, why: 'FieldName/Caption/CountryCode (یا ستون‌های آرایه‌ای) خالی' };
             } else if (!rejectedSample) rejectedSample = { key, row, why: 'شکل رکورد نامعتبر (آرایه [EnglishName, countryCode, PersianText, position] یا آبجکت {FieldName, Caption, CountryCode})' };
-
             cursor.continue();
           } else {
             this.isLoaded = true;
@@ -221,12 +197,10 @@ this.originalTexts = new WeakMap();
             resolve(true);
           }
         };
-
         cursorReq.onerror = () => { db.close(); reject(new Error('خطا در کورسور.')); };
       };
     });
   }
-
   /* ============================================================
      انتظار برای load شدن iframeهای در حال بارگذاری
      ============================================================ */
@@ -238,7 +212,6 @@ this.originalTexts = new WeakMap();
       try { doc = iframe.contentDocument; } catch (_) { doc = null; }
       if (!doc) continue;
       if (doc.readyState === 'complete') continue;
-
       waits.push(new Promise((res) => {
         const onLoad = () => { iframe.removeEventListener('load', onLoad); res(); };
         iframe.addEventListener('load', onLoad);
@@ -247,7 +220,6 @@ this.originalTexts = new WeakMap();
     }
     if (waits.length) await Promise.all(waits);
   }
-
   /* ============================================================
      ترجمه‌ی attributeهای یک عنصر
      ============================================================ */
@@ -255,16 +227,13 @@ this.originalTexts = new WeakMap();
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
     if (!this.options.attrTags.includes(el.tagName)) return;
     if (this._isNoTranslate(el)) return;
-
     const attrs = this.options.translateAttrs;
     const original = this.originalAttrs.get(el) || {};
-
     for (const attr of attrs) {
       if (!el.hasAttribute(attr)) continue;
       if (!(attr in original)) original[attr] = el.getAttribute(attr);
       const rawText = original[attr];
       const normText = this.normalize(rawText);
-
       if (langCode === 'fa') {
         if (el.getAttribute(attr) !== rawText) el.setAttribute(attr, rawText);
       } else if (activedict[normText]) {
@@ -274,16 +243,13 @@ this.originalTexts = new WeakMap();
     }
     this.originalAttrs.set(el, original);
   }
-
   /* ============================================================
      پیمایش یک ریشه (Document یا ShadowRoot)
      ============================================================ */
   _translateRoot(root, langCode, activedict, visited) {
     if (!root || visited.has(root)) return;
     visited.add(root);
-
     const walkRoot = root.body || root;
-
     // --- گره‌های متنی ---
     try {
       const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT, {
@@ -295,13 +261,11 @@ this.originalTexts = new WeakMap();
           return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
         }
       });
-
       let n;
       while ((n = walker.nextNode())) {
         if (!this.originalTexts.has(n)) this.originalTexts.set(n, n.nodeValue);
         const rawText = this.originalTexts.get(n);
         const normText = this.normalize(rawText);
-
         if (langCode === 'fa') {
           if (n.nodeValue !== rawText) n.nodeValue = rawText;
         } else if (activedict[normText]) {
@@ -314,7 +278,6 @@ this.originalTexts = new WeakMap();
         }
       }
     } catch (_) { /* ignore */ }
-
     // --- attributeها ---
     try {
       const all = walkRoot.querySelectorAll?.('*') ?? [];
@@ -324,7 +287,6 @@ this.originalTexts = new WeakMap();
         }
       }
     } catch (_) { /* ignore */ }
-
     // --- iframeهای هم‌مبدأ ---
     try {
       const iframes = walkRoot.querySelectorAll?.('iframe') ?? [];
@@ -333,15 +295,12 @@ this.originalTexts = new WeakMap();
         try { childDoc = iframe.contentDocument || null; } catch (_) { childDoc = null; }
         if (!childDoc) continue;
         if (childDoc.readyState && childDoc.readyState !== 'complete') continue;
-
         if (childDoc.body) {
-     
     //       childDoc.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
         }
         this._translateRoot(childDoc, langCode, activedict, visited);
       }
     } catch (_) { /* ignore */ }
-
     // --- Shadow DOM باز ---
     try {
       const all = walkRoot.querySelectorAll?.('*') ?? [];
@@ -351,7 +310,6 @@ this.originalTexts = new WeakMap();
       }
     } catch (_) { /* ignore */ }
   }
-
   /* ============================================================
      اعمال زبان
      ============================================================ */
@@ -360,13 +318,11 @@ this.originalTexts = new WeakMap();
       console.error("❌ کد زبان نامعتبر. (fa, en, ar)");
       return;
     }
-
     // اگر body هنوز آماده نیست، منتظر DOMContentLoaded بمان
     if (!document.body) {
       await new Promise((resolve) => {
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', resolve, { once: true });
-          
         } else {
           resolve();
         }
@@ -374,43 +330,33 @@ this.originalTexts = new WeakMap();
     }
  document.documentElement.classList.remove('translating');
     // ... بقیهٔ کد مثل قبل
-
     this.currentLanguage = langCode;
     const activedict = this.dictionaries[langCode] || {};
     if (langCode !== 'fa' && !Object.keys(activedict).length) {
       console.warn(`⚠️ دیکشنری '${langCode}' خالی است` +
         (this.isLoaded ? ' — رکوردی با countryCode این زبان در استور نیست.' : ' — init() هنوز تمام نشده یا ناموفق بوده است.'));
     }
-
  //  document.body.setAttribute('dir', langCode === 'en' ? 'ltr' : 'rtl');
-
     await this._waitForIframes(document);
-
     this._stats = { translated: 0, untranslated: 0, skipped: 0 };
     const visited = new Set();
     this._translateRoot(document, langCode, activedict, visited);
-
     this._saveCache();
-
     if (langCode !== 'fa') this._startObserver();
     else this._stopObserver();
-
     console.log(
       `🔄 زبان: '${langCode}' | ترجمه‌شده: ${this._stats.translated} | ترجمه‌نشده: ${this._stats.untranslated}`
     );
     return this.getStats();
   }
-
   /* ============================================================
      Observer برای محتوای داینامیک
      ============================================================ */
   _startObserver() {
     if (this._observer) return;
-
     const processNode = (node, sharedVisited) => {
       const activedict = this.dictionaries[this.currentLanguage] || {};
       const visited = sharedVisited || new Set();
-
       if (this._isNoTranslate(node)) return;
       // ... بقیهٔ بدنه مثل قبل
       if (node.nodeType === Node.ELEMENT_NODE) {
@@ -429,7 +375,6 @@ this.originalTexts = new WeakMap();
         }
       }
     };
-
     this._observer = new MutationObserver((mutations) => {
       const sharedVisited = new Set();
       for (const m of mutations) {
@@ -451,20 +396,16 @@ this.originalTexts = new WeakMap();
         }
       }
     });
-
     this._observer.observe(document.body, {
       childList: true, subtree: true, characterData: true
     });
-
     this._observeAllIframes(document.body);
   }
-
   _attachIframeObserver(iframe) {
     let doc = null;
     try { doc = iframe.contentDocument; } catch (_) { doc = null; }
     if (!doc || !doc.body || this._observedRoots.has(doc.body)) return;
     this._observedRoots.add(doc.body);
-
     const obs = new MutationObserver((mutations) => {
       const activedict = this.dictionaries[this.currentLanguage] || {};
       const visited = new Set();
@@ -484,7 +425,6 @@ this.originalTexts = new WeakMap();
     });
     obs.observe(doc.body, { childList: true, subtree: true, characterData: true });
   }
-
   _observeAllIframes(root) {
     try {
       const iframes = root.querySelectorAll?.('iframe') ?? [];
@@ -496,31 +436,20 @@ this.originalTexts = new WeakMap();
       }
     } catch (_) { /* ignore */ }
   }
-
   _stopObserver() {
     if (this._observer) { this._observer.disconnect(); this._observer = null; }
   }
-
   /* ============================================================
      گزارش و ابزارها
      ============================================================ */
   getStats() {
     return { ...this._stats };
   }
-
   getdictionarySize(langCode) {
     return Object.keys(this.dictionaries[langCode] || {}).length;
   }
-
   clearCache() { this._clearCache(); }
-
   getCurrentLanguage() { return this.currentLanguage; }
-
-
-
-
- 
-
 // بررسی میزان فضای استفاده شده و باقیمانده
   async checkStorageEstimate() {
   if (navigator.storage && navigator.storage.estimate) {
@@ -528,14 +457,12 @@ this.originalTexts = new WeakMap();
     const usedMB = (estimate.usage / 1024 / 1024).toFixed(2);
     const quotaMB = (estimate.quota / 1024 / 1024).toFixed(2);
     const percent = ((estimate.usage / estimate.quota) * 100).toFixed(1);
-    
     console.log(
       `💾 فضای ذخیره‌سازی:\n` +
       `   استفاده شده: ${usedMB} مگابایت\n` +
       `   سهم کل: ${quotaMB} مگابایت\n` +
       `   درصد استفاده: ${percent}%`
     );
-    
     return estimate;
   }
   return null;
@@ -554,5 +481,4 @@ this.originalTexts = new WeakMap();
     else console.log('⚠️ Storage همچنان best-effort است.');
     return granted;
   }
- 
 }

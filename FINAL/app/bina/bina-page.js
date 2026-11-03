@@ -8,7 +8,6 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
   'use strict';
-
   function parentBank() {
     try {
       return root.parent && root.parent !== root && root.parent.BinaBank ? root.parent.BinaBank : null;
@@ -16,7 +15,6 @@
       return null;
     } /* parent از origin دیگر */
   }
-
   function parentLang() {
     try {
       return root.parent && root.parent !== root ? root.parent.document.documentElement.lang : '';

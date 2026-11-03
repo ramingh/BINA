@@ -47,7 +47,6 @@ class WebTranslator {
     };
     this._cache = this._loadCache();
   }
-
   _loadCache() {
     if (!this.options.cacheEnabled) return {};
     try {
@@ -60,18 +59,15 @@ class WebTranslator {
       return {};
     }
   }
-
   _saveCache() {
     if (!this.options.cacheEnabled) return;
     try {
       localStorage.setItem('sidebarLanguage', this.currentLanguage);
     } catch (_) {}
   }
-
   _clearCache() {
     this._cache = {};
   }
-
   _isNoTranslate(node) {
     const sel = this.options.noTranslateSelector;
     if (!sel || !node) return false;
@@ -82,7 +78,6 @@ class WebTranslator {
       return false;
     }
   }
-
   normalize(str) {
     if (!str) return '';
     return String(str)
@@ -92,7 +87,6 @@ class WebTranslator {
       .replace(/\s+/g, ' ')
       .trim();
   }
-
   async _resolveDbName() {
     try {
       if (typeof indexedDB.databases === 'function') {
@@ -103,13 +97,11 @@ class WebTranslator {
     } catch (_) {}
     return this.dbName;
   }
-
   _resolveStoreName(db) {
     const names = Array.from(db.objectStoreNames);
     return names.find((n) => n === this.storeName) ||
       names.find((n) => n.toLowerCase() === String(this.storeName).toLowerCase()) || null;
   }
-
   async init() {
     if (this.isLoaded) return true;
     const dbName = await this._resolveDbName();
@@ -130,7 +122,6 @@ class WebTranslator {
         const cursorReq = store.openCursor();
         let totalRecords = 0;
         let matchedRecords = 0;
-
         cursorReq.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
@@ -139,7 +130,6 @@ class WebTranslator {
             const row = cursor.value;
             const k0 = Array.isArray(key) ? String(key[0]).toLowerCase() : '';
             const isValidKey = Array.isArray(key) ? (k0 === 'tk_dic_fieldname' || k0 === 'tk_dic') : true;
-
             let translatedText = '',
               countryCode = '',
               originalText = '',
@@ -161,7 +151,6 @@ class WebTranslator {
               codeMap = this.options.countryCodeMapObject;
               parsed = true;
             }
-
             if (parsed && originalText && translatedText && countryCode) {
               const normKey = this.normalize(originalText);
               const langCode = codeMap[countryCode];
@@ -174,11 +163,9 @@ class WebTranslator {
           } else {
             this.isLoaded = true;
             db.close();
-
             // خواندن زبان اولیه از کلید صحیح سیستم و اعمال خودکار
             const initialLang = localStorage.getItem('sidebarLanguage') || 'fa';
             this.setLanguage(initialLang);
-
             resolve(true);
           }
         };
@@ -189,7 +176,6 @@ class WebTranslator {
       };
     });
   }
-
   async _waitForIframes(root) {
     const iframes = root.querySelectorAll?.('iframe') ?? [];
     const waits = [];
@@ -212,7 +198,6 @@ class WebTranslator {
     }
     if (waits.length) await Promise.all(waits);
   }
-
   _translateAttrs(el, langCode, activedict) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
     if (!this.options.attrTags.includes(el.tagName)) return;
@@ -233,7 +218,6 @@ class WebTranslator {
     }
     this.originalAttrs.set(el, original);
   }
-
   _translateRoot(root, langCode, activedict, visited) {
     if (!root || visited.has(root)) return;
     visited.add(root);
@@ -265,7 +249,6 @@ class WebTranslator {
         }
       }
     } catch (_) {}
-
     try {
       const all = walkRoot.querySelectorAll?.('*') ?? [];
       for (const el of all) {
@@ -275,18 +258,15 @@ class WebTranslator {
       }
     } catch (_) {}
   }
-
   async setLanguage(langCode) {
     if (!['fa', 'en', 'ar'].includes(langCode)) return;
     this.currentLanguage = langCode;
     const activedict = this.dictionaries[langCode] || {};
-
     // اعمال جهت صفحه روی تگ ریشه (html) و body به صورت همزمان
     const direction = langCode === 'en' ? 'ltr' : 'rtl';
     document.documentElement.setAttribute('dir', direction);
     document.body.setAttribute('dir', direction);
     document.documentElement.lang = langCode;
-
     await this._waitForIframes(document);
     this._stats = {
       translated: 0,
@@ -296,13 +276,10 @@ class WebTranslator {
     const visited = new Set();
     this._translateRoot(document, langCode, activedict, visited);
     this._saveCache();
-
     if (langCode !== 'fa') this._startObserver();
     else this._stopObserver();
-
     return this.getStats();
   }
-
   _startObserver() {
     if (this._observer) return;
     this._observer = new MutationObserver((mutations) => {
@@ -314,14 +291,12 @@ class WebTranslator {
       characterData: true
     });
   }
-
   _stopObserver() {
     if (this._observer) {
       this._observer.disconnect();
       this._observer = null;
     }
   }
-
   getStats() {
     return {
       ...this._stats

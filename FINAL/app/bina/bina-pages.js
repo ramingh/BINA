@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
 bina-pages.js — توصیف‌گر (descriptor) هر منو
 هر برگ منو (pages/tab-NN.html) یک ورودی با کلید همان شناسه دارد.
-
 ═══ تغییرات این نسخه ═══
 تاریخ: 2026-11-02
 اضافه شدن tab-02 (کدینگ شرکت‌ها) با:
@@ -9,16 +8,13 @@ bina-pages.js — توصیف‌گر (descriptor) هر منو
   - textParams: دو متن‌باکس برای KOl_Code و MOien_Code
   - sql: کویری روی Coding_{company}
 ══════════════════════════════════════════════════════════════════════ */
-
 (function (root) {
 'use strict';
-
 /* عنوان فارسی ستون‌های Sanad — فرض ما */
 const SANAD_CAPTIONS = {
 Id: 'شناسه', ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', KOl_Code: 'کد کل', Moien_Code: 'کد معین',
 Tafsil_Code: 'کد تفصیل', SharhSanad: 'شرح سند', Bedehkar: 'بدهکار', Bestankar: 'بستانکار'
 };
-
 /* عنوان فارسی ستون‌های Coding */
 const CODING_CAPTIONS = {
 Id: 'شناسه',
@@ -42,18 +38,14 @@ Tafsil_Code2_Standard: 'کد تفصیل ۲ استاندارد',
 Tafsil_Onvan2_Standard: 'عنوان تفصیل ۲ استاندارد',
 CodeKarbar: 'کد کاربر'
 };
-
 const P = root.BinaPages = root.BinaPages || {};
-
 /* ۱۳ — اسناد حسابداری: کمبوی شرکت + سال، مسیر سریع (sql=null) */
 P['tab-13'] = {
 id: 'tab-13', title: 'اسناد حسابداری', family: 'Sanad', params: ['company', 'year'],
 sql: null, captions: SANAD_CAPTIONS, hiddenColumns: ['_SrcTable']
 };
-
 /* ۰۱ — معرفی شرکت‌ها: فعلاً همان نمای اسناد */
 P['tab-01'] = Object.assign({}, P['tab-13'], { id: 'tab-01', title: 'معرفی شرکتها' });
-
 /* ═══ ۰۲ — کدینگ شرکتها: کمبوی شرکت + دو متن‌باکس + کویری SQL ═══ */
 P['tab-02'] = {
 id: 'tab-02',
@@ -68,6 +60,5 @@ sql: "SELECT [Id],[Coding_Goroh_Asli],[Coding_Goroh_Gozaresh],[KOl_Code],[KOl_On
 captions: CODING_CAPTIONS,
 hiddenColumns: []
 };
-
 root.BinaCaptions = { Sanad: SANAD_CAPTIONS, Coding: CODING_CAPTIONS };
 })(typeof window !== 'undefined' ? window : globalThis);

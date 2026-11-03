@@ -1319,7 +1319,6 @@
     }
     /** ستون‌های دارای فیلد (بدون ستون‌های سیستمی) */
     getManagedcolumns() {
-     
       return this.table.getColumns().filter(function (c) { return Boolean(c.getField()); });
     }
     /** نام فیلدهای ستون‌های نمایان (به ترتیب فعلی) */
