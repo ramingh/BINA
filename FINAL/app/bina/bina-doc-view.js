@@ -2,7 +2,8 @@
 bina-doc-view.js — BinaDocView v1.0.0 (PATCHED — ترمیم سرعت گرید)
 «نمایش اسناد»: دو کمبو (شرکت، سال مالی) + BinaGrid؛ داده از BinaLocalSql.
 وابستگی‌ها (به همین ترتیب لود شوند):
-Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql. js · bina-doc-view.js
+Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql.js · bina-doc-view.js
+
 ═══ تغییرات این نسخه (PATCH) ═══
 تاریخ: 2026-11-02
 علت: مترجم (Dic_sek.Js) روی هر سلول گرید اجرا می‌شد → کندی شدید
@@ -11,6 +12,7 @@ Tabulator 5.6.1 · AlaSQL · bina-grid.js · bina-local-sql. js · bina-doc-view
   2. اضافه شدن translate="no" به عنصر .bdv-grid بعد از ساخت
 نتیجه مورد انتظار: جلوگیری از اجرای مترجم روی سلول‌های گرید
 ══════════════════════════════════════════════════════════════════════ */
+
 (function (root) {
 'use strict';
 const CSS = [
@@ -31,6 +33,7 @@ document.head.append(st);
 }
 const numCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 class BinaDocView {
 constructor(selector, opts) {
 opts = opts || {};
@@ -45,12 +48,14 @@ company: 'شرکت', year: 'سال مالی', loading: 'در حال بارگذا
 fromDb: 'خواندن از بانک', fromRam: 'از رم', grid: 'نمایش در گرید',
 noData: 'هیچ جدول Sanad در بانک‌های لوکال این origin پیدا نشد.'
 }, opts.labels);
+
 /* ═══ FIX APPLIED — خط اضافه‌شده ═══
    noTranslateBody: true → جلوگیری از ترجمه سلول‌های گرید */
 this.gridOptions = Object.assign(
 { height: '72vh', pageSize: 500, pageSizeOptions: [100, 500, 1000], storagePrefix: 'BinaDocView', noTranslateBody: true },
 opts.gridOptions);
 /* ═══ پایان FIX ═══ */
+
 this._byCompany = new Map();
 this._on = {};
 this._busy = false;
@@ -72,11 +77,13 @@ this.yrEl = this.root.querySelector('.bdv-yr');
 this.infoEl = this.root.querySelector('.bdv-info');
 this.errEl = this.root.querySelector('.bdv-err');
 this.errEl.style.display = 'none';
+
 /* ═══ FIX APPLIED — ۲ خط اضافه‌شده ═══
    translate="no" روی کانتینر گرید → مترجم کل درخت گرید را رد می‌کند */
 const __gridContainer = this.root.querySelector('.bdv-grid');
 if (__gridContainer) __gridContainer.setAttribute('translate', 'no');
 /* ═══ پایان FIX ═══ */
+
 this.grid = new root.BinaGrid(this.root.querySelector('.bdv-grid'), this.gridOptions);
 this._gridBuilt = new Promise(res => { this.grid.on('tableBuilt', () => res()); setTimeout(res, 3000); });
 this._onCo = () => { this._fillYears(); this._show(); };
@@ -141,6 +148,7 @@ await this._gridBuilt;
 const t0 = performance.now();
 const r = await this.engine.rows('Sanad_' + year + '_' + company);
 const loadMs = Math.round(performance.now() - t0);
+try { this.grid.options.captions = Object.assign({}, this.engine.captions(), (this.gridOptions||{}).captions || {}); } catch (e) { /* noop */ }
 await this.grid.clearData();
 const t1 = performance.now();
 await this.grid.setData(r.rows, 'Sanad');

@@ -1,7 +1,7 @@
 /* ============================================================
    WebTranslator — نسخه‌ی کامل و بهینه‌سازی شده
    بانک: Public
-   استور: Tk_dic
+   استور: Tk_dic 
    ============================================================ */
 class WebTranslator {
   constructor(dbName = 'public', storeName = 'tk_dic', dbVersion = null, options = {}) {

@@ -1,8 +1,8 @@
 'use strict';
 const el = id => document.getElementById(id);
 const queryEngine = new BinaQuery({
-  maxRowsPerTable: 5000,
-  maxTotalRows: 100000,
+  maxRowsPerTable: 500000,
+  maxTotalRows: 1000000,
   maxJoinRows: 150000,
   onProgress: e => {
     if (e.type === 'loading') {
@@ -115,7 +115,7 @@ el('run').onclick = () => safe(async () => {
   // Auto-load each referenced FROM/JOIN table if it is not already in memory.
   // This is a bounded sample, NOT a scan of all 20-30 million records.
   const rowCap = Number(el('maxrows').value);
-  if (!Number.isSafeInteger(rowCap) || rowCap < 1 || rowCap > 50000)
+  if (!Number.isSafeInteger(rowCap) || rowCap < 1 || rowCap > 500000)
     throw Error('تعداد رکورد باید بین ۱ و ۵۰۰۰۰ باشد.');
   const t0 = performance.now();
   const prepared = await queryEngine.ensureTablesForSQL({

@@ -11,14 +11,14 @@
 <div class="warning"><b>توجه:</b> داده‌های اصلی فقط خوانده می‌شوند. با زدن «اجرای کوئری»، جدول‌های موجود در FROM و JOIN به‌طور خودکار از IndexedDB همین Origin شناسایی و تا سقف مشخص‌شده بارگذاری می‌شوند. اگر تنها بخشی از جدول خوانده شود، SUM و COUNT متعلق به کل بانک نیست.</div>
 <section>
 <div class="section-head"><h2>۱. انتخاب و انتخاب و بارگذاری اختیاری جدول (SQL خودش نیز بارگذاری می‌کند)</h2><button id="refresh">خواندن فهرست IndexedDB</button></div>
-<div class="controls"><label>جدول <select id="tables"><option value="">ابتدا فهرست را بخوانید</option></select></label><label>تعداد رکورد <input id="maxrows" type="number" value="5000" min="1" max="50000"></label><label class="checkbox"><input id="partial" type="checkbox" checked> نمونه‌گیری از جدول بزرگ</label><button id="load" class="primary">بارگذاری جدول</button><button id="cols">نمایش ستون‌ها</button></div>
+<div class="controls"><label>جدول <select id="tables"><option value="">ابتدا فهرست را بخوانید</option></select></label><label>تعداد رکورد <input id="maxrows" type="number" value="500000" min="1" max="500000"></label><label class="checkbox"><input id="partial" type="checkbox" checked> نمونه‌گیری از جدول بزرگ</label><button id="load" class="primary">بارگذاری جدول</button><button id="cols">نمایش ستون‌ها</button></div>
 <div class="line"><small id="summary">هنوز فهرست خوانده نشده است.</small></div>
 <div class="line"><small id="loaded">هنوز جدولی بارگذاری نشده است؛ می‌توانید مستقیم SQL را اجرا کنید.</small><button id="reset" class="minor">پاک‌کردن فضای آزمایش</button></div>
 </section>
 <section>
 <div class="section-head"><h2>۲. اجرای SQL</h2><div class="examples"><button data-example="select">SELECT</button><button data-example="group">GROUP BY</button><button data-example="join">INNER JOIN</button><button data-example="left">LEFT JOIN</button><button data-example="running">جمع تجمعی بدهکار</button><button data-example="case">CASE</button><button data-example="union">UNION</button><button data-example="temp">جدول موقت</button></div></div>
 <textarea id="sql" spellcheck="false" dir="ltr" placeholder="SELECT * FROM ... LIMIT 20;"></textarea>
-<div class="controls"><button id="run" class="primary">اجرای کوئری و بارگذاری خودکار (Ctrl+Enter)</button><label>حداکثر سطر خروجی <input type="number" id="resultlimit" min="1" max="5000" value="100"></label><span id="timing"></span></div>
+<div class="controls"><button id="run" class="primary">اجرای کوئری و بارگذاری خودکار (Ctrl+Enter)</button><label>حداکثر سطر خروجی <input type="number" id="resultlimit" min="1" max="500000" value="100"></label><span id="timing"></span></div>
 </section>
 <section>
 <div class="section-head"><h2>۳. نتیجه</h2><button id="csv">خروجی CSV</button></div>

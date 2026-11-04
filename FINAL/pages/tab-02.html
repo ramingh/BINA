@@ -1,15 +1,18 @@
 <!--
   tab-02.html — کدینگ شرکتها
   ⚠️ ترتیب لود اسکریپت‌ها مهم است!
+
   دو گزینه برای کتابخانه‌های خارجی:
   ─────────────────────────────────────────────
   گزینه A (CDN — آنلاین):
     از https://unpkg.com و https://cdn.jsdelivr.net لود می‌شود
     اگر اینترنت قطع باشد، کار نمی‌کند
+
   گزینه B (لوکال — آفلاین):
     فایل‌های tabulator.min.js, tabulator.min.css, alasql.min.js
     را در FINAL/ بگذار و مسیرها را به ../tabulator.min.js تغییر بده
   ─────────────────────────────────────────────
+
   فعلاً گزینه A (CDN) فعال است. وقتی مطمئن شدی کار می‌کند، فایل‌ها را
   دانلود و لوکال کن.
 -->
@@ -18,11 +21,13 @@
 <head>
 <meta charset="UTF-8">
 <title>کدینگ شرکتها</title>
+
 <!-- ۱. CSS ها -->
 <!-- Tabulator CSS از CDN -->
 <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css">
 <!-- اگر لوکال داری، خط بالا را پاک کن و خط پایین را فعال کن: -->
 <!-- <link rel="stylesheet" href="../tabulator.min.css"> -->
+
 <link rel="stylesheet" href="../css/Form_Design.css">
 <link rel="stylesheet" href="../css/page.css">
 <style>
@@ -32,6 +37,7 @@
 </head>
 <body>
 <div id="view"></div>
+
 <!-- ۲. کتابخانه‌های خارجی (قبل از bina لود شوند) -->
 <!-- Tabulator JS از CDN -->
 <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
@@ -40,13 +46,16 @@
 <!-- اگر لوکال داری، دو خط بالا را پاک کن و دو خط پایین را فعال کن: -->
 <!-- <script src="../tabulator.min.js"></script> -->
 <!-- <script src="../alasql.min.js"></script> -->
+
 <!-- ۳. کتابخانه‌های bina (ترتیب مهم است) -->
 <script src="../app/bina/bina-local-sql.js"></script>
 <script src="../app/bina/bina-grid.js"></script>
 <script src="../app/bina/bina-query-view.js"></script>
 <script src="../app/bina/bina-pages.js"></script>
 <script src="../app/bina/bina-page.js"></script>
+
 <!-- ❌ bina-shell.js اینجا لود نکن — فقط در side_bar.html (parent) لود می‌شود -->
+
 <!-- ۴. mount کردن صفحه -->
 <script>
   BinaPage.mount('tab-02');

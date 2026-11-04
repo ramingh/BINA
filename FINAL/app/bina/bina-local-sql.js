@@ -12,6 +12,13 @@
      vw_All_Sanad  (= Sanad = Sanad_ALL_ALL)   همهٔ سندها ؛ ستون مجازی _SrcTable = Sanad_سال_شرکت
      Sanad_1399_ALL ، Sanad_ALL_1200 ، Sanad_1399_1200
      vw_All_Coding (= Coding = Coding_ALL) ، Coding_1200
+   ستون‌ها و عنوان‌ها (پویا — هیچ نام ستونی در کد ثابت نیست):
+     • نام و نوع ستون‌های هر خانواده از استور columns بانک public خوانده می‌شود (کلید coding / sanad).
+       عضو idIndex در ردیف‌ها نیست؛ خودش با نام idColumn (مثلاً id) جدا اضافه می‌شود.
+     • نوع int/bigint/… → عدد؛ nvarchar → رشته. نام فیلد دقیقاً همان حروف کوچک متادیتاست (kol_code …).
+     • عنوان فارسی: رکوردهای tk_dic با countrycode=2 که caption آن (کوچک‌شده) برابر نام ستون است → fieldname فارسی.
+       engine.captions() = { kol_code: 'کد کل', … } برای گزینهٔ captions گرید.
+     • اگر متادیتا نبود یا طول ردیف با چیدمان نخواند → C0… با هشدار آشکار (بی‌صدا نه).
    سرعت و حافظه:
      • فقط (سال، شرکت)هایی که کویری لازم دارد باز و در رم نگه داشته می‌شوند؛ بار دوم از رم می‌آید.
      • اگر کویری تک‌جدولی باشد و در WHERE شرطِ AND ی  _SrcTable LIKE '…' / = '…'  داشته باشد،
@@ -23,9 +30,8 @@
 const ALASQL_URL = 'https://cdn.jsdelivr.net/npm/alasql@4';
 const tick = () => new Promise(r => setTimeout(r, 8));
 const DEC = new TextDecoder();
-/* نگاشت قطعی ستون‌های Sanad (همان bina-sql-grid.js) */
-const SANAD_COLS = ['ShomarehSanad', 'Tarikh', 'KOl_Code', 'Moien_Code', 'Tafsil_Code', 'SharhSanad', 'Bedehkar', 'Bestankar'];
-const NUMERIC = new Set(['ShomarehSanad', 'KOl_Code', 'Moien_Code', 'Tafsil_Code', 'Bedehkar', 'Bestankar']);
+/* نام و نوع ستون‌ها از متادیتای IndexedDB می‌آید (استور columns در بانک public) — نه از کد */
+const isNumType = t => /^(int|bigint|smallint|tinyint|decimal|numeric|float|real|money)/i.test(String(t || ''));
 let alasqlLoading = null;
 function ensureAlasql() {
   if (typeof alasql !== 'undefined') return Promise.resolve();
@@ -52,6 +58,15 @@ function openDb(name) {
     q.onsuccess = () => res(q.result);
     q.onerror = () => rej(q.error);
     q.onblocked = () => rej(new Error('IndexedDB در تب دیگری بلوکه است.'));
+  });
+}
+/* همهٔ رکوردهای یک استور */
+function readAll(db, store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const rq = tx.objectStore(store).getAll();
+    tx.oncomplete = () => res(rq.result);
+    tx.onerror = tx.onabort = () => rej(tx.error || new Error('خطای IndexedDB'));
   });
 }
 /* ───────── تحلیل SQL ───────── */
@@ -136,7 +151,12 @@ class BinaLocalSql {
     this.onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
     this.cacheMaxRows = opts.cacheMaxRows || 2000000;   /* بیشتر از این → قدیمی‌ترین‌ها از رم خارج می‌شوند */
     this.queryMaxRows = opts.queryMaxRows || 4000000;   /* یک کویری بیشتر از این لازم داشت → خطا */
-    this.codingcolumns = opts.codingcolumns || null;    /* نام ستون‌های Coding، مثلاً ['Kol_Code','Onvan',…] */
+    this.titleCountry = opts.titleCountry === undefined ? 2 : opts.titleCountry;  /* countrycode رکوردهای tk_dic که caption آن نام فنی ستون است؛ null = همه */
+    this._metaDb = null;       /* نام دیتابیس public (دارای catalog و columns) */
+    this._layouts = new Map(); /* کلید خانواده (coding/sanad) → {names, row:[{n,num}], idName, sig} */
+    this._titles = new Map();  /* نام ستون → عنوان فارسی */
+    this._warns = [];          /* هشدارهای ساختاری (نمایش داده می‌شوند) */
+    this._notes = [];          /* پوشش عنوان‌ها و تعارض‌ها (فقط کنسول و warnings()) */
     this._src = null;      /* نام منبع → {table,family,year,company,parts,blocks} */
     this._cache = new Map();   /* نام منبع → {rows, t} */
     this._clock = 0;
@@ -156,7 +176,7 @@ class BinaLocalSql {
         const db = await openDb(info.name);
         try {
           const names = db.objectStoreNames;
-          if (findStore(names, 'catalog')) continue;                    /* public /   قدیمی */
+          if (findStore(names, 'catalog')) { if (findStore(names, 'columns')) this._metaDb = info.name; continue; }                    /* public /   قدیمی */
           for (const fam of ['Sanad', 'Coding']) {
             const store = findStore(names, fam);                        /* sanad هم قبول است */
             if (!store) continue;
@@ -180,6 +200,7 @@ class BinaLocalSql {
         } finally { db.close(); }
       }
       this._src = src;
+      await this._loadMeta();
     })().catch(e => { this._ready = null; throw e; });
     return this._ready;
   }
@@ -198,16 +219,93 @@ class BinaLocalSql {
   clear(name) {
     if (name == null) this._cache.clear(); else this._cache.delete(name);
   }
+  _warn(m) {
+    if (this._warns.indexOf(m) >= 0) return;
+    this._warns.push(m);
+    try { console.warn('[BinaLocalSql] ' + m); } catch (e) { /* noop */ }
+  }
+  _note(m) {
+    if (this._notes.indexOf(m) >= 0) return;
+    this._notes.push(m);
+    try { console.warn('[BinaLocalSql] ' + m); } catch (e) { /* noop */ }
+  }
+  _layoutFor(family) { return this._layouts.get(String(family).toLowerCase()) || null; }
+  /* متادیتا را از بانک public می‌خواند: columns (چیدمان) و tk_dic (عنوان فارسی). خطا کشنده نیست → C0… با هشدار */
+  async _loadMeta() {
+    this._layouts = new Map(); this._titles = new Map(); this._warns = []; this._notes = [];
+    if (!this._metaDb) { this._warn('بانک متادیتا (public با استورهای catalog و columns) پیدا نشد؛ ستون‌ها C0… نام می‌گیرند.'); return; }
+    let colRecs = [], dicRecs = [];
+    try {
+      const db = await openDb(this._metaDb);
+      try {
+        const cs = findStore(db.objectStoreNames, 'columns'), ds = findStore(db.objectStoreNames, 'tk_dic');
+        colRecs = cs ? await readAll(db, cs) : [];
+        dicRecs = ds ? await readAll(db, ds) : [];
+        if (!ds) this._note('استور tk_dic پیدا نشد؛ عنوان ستون‌ها همان نام فنی می‌ماند.');
+      } finally { db.close(); }
+    } catch (e) { this._warn('خواندن متادیتا ناموفق بود: ' + (e && e.message ? e.message : e)); return; }
+    /* ۱) چیدمان هر خانواده: columns منهای عضو idIndex */
+    for (const rec of colRecs) {
+      if (!rec || rec.key == null || !Array.isArray(rec.columns)) continue;
+      const cols = rec.columns.map(c => (typeof c === 'string' ? { name: c, type: '' } : c));
+      let idx = Number.isInteger(rec.idIndex) ? rec.idIndex : cols.findIndex(c => c && c.name === rec.idColumn);
+      if (idx >= cols.length) idx = -1;
+      const row = cols.filter((c, i) => i !== idx).map(c => ({ n: String(c.name), num: isNumType(c.type) }));
+      const idName = rec.idColumn || (idx >= 0 && cols[idx] ? String(cols[idx].name) : 'id');
+      this._layouts.set(String(rec.key).toLowerCase(), {
+        key: String(rec.key), row, idName,
+        sig: row.map(c => c.n + (c.num ? '#' : '')).join('|') + '@' + idName
+      });
+    }
+    if (!this._layouts.size) this._warn('استور columns خالی یا نامعتبر است؛ ستون‌ها C0… نام می‌گیرند.');
+    /* ۲) عنوان فارسی: lowercase(caption) = نام ستون ← fieldname (کوچک‌ترین key در تعارض) */
+    const wanted = new Map();
+    this._layouts.forEach(l => l.row.forEach(c => wanted.set(c.n.toLowerCase(), c.n)));
+    const best = new Map();
+    for (const rec of dicRecs) {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec)) continue;
+      if (this.titleCountry != null && String(rec.countrycode) !== String(this.titleCountry)) continue;
+      const cap = String(rec.caption == null ? '' : rec.caption).trim().toLowerCase();
+      const fa = String(rec.fieldname == null ? '' : rec.fieldname).trim();
+      if (!cap || !fa || !wanted.has(cap)) continue;
+      const prev = best.get(cap);
+      if (!prev) { best.set(cap, { fa, key: Number(rec.key) }); continue; }
+      if (prev.fa === fa) continue;
+      this._note('چند عنوان برای «' + wanted.get(cap) + '»: «' + prev.fa + '» و «' + fa + '» — عنوان با key کوچک‌تر می‌ماند.');
+      if (Number(rec.key) < prev.key) best.set(cap, { fa, key: Number(rec.key) });
+    }
+    const missing = [];
+    wanted.forEach((name, lower) => { const b = best.get(lower); if (b) this._titles.set(name, b.fa); else missing.push(name); });
+    if (missing.length) this._note('عنوان فارسی در tk_dic پیدا نشد برای ' + missing.length + ' ستون: ' + missing.join(', '));
+  }
+  /* بعد از سینک دوباره: چیدمان و عنوان‌ها دوباره خوانده شود؛ جدول‌های رم با چیدمان قدیمی در اولین استفاده کنار می‌روند */
+  async reloadMeta() { await this.init(); await this._loadMeta(); }
+  /* {نام ستون: عنوان فارسی} — برای گزینهٔ captions گرید */
+  captions() { const o = {}; this._titles.forEach((v, k) => { o[k] = v; }); return o; }
+  /* چیدمان یک خانواده: { idName, columns:[{name,type}] } یا null */
+  layout(family) {
+    const l = this._layoutFor(family);
+    return l ? { idName: l.idName, columns: l.row.map(c => ({ name: c.n, numeric: c.num })) } : null;
+  }
+  warnings() { return this._warns.concat(this._notes); }
   _toRows(src, ids, raw) {
-    const n = raw.length, out = new Array(n), name = src.table, isS = src.family === 'Sanad';
+    const n = raw.length, out = new Array(n), name = src.table;
+    const lay = this._layoutFor(src.family);
+    let cols = lay ? lay.row : null;
+    if (cols) {                                      /* هم‌ترازی: طول ردیف واقعی = ستون‌های چیدمان منهای id */
+      const first = raw.find(v => Array.isArray(v));
+      if (first && first.length !== cols.length) {
+        this._warn('طول ردیف ' + name + ' (' + first.length + ') با چیدمان ' + src.family + ' (' + cols.length + ' ستون بدون id) نمی‌خواند؛ ستون‌ها C0… نام می‌گیرند.');
+        cols = null;
+      }
+    }
+    const idName = lay ? lay.idName : 'Id';
     for (let i = 0; i < n; i++) {
-      const r = raw[i], o = { Id: ids ? ids[i] : null };
+      const r = raw[i], o = {};
+      o[idName] = ids ? ids[i] : null;
       if (Array.isArray(r)) {
-        if (isS) {
-          for (let c = 0; c < 8; c++) { const f = SANAD_COLS[c]; o[f] = NUMERIC.has(f) ? toNum(r[c]) : r[c]; }
-        } else {
-          for (let c = 0; c < r.length; c++) o[(this.codingcolumns && this.codingcolumns[c]) || 'C' + c] = r[c];
-        }
+        if (cols) { for (let c = 0; c < cols.length; c++) o[cols[c].n] = cols[c].num ? toNum(r[c]) : r[c]; }
+        else { for (let c = 0; c < r.length; c++) o['C' + c] = r[c]; }
       } else if (r && typeof r === 'object') Object.assign(o, r);
       o._SrcTable = name;
       out[i] = o;
@@ -216,8 +314,10 @@ class BinaLocalSql {
   }
   /* یک منبع (سال، شرکت) — فقط یک‌بار از IndexedDB */
   async _load(src, pos) {
+    const lay = this._layoutFor(src.family), sig = lay ? lay.sig : '';
     const hit = this._cache.get(src.table);
-    if (hit) { hit.t = ++this._clock; return { rows: hit.rows, fresh: false }; }
+    if (hit && hit.sig === sig) { hit.t = ++this._clock; return { rows: hit.rows, fresh: false }; }
+    if (hit) this._cache.delete(src.table);          /* چیدمان عوض شده → رم این جدول دوباره ساخته شود */
     const rows = [];
     for (const part of src.parts) {
       this._emit('خواندن ' + src.table + (pos ? ' (' + pos + ')' : '') + '…');
@@ -245,7 +345,7 @@ class BinaLocalSql {
         if (i + BATCH < vals.length) await tick();
       }
     }
-    this._cache.set(src.table, { rows, t: ++this._clock });
+    this._cache.set(src.table, { rows, t: ++this._clock, sig });
     return { rows, fresh: true };
   }
   _evict(keep) {
@@ -325,6 +425,7 @@ class BinaLocalSql {
       if (res && res.length && Array.isArray(res[0])) res = res[res.length - 1];
       res = res || [];
       if (res.length && (typeof res[0] !== 'object' || res[0] === null)) res = res.map(v => ({ Value: v }));
+      this._warns.forEach(w => { if (warnings.indexOf(w) < 0) warnings.push(w); });
       return { rows: res, ms: Math.round(performance.now() - t1), loadMs, used: [...used], loaded, warnings, sql };
     } finally {
       registered.forEach(n => { delete alasql.tables[n]; });
