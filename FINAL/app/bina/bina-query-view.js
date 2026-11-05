@@ -225,7 +225,7 @@ class BinaQueryView {
 
       /* hidden columns */
       try {
-        const order = this.grid.getcolumnOrder();
+        const order = this.grid.getColumnOrder();
         (d.hiddenColumns || []).forEach(f => {
           const c = order.find(x => x.field === f);
           if (c && c.visible) this.grid.togglecolumn(f);

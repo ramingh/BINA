@@ -19,6 +19,7 @@ const palettePopup = document.getElementById("palettePopup");
 const moreColorButton = document.getElementById("moreColorButton");
 const customColorInput = document.getElementById("customColorInput");
 const paletteSwatches = [...document.querySelectorAll(".palette-swatch")];
+
 function applyPaletteColor(color) {
   document.documentElement.style.setProperty("--palette-color", color);
   localStorage.setItem("sidebarPaletteColor", color);
@@ -55,6 +56,7 @@ const contentWelcome = document.getElementById("contentWelcome");
 const contentFrame = document.getElementById("contentFrame");
 const openTabs = new Map();
 let activeTabKey = "";
+
 function getMenuPath(menuItem) {
   const path = [];
   let currentElement = menuItem;
@@ -75,6 +77,7 @@ function getMenuPath(menuItem) {
   }
   return path;
 }
+
 function activateTab(tabKey) {
   activeTabKey = tabKey || "";
   openTabs.forEach((tabData, key) => {
@@ -83,9 +86,6 @@ function activateTab(tabKey) {
   const activeTab = openTabs.get(activeTabKey);
   contentWelcome.hidden = !!activeTab;
   contentFrame.hidden = !activeTab;
-      if (activeTab && contentFrame.dataset.page !== activeTab.page) {
-        contentFrame.src = activeTab.page;  // ← خط 87: صفحه در iframe لود می‌شود
-    }
   if (activeTab && contentFrame.dataset.page !== activeTab.page) {
     contentFrame.src = activeTab.page;
     contentFrame.dataset.page = activeTab.page;
@@ -96,6 +96,7 @@ function activateTab(tabKey) {
       inline: "nearest",
     });
 }
+
 function closeTab(tabKey) {
   const tabData = openTabs.get(tabKey);
   if (!tabData) return;
@@ -109,6 +110,7 @@ function closeTab(tabKey) {
   const nextIndex = Math.min(closedIndex, remainingKeys.length - 1);
   activateTab(remainingKeys[nextIndex] || "");
 }
+
 function openTab(menuItem) {
   const path = getMenuPath(menuItem);
   const title =
@@ -175,6 +177,7 @@ const languageStatus = document.getElementById("languageStatus");
 const sidebarToggleButton = document.getElementById("sidebarToggleButton");
 const statusDate = document.getElementById("statusDate");
 const statusTime = document.getElementById("statusTime");
+
 function updateStatusClock() {
   const locale = document.documentElement.lang === "en" ? "en-GB" : "fa-IR";
   const now = new Date();
@@ -189,13 +192,15 @@ function updateStatusClock() {
     second: "2-digit",
   }).format(now);
 }
+
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem("sidebarTheme", theme);
 }
+
 function applyLanguage(language) {
-  const isRtl = language === "fa" || language === "ar";   // fa و ar هر دو RTL
-  const isPersian = language === "fa";                     // فقط برای متن‌های فارسی
+  const isRtl = language === "fa" || language === "ar"; // fa و ar هر دو RTL
+  const isPersian = language === "fa"; // فقط برای متن‌های فارسی
   document.documentElement.lang = language;
   document.documentElement.dir = isRtl ? "rtl" : "ltr";
   localStorage.setItem("sidebarLanguage", language);
@@ -206,13 +211,18 @@ function applyLanguage(language) {
     );
   });
   languageButton.title = isPersian ? "زبان" : "Language";
-  languageStatus.textContent = isPersian ? "فارسی" : (language === "ar" ? "العربية" : "English");
+  languageStatus.textContent = isPersian ?
+    "فارسی" :
+    language === "ar" ?
+    "العربية" :
+    "English";
   themeButton.title = isPersian ? "شب / روز" : "Dark / Light";
-  sidebarToggleButton.title = isPersian
-     ? "باز / بسته کردن سایدبار"
-    : "Toggle sidebar";
+  sidebarToggleButton.title = isPersian ?
+    "باز / بسته کردن سایدبار" :
+    "Toggle sidebar";
   updateStatusClock();
 }
+
 function applySidebarState(collapsed) {
   appLayout.classList.toggle("is-sidebar-collapsed", collapsed);
   localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");

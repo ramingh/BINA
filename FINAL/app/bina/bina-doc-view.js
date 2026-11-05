@@ -154,7 +154,7 @@ const t1 = performance.now();
 await this.grid.setData(r.rows, 'Sanad');
 const gridMs = Math.round(performance.now() - t1);
 try {
-const order = this.grid.getcolumnOrder();
+const order = this.grid.getColumnOrder();
 this.hiddencolumns.forEach(f => {
 const c = order.find(x => x.field === f);
 if (c && c.visible) this.grid.togglecolumn(f);
