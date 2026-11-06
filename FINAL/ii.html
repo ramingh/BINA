@@ -1,268 +1,57 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
-  <meta charset="UTF-8">
-  <script>/* inline direction script */</script>
-  <link rel="stylesheet" href="style.css">
-</head>
+    <meta charset="UTF-8">
+    <title>تست تراز حساب‌ها - بینا</title>
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+    <!-- استایل‌ها و کتابخانه‌های پایه -->
+    <link rel="stylesheet" href="../FINAL/style.css">
+    <script src="../FINAL/app/bina/alasql.min.js"></script>
+    <script src="../FINAL/app/bina/bina-grid.js"></script>
+    <script src="../FINAL/app/bina/bina-local-sql.js"></script>
+    <script src="../FINAL/app/bina/bina-query-view.js"></script>
+    <script src="../FINAL/app/bina/bina-page.js"></script>
+    
+    <!-- بارگذاری دیسکریپتور تراز حساب‌ها -->
+    <script src="../trial-balance-desc.js"></script>
 
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #f1f5f9;
+            box-sizing: border-box;
+            height: 100vh;
+        }
+        /* کانتینر اصلی ویو که ارتفاع صفحه را کامل پر می‌کند بدون اسکرول بیرونی */
+        #view {
+            height: calc(100vh - 30px);
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 10px;
+        }
+    </style>
+</head>
 <body>
 
-  <div class="tabulator-headers" role="row" style="margin-left: 16px; height: 73px;">
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Id" style="min-width: 75px; width: 100px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Id</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Goroh_Asli" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Goroh_Asli</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="KOL_Code" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">KOL_Code</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="KOL_Onvan" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">KOL_Onvan</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="MOien_Code" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">MOien_Code</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="MOien_Onvan" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">MOien_Onvan</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Code" style="min-width: 85px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Code</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Onvan" style="min-width: 120px; width: 300px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Onvan</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Kol_Code_Standard" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Kol_Code_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Kol_Onvan_Standard" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Kol_Onvan_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Moien_Code_Standard" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Moien_Code_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Moien_Onvan_Standard" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Moien_Onvan_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Code_Standard" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Code_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Onvan_Standard" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Onvan_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Code1_Standard" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Code1_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Onvan1_Standard" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Onvan1_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Code2_Standard" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Code2_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="Tafsil_Onvan2_Standard" style="min-width: 110px; width: 240px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">Tafsil_Onvan2_Standard</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-    <div class="tabulator-col tabulator-sortable tabulator-col-sorter-element" role="columnheader" aria-sort="none"
-      tabulator-field="CodeKarbar" style="min-width: 80px; width: 130px; height: 73px;">
-      <div class="tabulator-col-content">
-        <div class="tabulator-col-title-holder">
-          <div class="tabulator-col-title" style="text-align: center;">CodeKarbar</div>
-          <div class="tabulator-col-sorter">
-            <div class="tabulator-arrow"></div>
-          </div>
-        </div>
-        <div class="tabulator-header-filter"><input type="search" placeholder="فیلتر…"
-            style="padding: 4px; width: 100%; box-sizing: border-box;"></div>
-      </div>
-    </div><span class="tabulator-col-resize-handle" style="height: 73px;"></span>
-  </div>
+    <!-- المان هدف برای مانت شدن ویو -->
+    <div id="view"></div>
 
-
-
-  <script src="app.js"></script>
-  <script src="Dic_sek.Js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // راه‌اندازی و اتصال صفحه با شناسه دیسکریپتور
+                await BinaPage.mount('trial-balance', {
+                    target: '#view'
+                });
+                console.log('✅ نمای تراز حساب‌ها با موفقیت بارگذاری شد.');
+            } catch (err) {
+                console.error('❌ خطا در بارگذاری نما:', err);
+            }
+        });
+    </script>
 </body>
-
 </html>

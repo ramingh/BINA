@@ -39,9 +39,16 @@ bina-pages.js — توصیف‌گر (descriptor) هر منو
     title: 'کدینگ شرکتها',
     family: 'Coding',
     params: ['company'],
-    textParams: [
-      { key: 'kOlCode', label: 'کد کل', placeholder: 'مثلاً 11' },
-      { key: 'mOienCode', label: 'کد معین', placeholder: 'مثلاً 1103' }
+    textParams: [{
+        key: 'kOlCode',
+        label: 'کد کل',
+        placeholder: 'مثلاً 11'
+      },
+      {
+        key: 'mOienCode',
+        label: 'کد معین',
+        placeholder: 'مثلاً 1103'
+      }
     ],
     sql: "SELECT * FROM Coding_{company} WHERE kol_code = {kOlCode} AND moien_code = {mOienCode}",
     hiddenColumns: ['_SrcTable']

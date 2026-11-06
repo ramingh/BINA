@@ -8,6 +8,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 (function (root) {
   'use strict';
+
   function parentBank() {
     try {
       return root.parent && root.parent !== root && root.parent.BinaBank ? root.parent.BinaBank : null;
@@ -15,6 +16,7 @@
       return null;
     } /* parent از origin دیگر */
   }
+
   function parentLang() {
     try {
       return root.parent && root.parent !== root ? root.parent.document.documentElement.lang : '';
@@ -59,9 +61,11 @@
           const lang = parentLang();
           if (lang && lang !== 'fa') root.translator.setLanguage(lang);
         }).catch(() => {
-          /* مترجم اختیاری است */ });
+          /* مترجم اختیاری است */
+        });
       } catch (e) {
-        /* noop */ }
+        /* noop */
+      }
     },
     whenReady() {
       return this._ready || Promise.resolve();

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>تست گردش حساب</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; padding: 20px; background: #f5f5f5; }
+    .controls {
+      background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+      display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+    }
+    select, button {
+      padding: 8px 14px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;
+    }
+    button { background: #2563eb; color: white; border: none; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    #status { margin: 10px 0; font-size: 14px; color: #333; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+    th { background: #1e293b; color: white; position: sticky; top: 0; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .number { direction: ltr; text-align: left; }
+  </style>
+</head>
+<body>
+
+  <h2>تست گردش و مانده حساب</h2>
+
+  <div class="controls">
+    <label>
+      شرکت:
+      <select id="company" style="min-width: 260px;"></select>
+    </label>
+
+    <label>
+      سال مالی:
+      <select id="year"></select>
+    </label>
+
+    <button onclick="runQuery()">اجرای کوئری</button>
+  </div>
+
+  <div id="status">در حال بارگذاری...</div>
+
+  <div style="max-height: 70vh; overflow: auto;">
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>کد حساب</th>
+          <th>عنوان حساب</th>
+          <th>گردش بدهکار</th>
+          <th>گردش بستانکار</th>
+          <th>مانده بدهکار</th>
+          <th>مانده بستانکار</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="../app/bina/bina-local-sql.js"></script>
+
+  <script>
+    let engine = null;
+
+    // ---------- خواندن لیست شرکت‌ها از tk_sherkat ----------
+    async function getCompanyList() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('public');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = (e) => {
+          const db = e.target.result;
+          const storeName = Array.from(db.objectStoreNames)
+            .find(n => n.toLowerCase() === 'tk_sherkat');
+          if (!storeName) { db.close(); return resolve([]); }
+
+          const tx = db.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const companies = [];
+
+          store.openCursor().onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+              const row = cursor.value;
+              let code, name, type;
+              if (Array.isArray(row)) {
+                code = row[0]; name = row[1]; type = row[2];
+              } else {
+                code = row.codesherkat ?? row.Codesherkat ?? row.code;
+                name = row.esmsherkat ?? row.Esmsherkat ?? row.name;
+                type = row.noesherkat ?? row.Noesherkat ?? '';
+              }
+              if (code) {
+                companies.push({
+                  code: String(code),
+                  name: name || String(code),
+                  type: type || ''
+                });
+              }
+              cursor.continue();
+            } else {
+              db.close();
+              companies.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+              resolve(companies);
+            }
+          };
+        };
+      });
+    }
+
+    // ---------- موتور ----------
+    async function initEngine() {
+      if (engine) return engine;
+      engine = new BinaLocalSql();
+      await engine.init();
+      return engine;
+    }
+
+    // ---------- پر کردن کمبوها ----------
+    async function loadFilters() {
+      const status = document.getElementById('status');
+      try {
+        const eng = await initEngine();
+        const sources = await eng.sources();
+        const companiesFromData = [...new Set(
+          sources.filter(s => s.family === 'Sanad').map(s => String(s.company))
+        )];
+
+        const companyList = await getCompanyList();
+
+        // فقط شرکت‌هایی که واقعاً داده Sanad دارند
+        const available = companyList.filter(c => companiesFromData.includes(c.code));
+
+        const companySelect = document.getElementById('company');
+        companySelect.innerHTML = available.map(c =>
+          `<option value="${c.code}">${c.code} - ${c.name}</option>`
+        ).join('');
+
+        const years = [...new Set(
+          sources.filter(s => s.family === 'Sanad').map(s => String(s.year))
+        )].sort();
+
+        document.getElementById('year').innerHTML =
+          years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+        status.textContent = `آماده | ${available.length} شرکت | ${years.length} سال`;
+      } catch (err) {
+        status.textContent = 'خطا در بارگذاری فیلترها: ' + err.message;
+        console.error(err);
+      }
+    }
+
+    function formatNumber(n) {
+      if (n == null) return '0';
+      return Number(n).toLocaleString('en-US');
+    }
+
+    // ---------- اجرای کوئری ----------
+    async function runQuery() {
+      const company = document.getElementById('company').value;
+      const year = document.getElementById('year').value;
+      const status = document.getElementById('status');
+      const tbody = document.querySelector('#resultTable tbody');
+
+      status.textContent = 'در حال اجرا...';
+      tbody.innerHTML = '';
+
+      try {
+        const eng = await initEngine();
+        const sanadTable = `Sanad_${year}_${company}`;
+        const codingTable = `Coding_${company}`;
+
+        console.time('کل');
+
+        const sql = `
+          SELECT 
+            kol_code, moien_code, tafsil_code,
+            CONCAT(kol_code, ' - ', moien_code, ' - ', tafsil_code) AS code_hesab,
+            SUM(bedehkar) AS gardesh_bedehkar,
+            SUM(bestankar) AS gardesh_bestankar,
+            CASE WHEN SUM(bedehkar - bestankar) > 0 THEN SUM(bedehkar - bestankar) ELSE 0 END AS mandeh_bedehkar,
+            CASE WHEN SUM(bestankar - bedehkar) > 0 THEN SUM(bestankar - bedehkar) ELSE 0 END AS mandeh_bestankar
+          FROM ${sanadTable}
+          GROUP BY kol_code, moien_code, tafsil_code
+          ORDER BY kol_code, moien_code, tafsil_code
+        `;
+
+        const result = await eng.query(sql);
+
+        // عنوان‌ها
+        const codingData = await eng.rows(codingTable);
+        const titleMap = new Map();
+        for (const row of codingData.rows) {
+          const key = `${row.kol_code}|${row.moien_code}|${row.tafsil_code}`;
+          titleMap.set(key, {
+            kol_onvan: row.kol_onvan || '',
+            moien_onvan: row.moien_onvan || '',
+            tafsil_onvan: row.tafsil_onvan || ''
+          });
+        }
+
+        for (const row of result.rows) {
+          const key = `${row.kol_code}|${row.moien_code}|${row.tafsil_code}`;
+          const title = titleMap.get(key) || {};
+          row.onvan_hesab = [title.kol_onvan, title.moien_onvan, title.tafsil_onvan]
+            .filter(Boolean).join(' - ');
+        }
+
+        console.timeEnd('کل');
+
+        const companyName = document.getElementById('company').selectedOptions[0]?.text || company;
+        status.textContent = `${companyName} | سال ${year} | ${result.rows.length} ردیف | ${result.ms} ms`;
+
+        const fragment = document.createDocumentFragment();
+        for (const row of result.rows) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.code_hesab}</td>
+            <td>${row.onvan_hesab || '-'}</td>
+            <td class="number">${formatNumber(row.gardesh_bedehkar)}</td>
+            <td class="number">${formatNumber(row.gardesh_bestankar)}</td>
+            <td class="number">${formatNumber(row.mandeh_bedehkar)}</td>
+            <td class="number">${formatNumber(row.mandeh_bestankar)}</td>
+          `;
+          fragment.appendChild(tr);
+        }
+        tbody.appendChild(fragment);
+
+      } catch (err) {
+        console.error(err);
+        status.textContent = 'خطا: ' + err.message;
+      }
+    }
+
+    // شروع
+    loadFilters();
+  </script>
+</body>
+</html>
