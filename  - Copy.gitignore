@@ -1,0 +1,12 @@
+# فولدرها
+node_modules/
+docs/
+.env
+*.log
+bin/
+obj/
+# فایل خاص
+config.local.json
+Web.config
+# همه فایل‌های یه مدل
+*.bak
