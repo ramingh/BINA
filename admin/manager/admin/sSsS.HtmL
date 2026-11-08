@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>تراز آزمایشی</title>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+  <script src="./sql/DataDecompressor.js"></script>
+  <script src="./sql/BinaDBManager.js"></script>
+  <script src="./sql/BinaReportEngine.js"></script>
+   <script src="../../../FINAL/app/bina/bina-grid.js"></script>
+  <style>
+    body { font-family: Tahoma, sans-serif; padding: 20px; background: #f8fafc; }
+    .toolbar { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    .toolbar label { margin-left: 15px; font-weight: bold; }
+    #gridContainer { min-height: 500px; background: #fff; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>تراز آزمایشی</h2>
+  
+  <div class="toolbar">
+    <label>سطح:
+      <input type="radio" name="level" value="kol" checked> تراز کل
+      <input type="radio" name="level" value="moien"> تراز معین
+      <input type="radio" name="level" value="tafsil"> تراز تفصیل
+    </label>
+    <button id="runBtn" onclick="runTaraz()">نمایش</button>
+    <span id="status"></span>
+  </div>
+  
+  <div id="gridContainer"></div>
+  
+  <script>
+    let grid = null;
+    const engine = new BinaReportEngine();
+    
+    async function runTaraz() {
+      const level = document.querySelector('input[name="level"]:checked').value;
+      const status = document.getElementById('status');
+      status.textContent = 'در حال بارگذاری...';
+      
+      try {
+        const rows = await engine.execute({
+          reportType: 'taraz',
+          companyCode: '1400',
+          fiscalYear: 1395,
+          level: level
+        });
+        
+        status.textContent = `✅ ${rows.length} ردیف`;
+        
+        if (grid) {
+          grid.destroy();
+          document.getElementById('gridContainer').innerHTML = '';
+        }
+        
+        // عنوان ستون‌ها بر اساس سطح
+        const captions = {
+          CodeHesab: 'کد حساب',
+          OnvanHesab: 'عنوان حساب',
+          GardeshBedehkar: 'گردش بدهکار',
+          GardeshBestankar: 'گردش بستانکار',
+          MandehBedehkar: 'مانده بد',
+          MandehBestankar: 'مانده بس'
+        };
+        
+        grid = new BinaGrid('#gridContainer', {
+          pageSize: 500,
+          height: '500px',
+          captions: captions,
+          // فقط ستون‌های مربوط به سطح را نشان بده
+          hiddenColumns: level === 'kol' 
+            ? ['KOl_Code', 'Moien_Code', 'Tafsil_Code', 'KOl_Onvan', 'Moien_Onvan', 'Tafsil_Onvan', 'EsmSherkat', 'SalMali']
+            : level === 'moien'
+            ? ['Moien_Code', 'Tafsil_Code', 'KOl_Onvan', 'Moien_Onvan', 'Tafsil_Onvan', 'EsmSherkat', 'SalMali']
+            : ['Tafsil_Code', 'KOl_Onvan', 'Moien_Onvan', 'Tafsil_Onvan', 'EsmSherkat', 'SalMali']
+        });
+        
+        await grid.setData(rows, `Taraz_${level}`, { own: true });
+      } catch (err) {
+        status.textContent = '❌ ' + err.message;
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

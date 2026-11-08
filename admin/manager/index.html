@@ -373,7 +373,7 @@
       </div>
       <div class="row" style="margin-top:10px"><label class="hint" for="endpointField">آدرس WebService:</label><input
           id="endpointField" style="width:min(700px,100%);direction:ltr"
-          value="http://localhost/grid/final/FastDataHandler.ashx"><button class="secondary" id="saveEndpoint">ثبت آدرس و
+          value="http://localhost/grid/FastDataHandler.ashx"><button class="secondary" id="saveEndpoint">ثبت آدرس و
           بازخوانی صفحه</button></div>
       <div class="hint">ابتدا تمام جدول‌های tk_* از سرور دریافت و کنترل می‌شوند؛ سپس فهرست و دو Schema مشترک آماده
         می‌شوند. اگر TK ناقص باشد، دریافت اسناد شروع نمی‌شود. آدرس سرویس را در همین بخش تنظیم کنید.</div>
@@ -501,7 +501,7 @@
         return;
       }
       // endpoint در کد ثابت است
-      const ENDPOINT = localStorage.getItem('bina_manager_endpoint') || "http://localhost/grid/final/FastDataHandler.ashx";
+      const ENDPOINT = localStorage.getItem('bina_manager_endpoint') || "http://localhost/grid/FastDataHandler.ashx";
       $("endpointField").value = ENDPOINT;
       $("saveEndpoint").onclick = () => {
         const text = $("endpointField").value.trim();
@@ -826,6 +826,11 @@
         log("صفحه آماده است.");
       })();
     })();
+
+    // قبل از ساخت Tabulator، ارتفاع کانتینر را بگیرید
+
+
+
   </script>
 </body>
 </html>

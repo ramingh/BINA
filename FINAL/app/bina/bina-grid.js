@@ -20,15 +20,25 @@
 (function (global) {
   'use strict';
   /* ═══════════════ ۱) فانکشن‌های کمکی (توابع آزاد، قابل استفادهٔ مستقل) ═══════════════ */
-  const FONT = { default: 11, min: 8, max: 12, fitTolerance: 1, precision: 10 };
+  const FONT = {
+    default: 11,
+    min: 8,
+    max: 12,
+    fitTolerance: 1,
+    precision: 10
+  };
   const DEFAULT_FG = '#2d4355';
   const DEFAULT_BG = '#f7fafc';
   const EXPORT = {
-    headerRow: 3,          /* ردیف هدر در فایل Excel */
-    dataRow: 4,            /* شروع داده در فایل Excel */
-    excelWidthFactor: 7,   /* تبدیل px به واحد عرض Excel */
-    pxToPoint: 0.75,       /* تبدیل px به pt برای فونت Excel */
-    csvBom: '\ufeff'       /* BOM برای سازگاری Excel با UTF-8 فارسی */
+    headerRow: 3,
+    /* ردیف هدر در فایل Excel */
+    dataRow: 4,
+    /* شروع داده در فایل Excel */
+    excelWidthFactor: 7,
+    /* تبدیل px به واحد عرض Excel */
+    pxToPoint: 0.75,
+    /* تبدیل px به pt برای فونت Excel */
+    csvBom: '\ufeff' /* BOM برای سازگاری Excel با UTF-8 فارسی */
   };
   /* ═══════ ستون‌های عددی که نباید جمع فوتر بگیرند ═══════ */
   const NO_SUM_FIELDS = new Set([
@@ -43,7 +53,9 @@
     return num.toLocaleString('en-US');
   }
   /** عدد فارسی برای UI */
-  function faNum(n) { return Number(n).toLocaleString('fa-IR'); }
+  function faNum(n) {
+    return Number(n).toLocaleString('fa-IR');
+  }
   /** ایمن‌سازی HTML برای نمایش متن خام */
   function escHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -55,7 +67,9 @@
       (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)));
   }
   /** آیا مقدار خالی است؟ */
-  function isBlank(v) { return v === null || v === undefined || v === ''; }
+  function isBlank(v) {
+    return v === null || v === undefined || v === '';
+  }
   /** تشخیص خودکار نوع ستون: عددی/متنی — از روی حداکثر ۲۰۰ ردیف نمونه */
   function inferKind(field, rows) {
     const preset = (arguments[2] || null); /* پریست اختیاری از بیرون */
@@ -105,13 +119,18 @@
   function copyTextToClipboard(text) {
     return new Promise(function (resolve, reject) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () { resolve(true); })
-          .catch(function () { legacyCopy(text) ? resolve(true) : reject(new Error('کپی ممکن نشد')); });
+        navigator.clipboard.writeText(text).then(function () {
+            resolve(true);
+          })
+          .catch(function () {
+            legacyCopy(text) ? resolve(true) : reject(new Error('کپی ممکن نشد'));
+          });
       } else {
         legacyCopy(text) ? resolve(true) : reject(new Error('کپی ممکن نشد'));
       }
     });
   }
+
   function legacyCopy(text) {
     try {
       const ta = document.createElement('textarea');
@@ -123,7 +142,9 @@
       const ok = document.execCommand('copy');
       ta.remove();
       return ok;
-    } catch (e) { return false; }
+    } catch (e) {
+      return false;
+    }
   }
   /** رنگ hex شش‌رقمی تمیز برای Excel */
   function normalizeHex(color, fallback) {
@@ -134,29 +155,44 @@
   /** اجازهٔ رندر به مرورگر بین دو کار سنگین */
   function yieldToUi() {
     return new Promise(function (resolve) {
-      requestAnimationFrame(function () { setTimeout(resolve, 0); });
+      requestAnimationFrame(function () {
+        setTimeout(resolve, 0);
+      });
     });
   }
   /* ═══════════════ ۲) EventBus — رویدادهای عمومی کامپوننت ═══════════════ */
   class EventBus {
-    constructor() { this._map = new Map(); }
+    constructor() {
+      this._map = new Map();
+    }
     /** ثبت شنونده — خروجی: تابع لغو */
     on(name, fn) {
       if (!this._map.has(name)) this._map.set(name, new Set());
       this._map.get(name).add(fn);
       const self = this;
-      return function () { self.off(name, fn); };
+      return function () {
+        self.off(name, fn);
+      };
     }
     /** شنوندهٔ یک‌بارمصرف */
     once(name, fn) {
-      const off = this.on(name, function (payload) { off(); fn(payload); });
+      const off = this.on(name, function (payload) {
+        off();
+        fn(payload);
+      });
       return off;
     }
-    off(name, fn) { if (this._map.has(name)) this._map.get(name).delete(fn); }
+    off(name, fn) {
+      if (this._map.has(name)) this._map.get(name).delete(fn);
+    }
     emit(name, payload) {
       if (!this._map.has(name)) return;
       this._map.get(name).forEach(function (fn) {
-        try { fn(payload); } catch (e) { console.error('[BinaGrid] event handler error:', name, e); }
+        try {
+          fn(payload);
+        } catch (e) {
+          console.error('[BinaGrid] event handler error:', name, e);
+        }
       });
     }
   }
@@ -180,45 +216,58 @@
       cellElement.style.backgroundColor = state.background || '';
       const text = document.createElement('div');
       text.className = 'smart ' + (this.grid.columnKind(definition) === 'number' ? 'num' : 'text');
-      text.style.fontSize = FONT.default + 'px';
+      text.style.fontSize = FONT.default+'px';
       text.dataset.fontSize = String(FONT.default);
       text.dataset.lines = '1';
       const self = this;
-      requestAnimationFrame(function () { self.scheduleCell(cell); });
+      // requestAnimationFrame(function () {self.scheduleCell(cell);});
       const value = cell.getValue();
       text.textContent = this.grid.columnKind(definition) === 'number' ? formatNumber(value) : (value ?? '');
       return text;
     }
+ 
     scheduleCell(cell) {
       this.pending.add(cell);
       if (!this.frame) {
         const self = this;
-        this.frame = requestAnimationFrame(function () { self.flush(); });
+        this.frame = requestAnimationFrame(function () {
+          self.flush();
+        });
       }
     }
     scheduleColumn(column) {
       const self = this;
-      column.getCells().forEach(function (c) { self.scheduleCell(c); });
+      column.getCells().forEach(function (c) {
+        self.scheduleCell(c);
+      });
     }
     scheduleVisibleRows() {
       const self = this;
       this.grid.table.getRows('visible').forEach(function (row) {
-        row.getCells().forEach(function (c) { self.scheduleCell(c); });
+        row.getCells().forEach(function (c) {
+          self.scheduleCell(c);
+        });
       });
     }
     /** محاسبهٔ فونت/خطوط یک سلول — خروجی: {row, layoutChanged} */
     updateSmartCell(cell) {
       const cellElement = cell.getElement();
-      if (!cellElement || !cellElement.isConnected) return { row: null, layoutChanged: false };
+      if (!cellElement || !cellElement.isConnected) return {
+        row: null,
+        layoutChanged: false
+      };
       const textElement = cellElement.querySelector('.smart');
-      if (!textElement) return { row: null, layoutChanged: false };
+      if (!textElement) return {
+        row: null,
+        layoutChanged: false
+      };
       const definition = cell.getColumn().getDefinition();
       const kind = this.grid.columnKind(definition);
       const oldFontSize = Number(textElement.dataset.fontSize || FONT.default);
       const oldLines = Number(textElement.dataset.lines || 1);
       /* فیت فونت: کوچک‌سازی تا حداقل ۸px */
       textElement.classList.remove('w2', 'w3');
-      textElement.style.fontSize = FONT.default + 'px';
+      textElement.style.fontSize = FONT.default+'px';
       const availableWidth = textElement.clientWidth;
       const requiredWidth = textElement.scrollWidth;
       let fontSize = FONT.default;
@@ -239,7 +288,10 @@
       textElement.dataset.fontSize = String(fontSize);
       textElement.dataset.lines = String(lineCount);
       const layoutChanged = oldLines !== lineCount || (lineCount > 1 && oldFontSize !== fontSize);
-      return { row: cell.getRow(), layoutChanged: layoutChanged };
+      return {
+        row: cell.getRow(),
+        layoutChanged: layoutChanged
+      };
     }
     /** هم‌ترازی ارتفاع سلول‌های یک ردیف با بلندترین سلول */
     normalizeRow(row) {
@@ -260,7 +312,9 @@
           el.style.height = rowHeight + 'px';
           el.style.minHeight = rowHeight + 'px';
         });
-      } catch (e) { /* Virtual DOM ممکن است ردیف را بین دو فریم حذف کند */ }
+      } catch (e) {
+        /* Virtual DOM ممکن است ردیف را بین دو فریم حذف کند */
+      }
     }
     /** rowFormatter — حفظ پیوستگی خطوط عمودی با Virtual DOM */
     syncRowHeight(row) {
@@ -278,7 +332,9 @@
               el.style.minHeight = rowHeight + 'px';
             }
           });
-        } catch (e) { /* row recycled */ }
+        } catch (e) {
+          /* row recycled */
+        }
       });
     }
     flush() {
@@ -290,7 +346,9 @@
         if (result.row && result.layoutChanged) rows.add(result.row);
       });
       this.pending.clear();
-      rows.forEach(function (row) { self.normalizeRow(row); });
+      rows.forEach(function (row) {
+        self.normalizeRow(row);
+      });
     }
   }
   /* ═══════════════ ۴) ColumnManagerPanel — پنل مدیریت ستون‌ها ═══════════════
@@ -299,7 +357,12 @@
   class ColumnManagerPanel {
     constructor(grid) {
       this.grid = grid;
-      this.dragState = { active: false, pointerId: null, offsetX: 0, offsetY: 0 };
+      this.dragState = {
+        active: false,
+        pointerId: null,
+        offsetX: 0,
+        offsetY: 0
+      };
       this._buildDom();
       this._bind();
     }
@@ -325,27 +388,47 @@
     }
     _bind() {
       const self = this;
-      this.panel.querySelector('.bina-cm-close').addEventListener('click', function () { self.close(); });
-      this.panel.querySelector('.bina-cm-reset').addEventListener('click', function () { self.reset(); });
-      this.overlay.addEventListener('click', function () { self.close(); });
-      this.header.addEventListener('pointerdown', function (e) { self._startDrag(e); });
-      this.header.addEventListener('pointermove', function (e) { self._moveDrag(e); });
-      this.header.addEventListener('pointerup', function (e) { self._stopDrag(e); });
-      this.header.addEventListener('pointercancel', function (e) { self._stopDrag(e); });
+      this.panel.querySelector('.bina-cm-close').addEventListener('click', function () {
+        self.close();
+      });
+      this.panel.querySelector('.bina-cm-reset').addEventListener('click', function () {
+        self.reset();
+      });
+      this.overlay.addEventListener('click', function () {
+        self.close();
+      });
+      this.header.addEventListener('pointerdown', function (e) {
+        self._startDrag(e);
+      });
+      this.header.addEventListener('pointermove', function (e) {
+        self._moveDrag(e);
+      });
+      this.header.addEventListener('pointerup', function (e) {
+        self._stopDrag(e);
+      });
+      this.header.addEventListener('pointercancel', function (e) {
+        self._stopDrag(e);
+      });
     }
-    isOpen() { return this.panel.classList.contains('open'); }
+    isOpen() {
+      return this.panel.classList.contains('open');
+    }
     open() {
       this.build();
       this.panel.classList.add('open');
       this.overlay.classList.add('open');
       this.panel.setAttribute('aria-hidden', 'false');
-      this.grid.emit('columnManagerToggled', { open: true });
+      this.grid.emit('columnManagerToggled', {
+        open: true
+      });
     }
     close() {
       this.panel.classList.remove('open');
       this.overlay.classList.remove('open');
       this.panel.setAttribute('aria-hidden', 'true');
-      this.grid.emit('columnManagerToggled', { open: false });
+      this.grid.emit('columnManagerToggled', {
+        open: false
+      });
     }
     /** ساخت ردیف‌های پنل از ستون‌های فعلی گرید */
     build() {
@@ -365,7 +448,8 @@
         name.title = field;
         const visible = self._checkbox(state.visible, function () {
           state.visible = visible.checked;
-          if (visible.checked) column.show(); else column.hide();
+          if (visible.checked) column.show();
+          else column.hide();
         });
         const frozen = self._checkbox(state.frozen, function () {
           frozen.disabled = true;
@@ -386,7 +470,9 @@
     }
     /** فریز بازه‌ای: همهٔ ستون‌ها تا ستون هدف (شامل خودش) یخ می‌زنند؛ unchecked = آب‌کردن */
     async setFrozenRange(targetField, checked) {
-      const fields = this.grid.getManagedcolumns().map(function (c) { return c.getField(); });
+      const fields = this.grid.getManagedcolumns().map(function (c) {
+        return c.getField();
+      });
       const selectedIndex = fields.indexOf(targetField);
       if (selectedIndex < 0) return;
       const frozenThrough = checked ? selectedIndex : selectedIndex - 1;
@@ -398,7 +484,9 @@
         if (!column) continue;
         const isFrozen = column.getDefinition().frozen === true;
         if (isFrozen !== state.frozen) {
-          await column.updateDefinition({ frozen: state.frozen });
+          await column.updateDefinition({
+            frozen: state.frozen
+          });
         }
       }
       requestAnimationFrame(() => this.grid.smart.scheduleVisibleRows());
@@ -425,7 +513,9 @@
         state.foreground = null;
         state.background = null;
         column.show();
-        if (column.getDefinition().frozen) await column.updateDefinition({ frozen: false });
+        if (column.getDefinition().frozen) await column.updateDefinition({
+          frozen: false
+        });
         column.getCells().forEach(function (cell) {
           const el = cell.getElement();
           el.style.color = '';
@@ -522,9 +612,19 @@
     serializableFilters() {
       try {
         return this.grid.table.getFilters()
-          .filter(function (f) { return typeof f.type !== 'function'; })
-          .map(function (f) { return { field: f.field, type: f.type, value: f.value }; });
-      } catch (e) { return []; }
+          .filter(function (f) {
+            return typeof f.type !== 'function';
+          })
+          .map(function (f) {
+            return {
+              field: f.field,
+              type: f.type,
+              value: f.value
+            };
+          });
+      } catch (e) {
+        return [];
+      }
     }
     /** حذف title از چیدمان — عنوان همیشه از نام فیلد می‌آید (تک‌منبع حقیقت) */
     sanitizeLayout(layout) {
@@ -539,8 +639,12 @@
     /** آیا فیلدهای ذخیره‌شده با گرید فعلی یکی است؟ (شرط restore) */
     layoutMatches(saved) {
       if (!saved || !Array.isArray(saved.columnLayout)) return false;
-      const savedFields = saved.columnLayout.map(function (c) { return c && c.field; }).filter(Boolean).sort();
-      const currentFields = this.grid.getManagedcolumns().map(function (c) { return c.getField(); }).sort();
+      const savedFields = saved.columnLayout.map(function (c) {
+        return c && c.field;
+      }).filter(Boolean).sort();
+      const currentFields = this.grid.getManagedcolumns().map(function (c) {
+        return c.getField();
+      }).sort();
       if (currentFields.length !== savedFields.length) return false;
       for (let i = 0; i < currentFields.length; i++) {
         if (currentFields[i] !== savedFields[i]) return false;
@@ -566,10 +670,16 @@
         columnLayout: this.sanitizeLayout(grid.table.getColumnLayout()),
         customcolumns: customcolumns,
         headerFilters: grid.table.getHeaderFilters().map(function (f) {
-          return { field: f.field, value: f.value };
+          return {
+            field: f.field,
+            value: f.value
+          };
         }),
         sorters: grid.table.getSorters().map(function (s) {
-          return { column: s.field, dir: s.dir };
+          return {
+            column: s.field,
+            dir: s.dir
+          };
         }),
         filters: this.serializableFilters()
       };
@@ -589,8 +699,11 @@
       const key = this.key();
       const payload = this.collect();
       this.timer = setTimeout(function () {
-        try { localStorage.setItem(key, JSON.stringify(payload)); }
-        catch (e) { console.warn('[BinaGrid] settings save failed', e); }
+        try {
+          localStorage.setItem(key, JSON.stringify(payload));
+        } catch (e) {
+          console.warn('[BinaGrid] settings save failed', e);
+        }
       }, 250);
     }
     /** بازگردانی کامل تنظیمات همین نما (فقط وقتی ساختار ستون‌ها بخورد) */
@@ -619,7 +732,9 @@
           grid.getManagedcolumns().forEach(function (column) {
             if (column.getDefinition().bottomCalc) {
               column.updateDefinition({
-                bottomCalcFormatter: function (cell) { return formatNumber(cell.getValue()); }
+                bottomCalcFormatter: function (cell) {
+                  return formatNumber(cell.getValue());
+                }
               });
             }
           });
@@ -685,19 +800,27 @@
       this.clear();
     }
     clear() {
-      this.cells = new Map();  /* rowKey → Set(field) */
-      this.rows = new Set();   /* rowKey → ردیف کامل */
-      this.active = null;      /* {row, field} */
-      this.anchor = null;      /* {rowKey, field} */
+      this.cells = new Map(); /* rowKey → Set(field) */
+      this.rows = new Set(); /* rowKey → ردیف کامل */
+      this.active = null; /* {row, field} */
+      this.anchor = null; /* {rowKey, field} */
       this.paint();
       this.grid._emitSelectionChanged();
     }
-    rowKey(row) { return String(row.getIndex()); }
+    rowKey(row) {
+      return String(row.getIndex());
+    }
     setActive(cell) {
       const row = cell.getRow();
       const field = cell.getField();
-      this.active = { row: row, field: field };
-      this.anchor = { rowKey: this.rowKey(row), field: field };
+      this.active = {
+        row: row,
+        field: field
+      };
+      this.anchor = {
+        rowKey: this.rowKey(row),
+        field: field
+      };
       const key = this.rowKey(row);
       this.cells.set(key, new Set([field]));
       this.paint();
@@ -718,15 +841,20 @@
         return;
       }
       this.cells = new Map();
-      const r1 = Math.min(anchorIdx, targetIdx), r2 = Math.max(anchorIdx, targetIdx);
-      const c1 = Math.min(anchorCol, targetCol), c2 = Math.max(anchorCol, targetCol);
+      const r1 = Math.min(anchorIdx, targetIdx),
+        r2 = Math.max(anchorIdx, targetIdx);
+      const c1 = Math.min(anchorCol, targetCol),
+        c2 = Math.max(anchorCol, targetCol);
       for (let ri = r1; ri <= r2; ri++) {
         const key = this.rowKey(visibleRows[ri]);
         const set = new Set();
         for (let ci = c1; ci <= c2; ci++) set.add(fields[ci]);
         this.cells.set(key, set);
       }
-      this.active = { row: row, field: field };
+      this.active = {
+        row: row,
+        field: field
+      };
       this.paint();
       this.grid._emitSelectionChanged();
     }
@@ -737,8 +865,13 @@
     }
     toggleRow(row) {
       const key = this.rowKey(row);
-      if (this.rows.has(key)) { this.rows.delete(key); this.cells.delete(key); }
-      else { this.rows.add(key); this.cells.delete(key); }
+      if (this.rows.has(key)) {
+        this.rows.delete(key);
+        this.cells.delete(key);
+      } else {
+        this.rows.add(key);
+        this.cells.delete(key);
+      }
       this.paint();
       this.grid._emitSelectionChanged();
     }
@@ -754,17 +887,36 @@
       this.grid._emitSelectionChanged();
     }
     /** رنگ‌آمیزی دوباره — بعد از هر رندر/صفحه/فیلتر صدا زده می‌شود */
+
+
     paint() {
-      this._painted.forEach(function (el) { el.classList.remove('bina-sel', 'bina-active'); });
+      this._painted.forEach(function (el) {
+        el.classList.remove('bina-sel', 'bina-active');
+      });
       if (this._paintedRows) {
-        this._paintedRows.forEach(function (el) { el.classList.remove('bina-row-sel'); });
+        this._paintedRows.forEach(function (el) {
+          el.classList.remove('bina-row-sel');
+        });
       }
       this._painted = [];
       this._paintedRows = [];
-      if (!this.grid.table) return;
+
+      // ✅ بررسی اضافه: آیا جدول وجود دارد و آماده است؟
+      if (!this.grid.table || !this.grid.table.modExists('page')) return;
+
       const self = this;
       const fields = this.grid.getVisibleFields();
-      this.grid.table.getRows('visible').forEach(function (row) {
+
+      // ✅ بررسی اضافه: آیا getRows کار می‌کند؟
+      let visibleRows;
+      try {
+        visibleRows = this.grid.table.getRows('visible');
+      } catch (e) {
+        // جدول هنوز آماده نیست
+        return;
+      }
+
+      visibleRows.forEach(function (row) {
         const el = row.getElement();
         if (!el || !el.isConnected) return;
         const key = self.rowKey(row);
@@ -788,6 +940,7 @@
         });
       });
     }
+
     /** ساخت TSV از انتخاب فعلی — header=true ردیف عنوان هم اضافه می‌کند */
     buildTsv(withHeader) {
       const grid = this.grid;
@@ -827,7 +980,11 @@
         tsv = this.buildTsv(withHeader);
         cellCount = this._countSelectedCells();
       }
-      return { text: tsv, cells: cellCount, rows: this.cells.size + this.rows.size };
+      return {
+        text: tsv,
+        cells: cellCount,
+        rows: this.cells.size + this.rows.size
+      };
     }
     _rowDataByKey(rowKey) {
       const row = this.grid.table.getRows('active').find(r => this.rowKey(r) === rowKey);
@@ -835,7 +992,9 @@
     }
     _countSelectedCells() {
       let n = 0;
-      this.cells.forEach(function (set) { n += set.size; });
+      this.cells.forEach(function (set) {
+        n += set.size;
+      });
       this.rows.forEach(key => {
         const data = this._rowDataByKey(key);
         if (data) n += this.grid.getVisibleFields().length;
@@ -856,22 +1015,86 @@
   /* ═══════════════ ۷) BinaGrid — کامپوننت اصلی ═══════════════ */
   /* عرض/نوع پیش‌فرض فیلدهای شناخته‌شدهٔ بینا — قابل بازنویسی با options.presetcolumns */
   const PRESET_COLUMNS = {
-    EsmSherkat: { width: 120, minWidth: 80, kind: 'number' },
-    SalMali: { width: 110, minWidth: 75, kind: 'number' },
-    ShomarehSanad: { width: 140, minWidth: 90, kind: 'number' },
-    Tarikh: { width: 130, minWidth: 90, kind: 'text' },
-    KOl_Code: { width: 110, minWidth: 75, kind: 'number' },
-    KOl_Onvan: { width: 240, minWidth: 110, kind: 'text' },
-    Moien_Code: { width: 120, minWidth: 80, kind: 'number' },
-    Moien_Onvan: { width: 300, minWidth: 120, kind: 'text' },
-    Tafsil_Code: { width: 130, minWidth: 85, kind: 'number' },
-    Tafsil_Onvan: { width: 300, minWidth: 120, kind: 'text' },
-    SharhSanad: { width: 340, minWidth: 130, kind: 'text' },
-    Bedehkar: { width: 160, minWidth: 100, kind: 'number' },
-    Bestankar: { width: 160, minWidth: 100, kind: 'number' },
-    Company: { width: 120, minWidth: 80, kind: 'number' },
-    Id: { width: 100, minWidth: 75, kind: 'number' },
-    Tedad: { width: 110, minWidth: 75, kind: 'number' }
+    EsmSherkat: {
+      width: 120,
+      minWidth: 80,
+      kind: 'number'
+    },
+    SalMali: {
+      width: 110,
+      minWidth: 75,
+      kind: 'number'
+    },
+    ShomarehSanad: {
+      width: 140,
+      minWidth: 90,
+      kind: 'number'
+    },
+    Tarikh: {
+      width: 130,
+      minWidth: 90,
+      kind: 'text'
+    },
+    KOl_Code: {
+      width: 110,
+      minWidth: 75,
+      kind: 'number'
+    },
+    KOl_Onvan: {
+      width: 240,
+      minWidth: 110,
+      kind: 'text'
+    },
+    Moien_Code: {
+      width: 120,
+      minWidth: 80,
+      kind: 'number'
+    },
+    Moien_Onvan: {
+      width: 300,
+      minWidth: 120,
+      kind: 'text'
+    },
+    Tafsil_Code: {
+      width: 130,
+      minWidth: 85,
+      kind: 'number'
+    },
+    Tafsil_Onvan: {
+      width: 300,
+      minWidth: 120,
+      kind: 'text'
+    },
+    SharhSanad: {
+      width: 340,
+      minWidth: 130,
+      kind: 'text'
+    },
+    Bedehkar: {
+      width: 160,
+      minWidth: 100,
+      kind: 'number'
+    },
+    Bestankar: {
+      width: 160,
+      minWidth: 100,
+      kind: 'number'
+    },
+    Company: {
+      width: 120,
+      minWidth: 80,
+      kind: 'number'
+    },
+    Id: {
+      width: 100,
+      minWidth: 75,
+      kind: 'number'
+    },
+    Tedad: {
+      width: 110,
+      minWidth: 75,
+      kind: 'number'
+    }
   };
   const BINA_CSS = `
   .bina-grid{position:relative;display:flex;flex-direction:column;gap:8px;outline:none;
@@ -928,6 +1151,7 @@
   .bina-cm-overlay.open{display:block}
   `;
   let cssInjected = false;
+
   function injectCss() {
     if (cssInjected) return;
     const style = document.createElement('style');
@@ -950,11 +1174,17 @@
       injectCss();
       const hostEl = typeof container === 'string' ? document.querySelector(container) : container;
       if (!hostEl) throw new Error('کانتینر گرید پیدا نشد: ' + container);
+      console.log('=========================', hostEl.offsetHeight);
       this.options = Object.assign({
-        pageSize: 500,
+        pageSize: 100,
         pageSizeOptions: [100, 500, 1000, 5000, true],
         rtl: true,
-        height: '560px',
+        // ارتفاع مستقیم از کانتینر گرفته می‌شود
+        height: '740px',
+
+        // ✅ این لایوت باعث می‌شود ستون‌ها کل عرض را بگیرند
+
+        layout: "fitColumns",
         storagePrefix: 'BinaGrid',
         locale: 'fa-fa',
         presetcolumns: PRESET_COLUMNS,
@@ -1031,8 +1261,7 @@
         data: [],
         columns: [],
         index: '__id',
-        layout: 'fitData',
-        height: '100%',
+
         movablecolumns: this.options.movablecolumns,
         resizablecolumns: this.options.resizablecolumns,
         renderVertical: 'virtual',
@@ -1047,15 +1276,29 @@
           'fa-fa': {
             pagination: {
               page_size: 'اندازهٔ صفحه:',
-              first: 'اول', first_title: 'صفحهٔ اول',
-              prev: 'قبلی', prev_title: 'صفحهٔ قبل',
-              next: 'بعدی', next_title: 'صفحهٔ بعد',
-              last: 'آخر', last_title: 'صفحهٔ آخر',
+              first: 'اول',
+              first_title: 'صفحهٔ اول',
+              prev: 'قبلی',
+              prev_title: 'صفحهٔ قبل',
+              next: 'بعدی',
+              next_title: 'صفحهٔ بعد',
+              last: 'آخر',
+              last_title: 'صفحهٔ آخر',
               all: 'همه',
-              counter: { showing: 'نمایش', of: 'از', rows: 'ردیف', pages: 'صفحه' }
+              counter: {
+                showing: 'نمایش',
+                of: 'از',
+                rows: 'ردیف',
+                pages: 'صفحه'
+              }
             },
-            data: { loading: 'در حال بارگذاری…', error: 'خطا' },
-            headerFilters: { default: 'فیلتر…' }
+            data: {
+              loading: 'در حال بارگذاری…',
+              error: 'خطا'
+            },
+            headerFilters: {
+              default: 'فیلتر…'
+            }
           }
         },
         rowFormatter: (row) => this.smart.syncRowHeight(row),
@@ -1090,26 +1333,47 @@
         if (e.shiftKey && self.selection.anchor) self.selection.extendTo(cell);
         else if (e.ctrlKey || e.metaKey) {
           self.selection.toggleRow(cell.getRow());
-          self.selection.active = { row: cell.getRow(), field: cell.getField() };
+          self.selection.active = {
+            row: cell.getRow(),
+            field: cell.getField()
+          };
           self.selection.paint();
         } else self.selection.setActive(cell);
-        self.root.focus({ preventScroll: true });
-        self.emit('cellClick', { event: e, field: cell.getField(), data: cell.getData() });
+        self.root.focus({
+          preventScroll: true
+        });
+        self.emit('cellClick', {
+          event: e,
+          field: cell.getField(),
+          data: cell.getData()
+        });
       });
       table.on('cellDblClick', function (e, cell) {
-        self.emit('cellDblClick', { event: e, field: cell.getField(), data: cell.getData() });
+        self.emit('cellDblClick', {
+          event: e,
+          field: cell.getField(),
+          data: cell.getData()
+        });
       });
       table.on('rowClick', function (e, row) {
-        self.emit('rowClick', { event: e, data: row.getData() });
+        self.emit('rowClick', {
+          event: e,
+          data: row.getData()
+        });
       });
       table.on('rowDblClick', function (e, row) {
-        self.emit('rowDblClick', { event: e, data: row.getData() });
+        self.emit('rowDblClick', {
+          event: e,
+          data: row.getData()
+        });
       });
       /* ── فیلتر / مرتب / صفحه ── */
       table.on('dataFiltered', function (filters, filteredRows) {
         /* با صفحه‌بندی activeRows در لحظهٔ رویداد عقب است؛ تعداد واقعی از آرگومان دوم */
         self._updateCount(filteredRows ? filteredRows.length : undefined);
-        self.emit('filterChanged', { count: filteredRows ? filteredRows.length : 0 });
+        self.emit('filterChanged', {
+          count: filteredRows ? filteredRows.length : 0
+        });
       });
       table.on('dataSorted', function () {
         self.stateStore.schedule();
@@ -1117,16 +1381,26 @@
       });
       table.on('pageLoaded', function (page) {
         self.selection.paint();
-        self.emit('pageChanged', { page: page, pageSize: table.getPageSize() });
+        self.emit('pageChanged', {
+          page: page,
+          pageSize: table.getPageSize()
+        });
       });
       table.on('pageSizeChanged', function (size) {
         /* فقط تغییر واقعی کاربر ذخیره شود — سازنده هم این رویداد را می‌پاشد */
         if (typeof size === 'number' && size >= 100 && table.getDataCount() > 0) {
-          try { localStorage.setItem(self.options.storagePrefix + '.pageSize', String(size)); } catch (e) { /* noop */ }
+          try {
+            localStorage.setItem(self.options.storagePrefix + '.pageSize', String(size));
+          } catch (e) {
+            /* noop */
+          }
         }
         /* قبل از tableBuilt این رویداد هم پاش می‌شود — getPage هنوز معتبر نیست */
         if (self._built) {
-          self.emit('pageChanged', { page: table.getPage(), pageSize: size });
+          self.emit('pageChanged', {
+            page: table.getPage(),
+            pageSize: size
+          });
         }
       });
       /* ── ستون‌ها ── */
@@ -1146,7 +1420,10 @@
           if (!state.baseWidth) state.baseWidth = Number(column.getDefinition().width) || column.getWidth() || 100;
         }
         self.stateStore.schedule();
-        self.emit('columnResized', { field: column.getField(), width: column.getWidth() });
+        self.emit('columnResized', {
+          field: column.getField(),
+          width: column.getWidth()
+        });
       });
       table.on('columnMoved', function () {
         self.smart.scheduleVisibleRows();
@@ -1159,9 +1436,13 @@
         self.emit('columnVisibilityChanged', self.getColumnOrder());
       });
       /* ── رندر دوباره → رنگ انتخاب‌ها بازآیی شود ── */
-      table.on('renderComplete', function () { self.selection.paint(); });
+      table.on('renderComplete', function () {
+        self.selection.paint();
+      });
       /* ── کیبورد ── */
-      this.root.addEventListener('keydown', function (e) { self._onKeydown(e); });
+      this.root.addEventListener('keydown', function (e) {
+        self._onKeydown(e);
+      });
       this._docKeydown = function (e) {
         if (e.key === 'Escape' && self.columnManager.isOpen()) self.columnManager.close();
       };
@@ -1181,39 +1462,65 @@
       if (rows.length && typeof rows[0] !== 'object') {
         throw new Error('setData: هر ردیف باید آبجکت باشد (خروجی کویری SQL).');
       }
+
       this.tableName = tableName || this.tableName || 'QueryResult';
       const first = rows[0] || {};
-      const fields = Object.keys(first).filter(function (f) { return f !== '__id'; });
+      const fields = Object.keys(first).filter(function (f) {
+        return f !== '__id';
+      });
       this.fieldSignature = fields.slice().sort().join('|');
-      /* state تازه برای ساختار جدید (رنگ‌ها بعداً از تنظیمات ذخیره‌شده برمی‌گردند) */
+
       this.columnState.clear();
       this.selection.clear();
-      /* بازیابی یک‌بارهٔ اندازهٔ صفحهٔ ذخیره‌شده — لحظهٔ اولین نمایش داده */
+
       if (!this._pageSizeRestored) {
         this._pageSizeRestored = true;
         try {
           const saved = Number(localStorage.getItem(this.options.storagePrefix + '.pageSize'));
           if (saved >= 100 && saved !== this.table.getPageSize()) this.table.setPageSize(saved);
-        } catch (e) { /* noop */ }
+        } catch (e) {
+          /* noop */
+        }
       }
+
       this.restoring = true;
       try {
         const defs = fields.map(f => this._makeColumnDef(f, rows));
+
+        // ✅ بررسی آمادگی Tabulator
+        if (!this._built) {
+          // جدول هنوز ساخته نشده - صبر کن
+          await new Promise(resolve => {
+            const checkBuilt = () => {
+              if (this._built) resolve();
+              else setTimeout(checkBuilt, 50);
+            };
+            checkBuilt();
+          });
+        }
+
         this.table.setColumns(defs);
-        /* setColumnLayout بعداً با options.columns ادغام می‌شود — همیشه همگام نگه دار */
         this.table.options.columns = defs;
       } finally {
         this.restoring = false;
       }
+
       await this.stateStore.restore();
       const withIds = this._withIds(rows, opts);
       await this.table.replaceData(withIds);
-      try { this.table.setPage(1); } catch (e) { /* noop */ }
+      try {
+        this.table.setPage(1);
+      } catch (e) {
+        /* noop */
+      }
       this._updateCount();
       this.smart.scheduleVisibleRows();
       this.stateStore.schedule();
       this._toggleEmpty();
-      this.emit('dataLoaded', { tableName: this.tableName, rows: rows.length });
+      this.emit('dataLoaded', {
+        tableName: this.tableName,
+        rows: rows.length
+      });
     }
     /**
      * آمادهٔ‌سازی ردیف‌ها برای Tabulator (کلید ردیف = __id، انتخاب سلول/ردیف به آن وابسته است).
@@ -1233,12 +1540,13 @@
       };
       if (!opts || opts.own !== true) return copyAll();
       const has = Object.prototype.hasOwnProperty;
-      for (let i = 0; i < rows.length; i++) {            /* پاس ۱: فقط بررسی */
+      for (let i = 0; i < rows.length; i++) {
+        /* پاس ۱: فقط بررسی */
         const r = rows[i];
         if (r === null || typeof r !== 'object' || !Object.isExtensible(r)) return copyAll();
         if (has.call(r, '__id') && r.__id !== i + 1) return copyAll();
       }
-      for (let i = 0; i < rows.length; i++) rows[i].__id = i + 1;   /* پاس ۲: ثبت */
+      for (let i = 0; i < rows.length; i++) rows[i].__id = i + 1; /* پاس ۲: ثبت */
       return rows;
     }
     /** پاک کردن کامل گرید */
@@ -1257,16 +1565,27 @@
       }
       this._updateCount(0);
       this._toggleEmpty();
-      this.emit('dataLoaded', { tableName: '', rows: 0 });
+      this.emit('dataLoaded', {
+        tableName: '',
+        rows: 0
+      });
     }
     /** همهٔ داده‌ها (بدون فیلتر) */
-    getData() { return this.table.getData(); }
+    getData() {
+      return this.table.getData();
+    }
     /** داده‌های فیلترشدهٔ فعلی (همهٔ صفحات) */
-    getFilteredData() { return this.table.getData('active'); }
+    getFilteredData() {
+      return this.table.getData('active');
+    }
     /** همان getFilteredData — نام قدیمی سازگار */
-    getActiveData() { return this.table.getData('active'); }
+    getActiveData() {
+      return this.table.getData('active');
+    }
     /** تعداد ردیف‌های فعلی (فیلترشده) */
-    getRecordCount() { return this.table.getRows('active').length; }
+    getRecordCount() {
+      return this.table.getRows('active').length;
+    }
     _updateCount(count) {
       if (typeof count !== 'number') count = this.table ? this.table.getRows('active').length : 0;
       this.countEl.textContent = 'تعداد: ' + faNum(count);
@@ -1276,21 +1595,25 @@
       this.emptyEl.style.display = empty ? 'flex' : 'none';
     }
     /* ─────────── ستون‌ها ─────────── */
-    _makeColumnDef(field, rows) {
-      const preset = this.options.presetcolumns[field];
-      const kind = preset ? preset.kind : inferKind(field, rows);
-      const definition = {
-        field: field,
-        title: (this.options.captions && this.options.captions[field]) || field, /* v1.2: captions اختیاری؛ وگرنه نام فیلد (کویری هم می‌تواند با AS عنوان بسازد) */
-        width: preset ? preset.width : (kind === 'number' ? 130 : 240),
-        minWidth: preset ? preset.minWidth : (kind === 'number' ? 80 : 110),
-        _kind: kind,
-        headerHozAlign: 'center',
-        hozAlign: kind === 'number' ? 'center' : 'right',
-        sorter: kind === 'number' ? 'number' : 'string',
-        headerFilter: 'input',
-        variableHeight: true
-      };
+ 
+
+_makeColumnDef(field, rows) {
+  const preset = this.options.presetcolumns[field];
+  const kind = preset ? preset.kind : inferKind(field, rows);
+  const definition = {
+    field: field,
+    title: (this.options.captions && this.options.captions[field]) || field,
+    width: preset ? preset.width : (kind === 'number' ? 130 : 240),
+    minWidth: preset ? preset.minWidth : (kind === 'number' ? 80 : 110),
+    headerHozAlign: 'center',
+    hozAlign: kind === 'number' ? 'center' : 'right',
+    sorter: kind === 'number' ? 'number' : 'string',
+    headerFilter: 'input',
+    variableHeight: true
+  };
+
+
+
       /* ═══════ ستون‌هایی که عددی‌اند اما نباید جمع فوتر بگیرند ═══════ */
       this.fieldKinds.set(field, kind);
       if (kind === 'text') definition.headerFilterFunc = 'like';
@@ -1311,27 +1634,38 @@
     getColumnState(field) {
       if (!this.columnState.has(field)) {
         this.columnState.set(field, {
-          visible: true, frozen: false,
-          foreground: null, background: null, baseWidth: 0
+          visible: true,
+          frozen: false,
+          foreground: null,
+          background: null,
+          baseWidth: 0
         });
       }
       return this.columnState.get(field);
     }
     /** ستون‌های دارای فیلد (بدون ستون‌های سیستمی) */
     getManagedcolumns() {
-      return this.table.getColumns().filter(function (c) { return Boolean(c.getField()); });
+      return this.table.getColumns().filter(function (c) {
+        return Boolean(c.getField());
+      });
     }
     /** نام فیلدهای ستون‌های نمایان (به ترتیب فعلی) */
     getVisibleFields() {
-      return this.getManagedcolumns().filter(function (c) { return c.isVisible(); })
-        .map(function (c) { return c.getField(); });
+      return this.getManagedcolumns().filter(function (c) {
+          return c.isVisible();
+        })
+        .map(function (c) {
+          return c.getField();
+        });
     }
     /** ترتیب فعلی ستون‌ها: [{field, visible, width, frozen}] */
     getColumnOrder() {
       return this.getManagedcolumns().map(function (c) {
         return {
-          field: c.getField(), visible: c.isVisible(),
-          width: c.getWidth(), frozen: c.getDefinition().frozen === true
+          field: c.getField(),
+          visible: c.isVisible(),
+          width: c.getWidth(),
+          frozen: c.getDefinition().frozen === true
         };
       });
     }
@@ -1339,13 +1673,16 @@
     toggleColumn(field) {
       const column = this.table.getColumn(field);
       if (!column) throw new Error('ستونی با نام «' + field + '» نیست.');
-      if (column.isVisible()) column.hide(); else column.show();
+      if (column.isVisible()) column.hide();
+      else column.show();
       return column.isVisible();
     }
     /** فریز همهٔ ستون‌ها تا field (شامل خودش) — field=null یعنی آب‌کردن همه */
     async freezeTo(field) {
       if (field === null || field === undefined) {
-        const fields = this.getManagedcolumns().map(function (c) { return c.getField(); });
+        const fields = this.getManagedcolumns().map(function (c) {
+          return c.getField();
+        });
         if (fields.length) await this.columnManager.setFrozenRange(fields[0], false);
         return;
       }
@@ -1366,9 +1703,15 @@
       this.stateStore.schedule();
     }
     /** بازنشانی همهٔ ستون‌ها (نمایش/فریز/رنگ) */
-    resetcolumns() { return this.columnManager.reset(); }
-    openColumnManager() { this.columnManager.open(); }
-    closeColumnManager() { this.columnManager.close(); }
+    resetcolumns() {
+      return this.columnManager.reset();
+    }
+    openColumnManager() {
+      this.columnManager.open();
+    }
+    closeColumnManager() {
+      this.columnManager.close();
+    }
     /* ─────────── فیلتر، جست‌وجو، مرتب‌سازی ─────────── */
     /**
      * فیلتر برنامه‌ای — همان امضای Tabulator:
@@ -1378,7 +1721,11 @@
       if (args.length === 1 && Array.isArray(args[0])) {
         this._customFilters = args[0].slice();
       } else {
-        this._customFilters.push({ field: args[0], type: args[1], value: args[2] });
+        this._customFilters.push({
+          field: args[0],
+          type: args[1],
+          value: args[2]
+        });
       }
       this._applyDataFilters();
     }
@@ -1387,7 +1734,9 @@
       this._searchText = String(text ?? '').trim();
       if (this.searchInput.value !== this._searchText) this.searchInput.value = this._searchText;
       this._applyDataFilters();
-      this.emit('searchChanged', { text: this._searchText });
+      this.emit('searchChanged', {
+        text: this._searchText
+      });
     }
     _applyDataFilters() {
       const fns = [];
@@ -1415,12 +1764,17 @@
       this.searchInput.value = '';
       this.table.clearFilter();
       this.table.clearHeaderFilter();
-      this.emit('searchChanged', { text: '' });
+      this.emit('searchChanged', {
+        text: ''
+      });
     }
     /** فهرست فیلترهای فعال */
     getFilters() {
       return {
-        header: this.table.getHeaderFilters().map(f => ({ field: f.field, value: f.value })),
+        header: this.table.getHeaderFilters().map(f => ({
+          field: f.field,
+          value: f.value
+        })),
         programmatic: this._customFilters.slice(),
         search: this._searchText
       };
@@ -1430,17 +1784,38 @@
       if (args.length === 1 && Array.isArray(args[0])) this.table.setSort(args[0]);
       else this.table.setSort(args[0], args[1]);
     }
-    clearSort() { this.table.clearSort(); }
+    clearSort() {
+      this.table.clearSort();
+    }
     getSorters() {
-      return this.table.getSorters().map(s => ({ column: s.field, dir: s.dir }));
+      return this.table.getSorters().map(s => ({
+        column: s.field,
+        dir: s.dir
+      }));
     }
     /* ─────────── صفحه‌بندی ─────────── */
-    setPage(n) { return this.table.setPage(n); }
-    nextPage() { return this.table.nextPage().catch(function () { /* آخرین صفحه */ }); }
-    prevPage() { return this.table.previousPage().catch(function () { /* اولین صفحه */ }); }
-    firstPage() { return this.table.setPage(1); }
-    lastPage() { return this.table.setPage('last'); }
-    setPageSize(n) { return this.table.setPageSize(n); }
+    setPage(n) {
+      return this.table.setPage(n);
+    }
+    nextPage() {
+      return this.table.nextPage().catch(function () {
+        /* آخرین صفحه */
+      });
+    }
+    prevPage() {
+      return this.table.previousPage().catch(function () {
+        /* اولین صفحه */
+      });
+    }
+    firstPage() {
+      return this.table.setPage(1);
+    }
+    lastPage() {
+      return this.table.setPage('last');
+    }
+    setPageSize(n) {
+      return this.table.setPageSize(n);
+    }
     getPageInfo() {
       return {
         page: this.table.getPage(),
@@ -1450,15 +1825,25 @@
       };
     }
     /* ─────────── انتخاب و کپی ─────────── */
-    getSelectedData() { return this.selection.getSelectedData(); }
-    clearSelection() { this.selection.clear(); }
-    selectAllPage() { this.selection.selectAllPage(); }
+    getSelectedData() {
+      return this.selection.getSelectedData();
+    }
+    clearSelection() {
+      this.selection.clear();
+    }
+    selectAllPage() {
+      this.selection.selectAllPage();
+    }
     /** کپی انتخاب فعلی (بدون انتخاب = null) — Excel-سازگار (TSV) */
     async copySelection(withHeader = false) {
       const result = this.selection.copy(withHeader);
       if (!result) return null;
       await copyTextToClipboard(result.text);
-      this.emit('copy', { cells: result.cells, rows: result.rows, header: withHeader });
+      this.emit('copy', {
+        cells: result.cells,
+        rows: result.rows,
+        header: withHeader
+      });
       return result;
     }
     /** کپی همهٔ نتایج فیلترشده (همهٔ صفحات) با هدر */
@@ -1471,7 +1856,11 @@
         lines.push(cols.map(c => row[c.getField()] ?? '').join('\t'));
       });
       await copyTextToClipboard(lines.join('\r\n'));
-      this.emit('copy', { cells: data.length * cols.length, rows: data.length, header: true });
+      this.emit('copy', {
+        cells: data.length * cols.length,
+        rows: data.length,
+        header: true
+      });
       return data.length;
     }
     /* ─────────── خروجی ─────────── */
@@ -1509,28 +1898,74 @@
       const data = this.getActiveData();
       if (!styles.length) throw new Error('هیچ ستون قابل خروجی نیست.');
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Report', { views: [{ rightToLeft: true }] });
+      const worksheet = workbook.addWorksheet('Report', {
+        views: [{
+          rightToLeft: true
+        }]
+      });
       worksheet.columns = styles.map(function (style) {
-        return { key: style.field, width: Math.max(4, style.widthPx / EXPORT.excelWidthFactor) };
+        return {
+          key: style.field,
+          width: Math.max(4, style.widthPx / EXPORT.excelWidthFactor)
+        };
       });
       /* Row 1 و 2 خالی · Header = Row 3 · Data = Row 4 به بعد */
       worksheet.addRow([]);
       worksheet.addRow([]);
       worksheet.addRow(styles.map(s => s.title));
       data.forEach(function (rowData) {
-        worksheet.addRow(styles.map(function (style) { return rowData[style.field]; }));
+        worksheet.addRow(styles.map(function (style) {
+          return rowData[style.field];
+        }));
       });
       const header = worksheet.getRow(EXPORT.headerRow);
       header.height = 24;
       header.eachCell(function (cell) {
-        cell.font = { name: 'IRANYekanX', bold: true, size: 9, color: { argb: 'FF20374B' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8DCEB' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.font = {
+          name: 'IRANYekanX',
+          bold: true,
+          size: 9,
+          color: {
+            argb: 'FF20374B'
+          }
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: {
+            argb: 'FFC8DCEB'
+          }
+        };
+        cell.alignment = {
+          horizontal: 'center',
+          vertical: 'middle',
+          wrapText: true
+        };
         cell.border = {
-          top: { style: 'thin', color: { argb: 'FF9FB5C7' } },
-          bottom: { style: 'thin', color: { argb: 'FF9FB5C7' } },
-          left: { style: 'thin', color: { argb: 'FFBFCBD4' } },
-          right: { style: 'thin', color: { argb: 'FFBFCBD4' } }
+          top: {
+            style: 'thin',
+            color: {
+              argb: 'FF9FB5C7'
+            }
+          },
+          bottom: {
+            style: 'thin',
+            color: {
+              argb: 'FF9FB5C7'
+            }
+          },
+          left: {
+            style: 'thin',
+            color: {
+              argb: 'FFBFCBD4'
+            }
+          },
+          right: {
+            style: 'thin',
+            color: {
+              argb: 'FFBFCBD4'
+            }
+          }
         };
       });
       await yieldToUi();
@@ -1544,11 +1979,16 @@
           cell.font = {
             name: 'IRANYekanX',
             size: Math.max(6, style.fontSizePx * EXPORT.pxToPoint),
-            color: { argb: 'FF' + normalizeHex(style.foreground, DEFAULT_FG) }
+            color: {
+              argb: 'FF' + normalizeHex(style.foreground, DEFAULT_FG)
+            }
           };
           cell.fill = {
-            type: 'pattern', pattern: 'solid',
-            fgColor: { argb: 'FF' + normalizeHex(style.background, DEFAULT_BG) }
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: {
+              argb: 'FF' + normalizeHex(style.background, DEFAULT_BG)
+            }
           };
           cell.alignment = {
             horizontal: (style.align === 'left' || style.align === 'right') ? style.align : 'center',
@@ -1556,26 +1996,52 @@
             wrapText: lineCount > 1
           };
           cell.border = {
-            bottom: { style: 'thin', color: { argb: 'FFD8E1E7' } },
-            left: { style: 'thin', color: { argb: 'FFBCC9D3' } },
-            right: { style: 'thin', color: { argb: 'FFBCC9D3' } }
+            bottom: {
+              style: 'thin',
+              color: {
+                argb: 'FFD8E1E7'
+              }
+            },
+            left: {
+              style: 'thin',
+              color: {
+                argb: 'FFBCC9D3'
+              }
+            },
+            right: {
+              style: 'thin',
+              color: {
+                argb: 'FFBCC9D3'
+              }
+            }
           };
         });
         excelRow.height = Math.max(18, maxLines * 13);
       });
       /* فریز ستون‌ها مطابق گرید */
       let frozenCount = 0;
-      for (const style of styles) { if (!style.frozen) break; frozenCount += 1; }
+      for (const style of styles) {
+        if (!style.frozen) break;
+        frozenCount += 1;
+      }
       if (frozenCount > 0) {
         worksheet.views = [{
-          state: 'frozen', xSplit: frozenCount,
-          ySplit: EXPORT.headerRow, rightToLeft: true
+          state: 'frozen',
+          xSplit: frozenCount,
+          ySplit: EXPORT.headerRow,
+          rightToLeft: true
         }];
       }
       if (styles.length > 0) {
         worksheet.autoFilter = {
-          from: { row: EXPORT.headerRow, column: 1 },
-          to: { row: EXPORT.headerRow, column: styles.length }
+          from: {
+            row: EXPORT.headerRow,
+            column: 1
+          },
+          to: {
+            row: EXPORT.headerRow,
+            column: styles.length
+          }
         };
       }
       const buffer = await workbook.xlsx.writeBuffer();
@@ -1585,11 +2051,16 @@
         }),
         (this.tableName || 'QueryResult') + '.xlsx'
       );
-      this.emit('exportDone', { kind: 'excel', rows: data.length });
+      this.emit('exportDone', {
+        kind: 'excel',
+        rows: data.length
+      });
       return data.length;
     }
     /** چاپ وضعیت فعلی گرید */
-    print() { window.print(); }
+    print() {
+      window.print();
+    }
     /** wrapper دکمه‌های خروجی: قفل دکمه + خطا + رویداد */
     async _runExport(button, action) {
       if (button.disabled) return;
@@ -1598,7 +2069,9 @@
         await action();
       } catch (error) {
         console.error('[BinaGrid] export error', error);
-        this.emit('exportError', { error: error });
+        this.emit('exportError', {
+          error: error
+        });
         this._toast('خطا در خروجی: ' + (error?.message || 'نامشخص'));
       } finally {
         button.disabled = false;
@@ -1612,7 +2085,9 @@
     }
     _emitSelectionChanged() {
       let cells = 0;
-      this.selection?.cells.forEach(function (set) { cells += set.size; });
+      this.selection?.cells.forEach(function (set) {
+        cells += set.size;
+      });
       this.emit('selectionChanged', {
         cells: cells,
         rows: this.selection?.rows.size || 0,
@@ -1623,7 +2098,10 @@
     _onKeydown(event) {
       if (this._destroyed) return;
       const sel = this.selection;
-      if (event.key === 'Escape') { sel.clear(); return; }
+      if (event.key === 'Escape') {
+        sel.clear();
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
         event.preventDefault();
         this.searchInput.focus();
@@ -1638,9 +2116,13 @@
         return;
       }
       const nav = {
-        ArrowUp: 'up', ArrowDown: 'down',
-        ArrowRight: 'prev', ArrowLeft: 'next',  /* RTL: راست = ستون قبلی (سمت راست صفحه) */
-        Home: 'home', End: 'end'
+        ArrowUp: 'up',
+        ArrowDown: 'down',
+        ArrowRight: 'prev',
+        ArrowLeft: 'next',
+        /* RTL: راست = ستون قبلی (سمت راست صفحه) */
+        Home: 'home',
+        End: 'end'
       };
       const dir = nav[event.key];
       if (dir) {
@@ -1659,16 +2141,21 @@
       const visibleRows = this.table.getRows('visible');
       const fields = this.getVisibleFields();
       if (!visibleRows.length || !fields.length) return;
-      let rowIdx = 0, colIdx = 0;
+      let rowIdx = 0,
+        colIdx = 0;
       if (sel.active) {
         rowIdx = visibleRows.findIndex(r => r === sel.active.row);
         colIdx = fields.indexOf(sel.active.field);
         if (rowIdx < 0) rowIdx = 0;
         if (colIdx < 0) colIdx = 0;
       }
-      if (ctrl && dir === 'home') { rowIdx = 0; colIdx = 0; }
-      else if (ctrl && dir === 'end') { rowIdx = visibleRows.length - 1; colIdx = fields.length - 1; }
-      else if (dir === 'up') rowIdx = Math.max(0, rowIdx - 1);
+      if (ctrl && dir === 'home') {
+        rowIdx = 0;
+        colIdx = 0;
+      } else if (ctrl && dir === 'end') {
+        rowIdx = visibleRows.length - 1;
+        colIdx = fields.length - 1;
+      } else if (dir === 'up') rowIdx = Math.max(0, rowIdx - 1);
       else if (dir === 'down') rowIdx = Math.min(visibleRows.length - 1, rowIdx + 1);
       else if (dir === 'next') colIdx = Math.min(fields.length - 1, colIdx + 1);
       else if (dir === 'prev') colIdx = Math.max(0, colIdx - 1);
@@ -1681,22 +2168,34 @@
       if (!cell) return;
       sel.setActive(cell);
       const el = cell.getElement();
-      if (el && el.isConnected) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (el && el.isConnected) el.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest'
+      });
     }
     /* ─────────── دکمه‌های نوار ابزار ─────────── */
     _wireToolbar() {
       const self = this;
       this.searchInput.addEventListener('input', function () {
         clearTimeout(self._searchTimer);
-        self._searchTimer = setTimeout(function () { self.search(self.searchInput.value); }, 200);
+        self._searchTimer = setTimeout(function () {
+          self.search(self.searchInput.value);
+        }, 200);
       });
       this.searchInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') { self.search(''); self.root.focus(); }
+        if (e.key === 'Escape') {
+          self.search('');
+          self.root.focus();
+        }
       });
-      this.toolbar.querySelector('.bina-clear').addEventListener('click', function () { self.clearFilters(); });
+      this.toolbar.querySelector('.bina-clear').addEventListener('click', function () {
+        self.clearFilters();
+      });
       this.toolbar.querySelector('[data-act="copyall"]').addEventListener('click', function () {
         self._runExport(event.currentTarget, function () {
-          return self.copyAll().then(function (n) { self._toast(faNum(n) + ' ردیف کپی شد ✓'); });
+          return self.copyAll().then(function (n) {
+            self._toast(faNum(n) + ' ردیف کپی شد ✓');
+          });
         });
       });
       this.toolbar.querySelector('[data-act="excel"]').addEventListener('click', function (e) {
@@ -1705,34 +2204,60 @@
       // this.toolbar.querySelector('[data-act="csv"]').addEventListener('click', function (e) {
       //   self._runExport(e.currentTarget, () => self.exportCsv());
       // });
-      this.toolbar.querySelector('[data-act="print"]').addEventListener('click', function () { self.print(); });
-      this.toolbar.querySelector('[data-act="columns"]').addEventListener('click', function () { self.columnManager.open(); });
+      this.toolbar.querySelector('[data-act="print"]').addEventListener('click', function () {
+        self.print();
+      });
+      this.toolbar.querySelector('[data-act="columns"]').addEventListener('click', function () {
+        self.columnManager.open();
+      });
     }
     /* ─────────── وضعیت و چرخهٔ حیات ─────────── */
     /** ذخیرهٔ فوری تنظیمات فعلی */
-    saveState() { this.stateStore.saveNow(); }
+    saveState() {
+      this.stateStore.saveNow();
+    }
     /** بازگردانی تنظیمات از localStorage */
-    restoreState() { return this.stateStore.restore(); }
+    restoreState() {
+      return this.stateStore.restore();
+    }
     /** پاک کردن تنظیمات ذخیره‌شدهٔ نمای فعلی */
     resetState() {
-      try { localStorage.removeItem(this.stateStore.key()); } catch (e) { /* noop */ }
+      try {
+        localStorage.removeItem(this.stateStore.key());
+      } catch (e) {
+        /* noop */
+      }
     }
     /** نسخهٔ کامپوننت */
-    static get version() { return '1.2.0'; }
+    static get version() {
+      return '1.2.0';
+    }
     /** تخریب کامل: قطع رویدادها و حذف DOM */
     destroy() {
       if (this._destroyed) return;
       this._destroyed = true;
       document.removeEventListener('keydown', this._docKeydown);
-      try { this.table.destroy(); } catch (e) { /* noop */ }
+      try {
+        this.table.destroy();
+      } catch (e) {
+        /* noop */
+      }
       this.root.remove();
       this.events = new EventBus();
     }
     /* ─────────── رویدادها ─────────── */
-    on(name, fn) { return this.events.on(name, fn); }
-    once(name, fn) { return this.events.once(name, fn); }
-    off(name, fn) { this.events.off(name, fn); }
-    emit(name, payload) { this.events.emit(name, payload); }
+    on(name, fn) {
+      return this.events.on(name, fn);
+    }
+    once(name, fn) {
+      return this.events.once(name, fn);
+    }
+    off(name, fn) {
+      this.events.off(name, fn);
+    }
+    emit(name, payload) {
+      this.events.emit(name, payload);
+    }
   }
   /* سیم‌کشی دکمه‌های نوار ابزار — بعد از ساخت کامل نمونه */
   const _origWire = BinaGrid.prototype._wireEvents;
@@ -1742,8 +2267,17 @@
   };
   /* توابع کمکی برای استفادهٔ بیرونی/تست */
   BinaGrid.utils = Object.freeze({
-    formatNumber, faNum, inferKind, measureTextWidth, estimateLineCount,
-    isNumericLike, isBlank, normalizeHex, downloadBlob, copyTextToClipboard, yieldToUi
+    formatNumber,
+    faNum,
+    inferKind,
+    measureTextWidth,
+    estimateLineCount,
+    isNumericLike,
+    isBlank,
+    normalizeHex,
+    downloadBlob,
+    copyTextToClipboard,
+    yieldToUi
   });
   global.BinaGrid = BinaGrid;
   /* ═══════════════════════════════════════════════════════════════════════════
