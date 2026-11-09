@@ -1174,8 +1174,7 @@
       injectCss();
       const hostEl = typeof container === 'string' ? document.querySelector(container) : container;
       if (!hostEl) throw new Error('کانتینر گرید پیدا نشد: ' + container);
-      console.log('=========================', hostEl.offsetHeight);
-      this.options = Object.assign({
+         this.options = Object.assign({
         pageSize: 100,
         pageSizeOptions: [100, 500, 1000, 5000, true],
         rtl: true,
@@ -1458,6 +1457,10 @@
      *        آبجکت‌ها ثبت می‌شود). پیش‌فرض (بدون opts) مثل v1.0: ورودی دست‌نخورده می‌ماند و هر ردیف کپی می‌شود.
      */
     async setData(rows, tableName, opts) {
+         // 🔧 پاک کردن کامل سلکت‌های قبلی برای جلوگیری از ماندن رنگ‌ها
+
+  
+  
       if (!Array.isArray(rows)) throw new Error('setData: آرایه‌ای از آبجکت بده.');
       if (rows.length && typeof rows[0] !== 'object') {
         throw new Error('setData: هر ردیف باید آبجکت باشد (خروجی کویری SQL).');
@@ -1469,10 +1472,20 @@
         return f !== '__id';
       });
       this.fieldSignature = fields.slice().sort().join('|');
-
+  console.log('this.selection = ', this.selection,'tableName = ', tableName);
       this.columnState.clear();
       this.selection.clear();
-
+            // 🔧 پاک کردن قاطع تمام رنگ‌های سلکت از کل صفحه (حتی از گریدهای دیگر)
+      document.querySelectorAll('.bina-sel, .bina-active, .bina-row-sel').forEach(el => {
+          el.classList.remove('bina-sel', 'bina-active', 'bina-row-sel');
+      });
+      
+      // پاکسازی کلاس‌های DOM
+      if (this.table && this.table.element) {
+          this.table.element.querySelectorAll('.bina-sel, .bina-active, .bina-row-sel').forEach(el => {
+              el.classList.remove('bina-sel', 'bina-active', 'bina-row-sel');
+          });
+      }
       if (!this._pageSizeRestored) {
         this._pageSizeRestored = true;
         try {
@@ -1826,6 +1839,8 @@ _makeColumnDef(field, rows) {
     }
     /* ─────────── انتخاب و کپی ─────────── */
     getSelectedData() {
+      console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^' ,this.selection);
+      
       return this.selection.getSelectedData();
     }
     clearSelection() {

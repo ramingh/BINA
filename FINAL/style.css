@@ -8,7 +8,7 @@
 }
 
 :root {
-  --sidebar-width: 270px;
+  --sidebar-width: 280px;
   --sidebar-collapsed-width: 52px;
   --color-page: #f4f6f8;
   --color-surface: #ffffff;
@@ -35,7 +35,7 @@
     height: 560px;  /* ارتفاع کانتینر ثابت باشد */
     overflow: hidden;
 }
-/* به .bina-table هیچ ارتفاعی در CSS ندهید */
+
 button,
 input,
 select,
@@ -239,19 +239,22 @@ html[data-theme='dark'] .theme-icon--moon {
   gap: 7px;
   padding: 6px 9px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-small);
+  border-radius:    var(--radius-small);
   color: var(--color-text);
   text-decoration: none;
   cursor: pointer;
   transition: border-color var(--transition-fast),
     box-shadow var(--transition-fast), background-color var(--transition-fast);
+  text-align: right;          /* ← اضافه شد */
+  direction: rtl;             /* ← اضافه شد */
 }
 
 .menu-item:hover {
   border-color: var(--color-border-hover);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+  box-shadow: 0 1px 3px rgba(74, 99, 80, 0.213);
 }
 
+ 
 .menu-item--level-1 {
   background: var(--color-level-1);
   font-weight: 700;
@@ -285,66 +288,44 @@ html[data-theme='dark'] .theme-icon--moon {
   background: var(--color-tree-line);
 }
 
+/* ================================================================================ ==================================================== =============================
+   اصلاح کامل خطوط درختی منو (Tree View Connector Lines)
+   =========================================================================================================== ========================== ============================ */
+   
+/* =========================================================
+   اصلاح خطوط درختی: ایجاد انحنا (کرو) + حذف کامل کادر سفید
+   ========================================================= */
+
 .submenu {
-  margin-inline-start: 14px;
-  padding-inline-start: 10px;
-  border-inline-start: 1px solid var(--color-tree-line);
-}
-
-.submenu>.menu-item,
-.submenu>.menu-group>.menu-item {
+  margin-inline-start: 16px;
+  padding-inline-start: 0;
   position: relative;
-  margin-top: 4px;
 }
 
-.submenu>.menu-item::before,
-.submenu>.menu-group>.menu-item::before {
+/* خط عمودی اصلی - دقیقاً در وسط آخرین آیتم متوقف می‌شود (پایین‌تر نمی‌رود) */
+.submenu::before {
   content: '';
   position: absolute;
-  top: 50%;
-  inset-inline-start: -10px;
-  width: 10px;
-  border-top: 1px solid var(--color-tree-line);
-}
-
-/* End each tree line at its last item with a small rounded elbow. */
-.submenu>.menu-item:last-child::before,
-.submenu>.menu-group:last-child>.menu-item::before {
   top: 0;
-  height: 50%;
-  width: 10px;
-  border-top: 0;
-  border-inline-start: 1px solid var(--color-tree-line);
-  border-bottom: 1px solid var(--color-tree-line);
-  border-end-start-radius: 6px;
+  bottom: 17px; /* توقف دقیق در مرکز آخرین آیتم */
+  inset-inline-start: 0;
+  width: 1px;
+  background-color: var(--color-tree-line);
+  z-index: 1;
 }
 
-.submenu>.menu-item:last-child::after {
+/* خط عمودی اصلی - دقیقاً در وسط آخرین آیتم متوقف می‌شود (پایین‌تر نمی‌رود) */
+.submenu::before {
   content: '';
   position: absolute;
-  inset-inline-start: -12px;
-  top: calc(50% + 1px);
-  bottom: -5px;
-  width: 3px;
-  background: var(--color-sidebar);
-  pointer-events: none;
-}
-
-.submenu>.menu-group:last-child {
-  position: relative;
-}
-
-.submenu>.menu-group:last-child::after {
-  content: '';
-  position: absolute;
-  inset-inline-start: -12px;
-  top: 18px;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-sidebar);
-  pointer-events: none;
-}
-
+  top: 0;
+  bottom: 17px; /* توقف دقیق در مرکز آخرین آیتم */
+  inset-inline-start: 0;
+  width: 1px;
+  background-color: var(--color-tree-line);
+  z-index: 1;
+} 
+ 
 .main-content {
   min-width: 0;
   overflow: hidden;
@@ -584,11 +565,7 @@ html[data-theme='dark'] .content-panel {
   }
 }
 
-/* Targeted fixes: stop the last branch at its last item and keep clock width stable. */
-.submenu>.menu-group:last-child {
-  margin-bottom: 0;
-}
-
+ 
 #statusTime {
   inline-size: 70px;
   flex: 0 0 70px;
@@ -613,4 +590,82 @@ html[data-theme='dark'] .content-panel {
   display: block;
   border: 0;
   background: transparent;
+}
+.submenu {
+  margin-right: 14px;      /* سمت راست برای RTL */
+  padding-right: 10px;     /* سمت راست برای RTL */
+  border-right: 1px solid var(--color-tree-line);
+  position: relative;
+}
+
+.submenu > .menu-item,
+.submenu > .menu-group > .menu-item {
+  position: relative;
+  margin-top: 4px;
+} 
+.submenu > .menu-item::before,
+.submenu > .menu-group > .menu-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -10px;           /* در RTL یعنی خارج از کادر سمت راست */
+  width: 10px;
+  border-top: 1px solid var(--color-tree-line);
+}
+ 
+.submenu > .menu-item:last-child::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: calc(50% + 1px);
+  bottom: -5px;
+  width: 3px;
+  background: var(--color-sidebar);
+  pointer-events: none;
+}
+
+.submenu > .menu-group:last-child::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: 18px;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-sidebar);
+  pointer-events: none; 
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+
+ 
+ 
+.menu-group > summary::after {
+  content: ' ▾';
+  transition: transform 1s ease;
+}
+
+/* =========================================================
+   آیکون فلش آکاردئون در انتهای سمت چپ منو
+   ========================================================= */
+
+/* حالت عادی (منو بسته است) */
+.menu-group > summary::after {
+  content: '▾';
+  font-size: 26px;
+  color: var(--color-muted);
+  margin-inline-start: auto; /* انتقال قطعی به انتهای سمت چپ */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  transition: transform 250ms ease, color 250ms ease;
+}
+
+/* حالت باز (منو باز شده است) */
+.menu-group[open] > summary::after {
+  color: rgb(255, 7, 7); /* رنگ قرمز دلخواه شما */
+  transform: rotate(180deg); /* چرخش نرم ۱۸۰ درجه به سمت بالا */
 }

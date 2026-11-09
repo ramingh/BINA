@@ -78,15 +78,12 @@
 
       try {
         let result;
-console.log('------------=================================---------');
-
-    
-                switch (params.reportType) {
+         switch (params.reportType) {
           case 'accountMovement':
             result = await this._generateAccountMovement(params, metrics);
             break;
 
-          case 'taraz':                                       // ← جدید
+          case 'taraz': // ← جدید
             result = await this._generateTaraz(params, metrics);
             break;
 
@@ -143,7 +140,10 @@ console.log('------------=================================---------');
      * @private
      */
     async _generateAccountMovement(params, metrics) {
-      const { companyCode, fiscalYear } = params;
+      const {
+        companyCode,
+        fiscalYear
+      } = params;
 
       // ═══ فاز ۱: بارگذاری داده‌های Coding ═══
       let t0 = performance.now();
@@ -151,8 +151,10 @@ console.log('------------=================================---------');
       const codingData = await this.dbManager.getReadyData(companyCode, 'coding', null);
       const codingRows = await this.decompressor.inflateBlocks(
         codingData.blocks,
-        codingData.columns,
-        { family: 'coding', companyCode }
+        codingData.columns, {
+          family: 'coding',
+          companyCode
+        }
       );
 
       metrics.phases.codingLoad = {
@@ -185,8 +187,11 @@ console.log('------------=================================---------');
       const sanadData = await this.dbManager.getReadyData(companyCode, 'sanad', fiscalYear);
       const sanadRows = await this.decompressor.inflateBlocks(
         sanadData.blocks,
-        sanadData.columns,
-        { family: 'sanad', companyCode, fiscalYear }
+        sanadData.columns, {
+          family: 'sanad',
+          companyCode,
+          fiscalYear
+        }
       );
 
       metrics.phases.sanadLoad = {
@@ -245,9 +250,9 @@ console.log('------------=================================---------');
           moien_code: sanad.moien_code,
           tafsil_code: sanad.tafsil_code,
 
-          OnvanHesab: coding
-            ? `${coding.kol_onvan} - ${coding.moien_onvan} - ${coding.tafsil_onvan}`
-            : '',
+          OnvanHesab: coding ?
+            `${coding.kol_onvan} - ${coding.moien_onvan} - ${coding.tafsil_onvan}` :
+            '',
           kol_onvan: coding ? coding.kol_onvan : '',
           moien_onvan: coding ? coding.moien_onvan : '',
           tafsil_onvan: coding ? coding.tafsil_onvan : '',
@@ -301,7 +306,7 @@ console.log('------------=================================---------');
      * @returns {Promise<Object[]>}
      */
 
-        async sql2js(sqlQuery) {
+    async sql2js(sqlQuery) {
       const startTime = performance.now();
       const metrics = {
         phase: 'sql2js',
@@ -315,34 +320,49 @@ console.log('------------=================================---------');
         // ═══ مرحله ۱: تجزیه SQL ═══
         let t0 = performance.now();
         const parsed = this._parseSQL(sqlQuery);
-        metrics.phases.parsing = { durationMs: performance.now() - t0 };
+        metrics.phases.parsing = {
+          durationMs: performance.now() - t0
+        };
 
         // ═══ مرحله ۲: استخراج اطلاعات جداول ═══
         t0 = performance.now();
-        const { mainTable, joinTable, companyCode, fiscalYear } = this._extractTableInfo(parsed);
+        const {
+          mainTable,
+          joinTable,
+          companyCode,
+          fiscalYear
+        } = this._extractTableInfo(parsed);
         metrics.companyCode = companyCode;
         metrics.fiscalYear = fiscalYear;
         metrics.reportType = `SQL: ${mainTable.name}`;
-        metrics.phases.tableExtraction = { durationMs: performance.now() - t0 };
+        metrics.phases.tableExtraction = {
+          durationMs: performance.now() - t0
+        };
 
         // ═══ مرحله ۳: بارگذاری داده‌ها ═══
         t0 = performance.now();
         const [mainData, joinData] = await Promise.all([
           this.dbManager.getReadyData(companyCode, mainTable.family, fiscalYear),
-          joinTable
-            ? this.dbManager.getReadyData(companyCode, joinTable.family, null)
-            : Promise.resolve({ blocks: [], columns: [] })
+          joinTable ?
+          this.dbManager.getReadyData(companyCode, joinTable.family, null) :
+          Promise.resolve({
+            blocks: [],
+            columns: []
+          })
         ]);
 
         const [mainRows, joinRows] = await Promise.all([
           this.decompressor.inflateBlocks(mainData.blocks, mainData.columns, {
-            family: mainTable.family, companyCode, fiscalYear
+            family: mainTable.family,
+            companyCode,
+            fiscalYear
           }),
-          joinTable
-            ? this.decompressor.inflateBlocks(joinData.blocks, joinData.columns, {
-                family: joinTable.family, companyCode
-              })
-            : Promise.resolve([])
+          joinTable ?
+          this.decompressor.inflateBlocks(joinData.blocks, joinData.columns, {
+            family: joinTable.family,
+            companyCode
+          }) :
+          Promise.resolve([])
         ]);
 
         metrics.phases.dataLoad = {
@@ -376,14 +396,14 @@ console.log('------------=================================---------');
         t0 = performance.now();
         const aggregated = new Map();
 
-        const groupKeyFields = joinKeyFields.length > 0
-          ? joinKeyFields
-          : parsed.groupBy;
+        const groupKeyFields = joinKeyFields.length > 0 ?
+          joinKeyFields :
+          parsed.groupBy;
 
         for (const row of mainRows) {
-          const groupKey = groupKeyFields.length > 0
-            ? groupKeyFields.map(f => this._pickField(row, f)).join('|')
-            : 'single_group';
+          const groupKey = groupKeyFields.length > 0 ?
+            groupKeyFields.map(f => this._pickField(row, f)).join('|') :
+            'single_group';
 
           if (!aggregated.has(groupKey)) {
             const joinRow = joinMap.get(groupKey) || {};
@@ -401,7 +421,10 @@ console.log('------------=================================---------');
           }
 
           const acc = aggregated.get(groupKey);
-          parsed.sumFields.forEach(({ field, alias }) => {
+          parsed.sumFields.forEach(({
+            field,
+            alias
+          }) => {
             if (!acc._aggregates[alias]) acc._aggregates[alias] = 0;
             acc._aggregates[alias] += (Number(this._pickField(row, field)) || 0);
           });
@@ -428,7 +451,10 @@ console.log('------------=================================---------');
           });
 
           // 🔧 CONCAT: فیلدها را با _pickField از row بردار
-          parsed.concatFields.forEach(({ alias, parts }) => {
+          parsed.concatFields.forEach(({
+            alias,
+            parts
+          }) => {
             row[alias] = parts
               .map(p => {
                 const v = this._pickField(row, p);
@@ -437,7 +463,10 @@ console.log('------------=================================---------');
               .join(' - ');
           });
 
-          parsed.constantFields.forEach(({ alias, value }) => {
+          parsed.constantFields.forEach(({
+            alias,
+            value
+          }) => {
             row[alias] = value;
           });
 
@@ -463,7 +492,9 @@ console.log('------------=================================---------');
             return 0;
           });
         }
-        metrics.phases.sorting = { durationMs: performance.now() - t0 };
+        metrics.phases.sorting = {
+          durationMs: performance.now() - t0
+        };
 
         metrics.totalTimeMs = performance.now() - startTime;
         metrics.resultCount = result.length;
@@ -481,7 +512,7 @@ console.log('------------=================================---------');
       }
     }
 
-      /**
+    /**
      * ═══════════════════════════════════════════════════════════════════════
      * تراز (Trial Balance) — سه سطح: kol (کل) / moien (معین) / tafsil (تفصیل)
      * ═══════════════════════════════════════════════════════════════════════
@@ -517,10 +548,6 @@ console.log('------------=================================---------');
       // ═══ فاز ۲: ساخت ایندکس Coding ═══
       t0 = performance.now();
 
-      // کلید ایندکس بر اساس سطح:
-      //   kol    → kol_code
-      //   moien  → kol_code-moien_code
-      //   tafsil → kol_code-moien_code-tafsil_code
       const codingMap = new Map();
       for (let i = 0; i < codingRows.length; i++) {
         const c = codingRows[i];
@@ -563,9 +590,17 @@ console.log('------------=================================---------');
       t0 = performance.now();
 
       const aggregated = new Map();
+      const filter = params.filter || null;
 
       for (let i = 0; i < sanadRows.length; i++) {
         const row = sanadRows[i];
+
+        // 🔧 اعمال فیلتر Drill-down
+        if (filter) {
+          if (filter.KOl_Code !== undefined && Number(row.kol_code) !== Number(filter.KOl_Code)) continue;
+          if (filter.Moien_Code !== undefined && Number(row.moien_code) !== Number(filter.Moien_Code)) continue;
+        }
+
         let key;
         if (level === 'kol') {
           key = String(row.kol_code);
@@ -595,10 +630,11 @@ console.log('------------=================================---------');
         uniqueGroups: aggregated.size
       };
 
-      // ═══ فاز ۵: ساخت خروجی با JOIN ═══
+      // ═══ فاز ۵: ساخت خروجی با JOIN و اعمال فیلترها ═══
       t0 = performance.now();
 
       const result = [];
+      const filters = params.filters || {}; // دریافت فیلترهای متنی/عددی
 
       for (const [key, sanad] of aggregated.entries()) {
         const coding = codingMap.get(key) || {};
@@ -621,7 +657,9 @@ console.log('------------=================================---------');
           onvanHesab = `${coding.kol_onvan || ''} - ${coding.moien_onvan || ''} - ${coding.tafsil_onvan || ''}`;
         }
 
-        result.push({
+        // ساخت آبجکت ردیف
+             // ساخت آبجکت ردیف
+        let rowObj = {
           EsmSherkat: companyCode,
           SalMali: fiscalYear,
           CodeHesab: codeHesab,
@@ -636,7 +674,43 @@ console.log('------------=================================---------');
           GardeshBestankar: bestankar,
           MandehBedehkar: mandehBedehkar,
           MandehBestankar: mandehBestankar
-        });
+        };
+
+        // 🔧 حذف فیلدهای اضافی بر اساس سطح (تا اصلاً به گرید نروند)
+        ['KOl_Code','KOl_Onvan','Moien_Code','Tafsil_Code',
+ 'Moien_Onvan','Tafsil_Onvan','EsmSherkat','SalMali'
+].forEach(k => delete rowObj[k]);
+        // 🔧 اعمال فیلترهای متنی/عددی
+        let passesFilters = true;
+        for (const [field, condition] of Object.entries(filters)) {
+          if (!condition) continue;
+          
+          const val = rowObj[field];
+          if (val === undefined) continue;
+
+          if (typeof condition === 'string') {
+            if (!String(val).includes(condition)) { passesFilters = false; break; }
+          }
+          else if (typeof condition === 'number') {
+            if (Number(val) !== condition) { passesFilters = false; break; }
+          }
+          else if (typeof condition === 'object' && condition.value !== undefined) {
+            const v = Number(val);
+            const target = Number(condition.value);
+            if (condition.op === '>') { if (!(v > target)) { passesFilters = false; break; } }
+            else if (condition.op === '<') { if (!(v < target)) { passesFilters = false; break; } }
+            else if (condition.op === '=') { if (v !== target) { passesFilters = false; break; } }
+            else if (condition.op === 'between') {
+              const min = Number(condition.min);
+              const max = Number(condition.max);
+              if (!(v >= min && v <= max)) { passesFilters = false; break; }
+            }
+          }
+        }
+
+        if (passesFilters) {
+          result.push(rowObj);
+        }
       }
 
       metrics.phases.joinAndTransform = {
@@ -729,18 +803,18 @@ console.log('------------=================================---------');
       // ۳. استخراج GROUP BY
       const groupRegex = /GROUP\s+BY\s+([\s\S]*?)(?:ORDER\s+BY|$)/i;
       const groupMatch = sql.match(groupRegex);
-      const groupBy = groupMatch
-        ? groupMatch[1].split(',').map(f => f.trim().replace(/^(\w+)\./, ''))
-        : [];
+      const groupBy = groupMatch ?
+        groupMatch[1].split(',').map(f => f.trim().replace(/^(\w+)\./, '')) :
+        [];
 
       // ۴. استخراج ORDER BY
       const orderRegex = /ORDER\s+BY\s+([\s\S]*?)$/i;
       const orderMatch = sql.match(orderRegex);
-      const orderBy = orderMatch
-        ? orderMatch[1].split(',').map(f =>
-            f.trim().replace(/^(\w+)\./, '').replace(/\s+(ASC|DESC)$/i, '')
-          )
-        : [];
+      const orderBy = orderMatch ?
+        orderMatch[1].split(',').map(f =>
+          f.trim().replace(/^(\w+)\./, '').replace(/\s+(ASC|DESC)$/i, '')
+        ) :
+        [];
 
       // ۵. استخراج SUM
       const sumRegex = /SUM\((\w+)\.(\w+)\)\s+AS\s+(\w+)/gi;
@@ -762,7 +836,7 @@ console.log('------------=================================---------');
       while ((concatMatch = concatRegex.exec(sql)) !== null) {
         const rawParts = concatMatch[1].split(',').map(p => p.trim());
         const cleanParts = rawParts
-          .filter(p => !/^['"]\s*-\s*['"]$/.test(p))   // حذف جداکننده‌های ثابت مثل ' - '
+          .filter(p => !/^['"]\s*-\s*['"]$/.test(p)) // حذف جداکننده‌های ثابت مثل ' - '
           .map(p => p.replace(/^(\w+)\./, '').replace(/['"]/g, ''));
         concatFields.push({
           alias: concatMatch[2],
@@ -812,8 +886,14 @@ console.log('------------=================================---------');
       }
 
       return {
-        mainTable: { name: mainTableName, alias: mainAlias },
-        joinTable: joinTableName ? { name: joinTableName, alias: joinAlias } : null,
+        mainTable: {
+          name: mainTableName,
+          alias: mainAlias
+        },
+        joinTable: joinTableName ? {
+          name: joinTableName,
+          alias: joinAlias
+        } : null,
         joinConditions,
         groupBy,
         orderBy,
@@ -843,19 +923,36 @@ console.log('------------=================================---------');
       if (sanadMatch) {
         fiscalYear = parseInt(sanadMatch[1], 10);
         companyCode = sanadMatch[2];
-        mainTable = { name: mainName, family: 'sanad', alias: parsed.mainTable.alias };
-        joinTable = joinName
-          ? { name: joinName, family: 'coding', alias: parsed.joinTable.alias }
-          : null;
+        mainTable = {
+          name: mainName,
+          family: 'sanad',
+          alias: parsed.mainTable.alias
+        };
+        joinTable = joinName ?
+          {
+            name: joinName,
+            family: 'coding',
+            alias: parsed.joinTable.alias
+          } :
+          null;
       } else if (codingMatch) {
         companyCode = codingMatch[1];
-        mainTable = { name: mainName, family: 'coding', alias: parsed.mainTable.alias };
+        mainTable = {
+          name: mainName,
+          family: 'coding',
+          alias: parsed.mainTable.alias
+        };
         joinTable = null;
       } else {
         throw new Error(`نام جدول اصلی شناسایی نشد: ${mainName}. باید فرمت Sanad_YYYY_CODE یا Coding_CODE داشته باشد.`);
       }
 
-      return { mainTable, joinTable, companyCode, fiscalYear };
+      return {
+        mainTable,
+        joinTable,
+        companyCode,
+        fiscalYear
+      };
     }
 
     /**
@@ -870,7 +967,11 @@ console.log('------------=================================---------');
         return 0;
       }
 
-      const { type, field1Alias, field2Alias } = caseField.expression;
+      const {
+        type,
+        field1Alias,
+        field2Alias
+      } = caseField.expression;
       const val1 = Number(row[field1Alias]) || 0;
       const val2 = Number(row[field2Alias]) || 0;
 
@@ -908,7 +1009,7 @@ console.log('------------=================================---------');
       if (!params.fiscalYear || typeof params.fiscalYear !== 'number') {
         throw new Error('fiscalYear (سال مالی) اجباری است و باید عدد باشد.');
       }
-            if (params.reportType === 'taraz' && !['kol', 'moien', 'tafsil'].includes(params.level)) {
+      if (params.reportType === 'taraz' && !['kol', 'moien', 'tafsil'].includes(params.level)) {
         throw new Error('برای گزارش taraz، پارامتر level الزامی است (kol | moien | tafsil).');
       }
     }
@@ -930,11 +1031,11 @@ console.log('------------=================================---------');
       if (metrics.phases) {
         log('⏱️ فازها:');
         for (const [name, phase] of Object.entries(metrics.phases)) {
-          const detail = phase.rowCount !== undefined ? ` | ${phase.rowCount} ردیف`
-            : phase.indexSize !== undefined ? ` | ${phase.indexSize} ایندکس`
-            : phase.uniqueGroups !== undefined ? ` | ${phase.uniqueGroups} گروه`
-            : phase.resultCount !== undefined ? ` | ${phase.resultCount} نتیجه`
-            : '';
+          const detail = phase.rowCount !== undefined ? ` | ${phase.rowCount} ردیف` :
+            phase.indexSize !== undefined ? ` | ${phase.indexSize} ایندکس` :
+            phase.uniqueGroups !== undefined ? ` | ${phase.uniqueGroups} گروه` :
+            phase.resultCount !== undefined ? ` | ${phase.resultCount} نتیجه` :
+            '';
           log(`   • ${name}: ${phase.durationMs.toFixed(1)}ms${detail}`);
         }
       }

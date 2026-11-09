@@ -153,7 +153,126 @@
         };
       });
     }
+    /**
+     * خواندن لیست شرکت‌ها از Public/TK_sherkat
+     * @returns {Promise<Array<{Codesherkat: string, EsmSherkat: string}>>}
+     */
+    async getCompanies() {
+      console.log('🔍 [getCompanies] شروع...');
+      try {
+        const db = await this.openPublicDb();
+        const storeName = Array.from(db.objectStoreNames).find(n => n.toLowerCase() === 'tk_sherkat');
+        
+        if (!storeName) {
+          console.warn('⚠️ [getCompanies] استور tk_sherkat پیدا نشد!');
+          return [];
+        }
 
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction([storeName], 'readonly');
+          const store = tx.objectStore(storeName);
+          const req = store.getAll();
+
+          req.onsuccess = () => {
+            const results = req.result;
+            
+            // 🔧 خواندن کلیدها بدون حساسیت به حروف
+            const getField = (obj, name) => {
+              if (!obj) return undefined;
+              if (obj[name] !== undefined) return obj[name];
+              const lower = name.toLowerCase();
+              for (const k in obj) {
+                if (k.toLowerCase() === lower) return obj[k];
+              }
+              return undefined;
+            };
+
+            const companies = results.map(r => {
+              const actualObj = (r && r.value) ? r.value : r; // اگر ساختار {value} بود
+              const code = getField(actualObj, 'Codesherkat');
+              const name = getField(actualObj, 'EsmSherkat');
+              
+              if (code !== undefined && name !== undefined) {
+                return {
+                  Codesherkat: String(code),
+                  EsmSherkat: String(name)
+                };
+              }
+              return null;
+            }).filter(Boolean);
+
+        //    console.log('📦 [getCompanies] تعداد شرکت‌های معتبر:', companies.length);
+
+            // حذف تکراری‌ها و مرتب‌سازی
+            const unique = Array.from(new Map(companies.map(c => [c.Codesherkat, c])).values());
+            unique.sort((a, b) => a.Codesherkat.localeCompare(b.Codesherkat, undefined, { numeric: true }));
+            
+            resolve(unique);
+          };
+
+          req.onerror = () => reject(new Error('خطا در خواندن tk_sherkat: ' + req.error));
+        });
+      } catch (err) {
+        console.error('❌ [getCompanies] خطای کلی:', err);
+        return [];
+      }
+    }
+    /**
+     * استخراج سال‌های مالی موجود برای یک شرکت
+     * با نگاه به نام دیتابیس‌های IndexedDB (چون هر شرکت یک دیتابیس است)
+     * @param {string} companyCode
+     * @returns {Promise<number[]>}
+     */
+    async getAvailableYears(companyCode) {
+      console.log(`🔍 [getAvailableYears] شروع برای شرکت: ${companyCode}`);
+      try {
+        const db = await this.openCompanyDb(companyCode);
+        console.log(`✅ [getAvailableYears] دیتابیس ${companyCode} باز شد. استورها:`, Array.from(db.objectStoreNames));
+
+        // پیدا کردن نام استور sanad بدون حساسیت به حروف
+        const storeName = Array.from(db.objectStoreNames).find(n => n.toLowerCase() === 'sanad');
+        console.log(`🔍 [getAvailableYears] نام استور پیدا شده:`, storeName);
+
+        if (!storeName) {
+          console.warn(`⚠️ [getAvailableYears] استور sanad در دیتابیس ${companyCode} پیدا نشد!`);
+          return [];
+        }
+
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction([storeName], 'readonly');
+          const store = tx.objectStore(storeName);
+          const req = store.getAllKeys();
+
+          req.onsuccess = () => {
+            const keys = req.result;
+            console.log(`📦 [getAvailableYears] تعداد کلیدها در ${companyCode}:`, keys.length);
+            if (keys.length > 0) {
+              console.log(`📦 [getAvailableYears] نمونه کلید اول:`, keys[0]);
+            }
+
+            const years = new Set();
+            keys.forEach(k => {
+              if (Array.isArray(k) && k.length >= 1) {
+                const year = Number(k[0]);
+                if (!isNaN(year)) years.add(year);
+              }
+            });
+            
+            const sorted = Array.from(years).sort((a, b) => a - b);
+            console.log(`✅ [getAvailableYears] سال‌های پیدا شده برای ${companyCode}:`, sorted);
+            resolve(sorted);
+          };
+
+          req.onerror = () => {
+            console.error(`❌ [getAvailableYears] خطا در getAllKeys:`, req.error);
+            reject(new Error('خطا در خواندن کلیدهای sanad: ' + req.error));
+          };
+        });
+      } catch (err) {
+        console.error(`❌ [getAvailableYears] خطای کلی برای ${companyCode}:`, err);
+        return [];
+      }
+    }
     /**
      * استخراج بلوک‌های فشرده از استور شرکت
      * @param {string|number} companyCode - کد شرکت
@@ -298,8 +417,9 @@
         this.logger.log(`🔒 دیتابیس ${dbName} بسته شد.`);
       }
     }
+  
   }
-
+  
   // Browser global
   global.BinaDBManager = BinaDBManager;
 

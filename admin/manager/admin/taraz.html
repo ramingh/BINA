@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+        <meta charset="UTF-8">
+        <title>مرور ترازها و دفاتر مالی</title>
+        <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+        <link rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+        <script src="./sql/DataDecompressor.js"></script>
+        <link rel="stylesheet" href="./Taraz.css">
+        <script src="./sql/BinaDBManager.js?v=2"></script>
+        <!-- <script src="./sql/BinaDBManager.js"></script> -->
+        <script src="./sql/BinaReportEngine.js"></script>
+        <script src="../../../FINAL/app/bina/bina-grid.js"></script>
+
+</head>
+
+
+
+<div class="access-container">
+        <div class="top-controls">
+                <!-- رادیو باتوم‌های سمت چپ -->
+                <div >
+                        <div class="radio-group">
+                                <label><input type="radio" name="level" value="kol" checked onchange="runTaraz()"> تراز
+                                        کل</label>
+                                <label><input type="radio" name="level" value="moien" onchange="runTaraz()"> تراز
+                                        معین</label>
+                                <label><input type="radio" name="level" value="tafsil" onchange="runTaraz()"> تراز
+                                        تفصیل</label>
+                        </div>
+                        <div class="radio-group">
+                                <label><input type="radio" name="docType" value="all" checked> همه اسناد</label>
+                                <label><input type="radio" name="docType" value="bastan"> بدون بستن حساب‌ها</label><br>
+                                <label><input type="radio" name="docType" value="ekhtetamieh"> بدون بستن اسناد
+                                        اختتامیه</label>
+                                <label><input type="radio" name="docType" value="eftetahieh"> بدون بستن تفصیلی</label>
+                        </div>
+                </div>
+
+                <!-- نام شرکت و سال مالی در سمت راست -->
+                <div class="company-controls">
+                        <label>نام شرکت:
+                                <select id="companyCode">
+                                        <option value="">در حال بارگذاری...</option>
+                                </select>
+                        </label>
+                        <label>سال مالی:
+                                <select id="fiscalYear">
+                                        <option value="">--</option>
+                                </select>
+                        </label>
+                </div>
+        </div>
+
+        <!-- دکمه زرد -->
+        <div style="text-align: left;">
+                <button class="btn-yellow" onclick="alert('بعدا پیاده‌سازی می‌شود')">تراز مقایسه ایی سالانه</button>
+        </div>
+
+        <!-- گرید -->
+        <div id="gridContainer"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+                <div class="modal-header">
+                        <h3 id="modalTitle">جزئیات</h3>
+                        <button class="modal-close" onclick="closeModal()">✕</button>
+                </div>
+                <div class="modal-body" id="modalGrid"></div>
+        </div>
+</div>
+
+<!-- اسکریپت‌ها (بدون تغییر) -->
+
+
+<script>
+
+        let grid = null;
+        let modalGrid = null;
+        const engine = new BinaReportEngine();
+        const dbManager = engine.dbManager;
+
+        async function loadCompanies() {
+                console.log('🚀 [loadCompanies] شروع...');
+                const select = document.getElementById('companyCode');
+                try {
+                        const companies = await dbManager.getCompanies();
+                        console.log('🚀 [loadCompanies] نتیجه:', companies);
+
+                        select.innerHTML = '';
+                        if (!companies || companies.length === 0) {
+                                select.innerHTML = '<option value="">شرکتی یافت نشد (کنسول را ببینید)</option>';
+                                return;
+                        }
+                        companies.forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.Codesherkat;
+                                opt.textContent = c.EsmSherkat + ' (' + c.Codesherkat + ')';
+                                select.appendChild(opt);
+                        });
+
+                        // بارگذاری سال‌های اولین شرکت
+                        await loadYears(companies[0].Codesherkat);
+                } catch (err) {
+                        console.error('❌ [loadCompanies] خطا:', err);
+                        select.innerHTML = '<option value="">خطا در بارگذاری</option>';
+                }
+        }
+
+        async function loadYears(companyCode) {
+                console.log(`🚀 [loadYears] شروع برای شرکت: ${companyCode}`);
+                const select = document.getElementById('fiscalYear');
+                if (!companyCode) {
+                        select.innerHTML = '<option value="">--</option>';
+                        return;
+                }
+                select.innerHTML = '<option value="">در حال بارگذاری...</option>';
+                try {
+                        const years = await dbManager.getAvailableYears(companyCode);
+                        select.innerHTML = '';
+                        if (!years || years.length === 0) {
+                                select.innerHTML = '<option value="">سالی یافت نشد (کنسول را ببینید)</option>';
+                                return;
+                        }
+                        years.forEach(y => {
+                                const opt = document.createElement('option');
+                                opt.value = y;
+                                opt.textContent = y;
+                                select.appendChild(opt);
+                        });
+                        select.value = years[years.length - 1];
+                        console.log(`🚀 [loadYears] سال انتخاب شده: ${select.value}`);
+                } catch (err) {
+                        console.error('❌ [loadYears] خطا:', err);
+                        select.innerHTML = '<option value="">خطا</option>';
+                }
+        }
+
+        document.getElementById('companyCode').addEventListener('change', async (e) => {
+                await loadYears(e.target.value);
+                runTaraz();
+        });
+
+        document.getElementById('fiscalYear').addEventListener('change', () => {
+                runTaraz();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+                await loadCompanies();
+                runTaraz();
+        });
+
+        async function runTaraz() {
+                const level = document.querySelector('input[name="level"]:checked').value;
+                const companyCode = document.getElementById('companyCode').value;
+                const fiscalYear = Number(document.getElementById('fiscalYear').value);
+
+                if (!companyCode || !fiscalYear) return;
+
+                try {
+                        const rows = await engine.execute({
+                                reportType: 'taraz',
+                                companyCode: companyCode,
+                                fiscalYear: fiscalYear,
+                                level: level
+                        });
+
+                        if (grid) grid.destroy();
+                        document.getElementById('gridContainer').innerHTML = '';
+                        // 🔧 پاک کردن کامل سلکت‌های باقی‌مانده قبل از ساخت گرید جدید
+                        if (grid) {
+                                grid.selection.clear();
+                                // پاک کردن کلاس‌های رنگی از DOM
+                                document.querySelectorAll('.bina-sel, .bina-active, .bina-row-sel').forEach(el => {
+                                        el.classList.remove('bina-sel', 'bina-active', 'bina-row-sel');
+                                });
+                        }
+                        const captions = {
+                                CodeHesab: 'کد حساب', OnvanHesab: 'عنوان حساب',
+                                GardeshBedehkar: 'بدهکار', GardeshBestankar: 'بستانکار',
+                                MandehBedehkar: 'مانده بد', MandehBestankar: 'مانده بس'
+                        };
+
+                        grid = new BinaGrid('#gridContainer', {
+                                pageSize: 500,
+                                height: 'calc(100vh - 250px)',
+                                captions: captions,
+                                columnCalcs: 'table'
+                        });
+
+                        await grid.setData(rows, `Taraz_${level}`, { own: true });
+
+                        if (level === 'kol' || level === 'moien') {
+                                grid.on('rowClick', (e) => {
+                                        const nextLevel = level === 'kol' ? 'moien' : 'tafsil';
+                                        openDrillDown(e.data, nextLevel, companyCode, fiscalYear);
+                                });
+                        }
+
+                } catch (err) {
+                        document.getElementById('gridContainer').innerHTML = '<div style="padding:20px;color:red;">خطا: ' + err.message + '</div>';
+                        console.error(err);
+                }
+        }
+
+
+        async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear) {
+                // 🔧 استخراج کد از CodeHesab (مثلاً "11 - 1103" رو تبدیل میکنه به 11 و 1103)
+                const parts = String(parentRow.CodeHesab).split('-').map(s => s.trim());
+                const filter = { KOl_Code: Number(parts[0]) };
+
+                // اگر در سطح معین بودیم (یعنی داریم میریم تفصیل)، کد معین رو هم اضافه کن
+                if (nextLevel === 'tafsil' && parts[1]) {
+                        filter.Moien_Code = Number(parts[1]);
+                }
+
+                document.getElementById('modalTitle').textContent = `جزئیات: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab}`;
+                document.getElementById('modalOverlay').classList.add('open');
+
+                try {
+                        const rows = await engine.execute({
+                                reportType: 'taraz', companyCode: companyCode, fiscalYear: fiscalYear,
+                                level: nextLevel, filter: filter
+                        });
+                        // ... بقیه کدها بدون تغییر ...
+
+                        if (modalGrid) { modalGrid.destroy(); document.getElementById('modalGrid').innerHTML = ''; }
+
+                        const captions = { CodeHesab: 'کد حساب', OnvanHesab: 'عنوان حساب', GardeshBedehkar: 'بدهکار', GardeshBestankar: 'بستانکار', MandehBedehkar: 'مانده بد', MandehBestankar: 'مانده بس' };
+
+                        modalGrid = new BinaGrid('#modalGrid', {
+                                pageSize: 500, height: '100%', captions: captions,
+                                hiddenColumns: nextLevel === 'moien' ? ['Moien_Code', 'Tafsil_Code', 'KOl_Onvan', 'Moien_Onvan', 'Tafsil_Onvan', 'EsmSherkat', 'SalMali'] : ['Tafsil_Code', 'KOl_Onvan', 'Moien_Onvan', 'Tafsil_Onvan', 'EsmSherkat', 'SalMali']
+                        });
+
+                        await modalGrid.setData(rows, `Drill_${nextLevel}`, { own: true });
+
+                        if (nextLevel === 'moien') {
+                                modalGrid.on('rowClick', (e) => openDrillDown(e.data, 'tafsil', companyCode, fiscalYear));
+                        }
+                } catch (err) {
+                        console.error(err);
+                        document.getElementById('modalGrid').innerHTML = '<p style="color:red;padding:10px;">خطا: ' + err.message + '</p>';
+                }
+        }
+
+        function closeModal() {
+                document.getElementById('modalOverlay').classList.remove('open');
+                if (modalGrid) { modalGrid.destroy(); modalGrid = null; }
+                document.getElementById('modalGrid').innerHTML = '';
+        }
+
+        // اجرای خودکار در اولین بارگذاری
+        window.addEventListener('DOMContentLoaded', () => {
+                runTaraz();
+        });
+</script>
+</body>
+
+</html>

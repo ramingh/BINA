@@ -191,20 +191,7 @@
                         <a class="menu-item menu-item--level-2" href="pages/tab-08.html"><span
                                 class="menu-item__bullet"></span><span class="menu-item__label">گروههای گزارشات
                                 مالی</span></a>
-                        <details class="menu-group">
-                            <summary class="menu-item menu-item--level-2">
-                                <span class="menu-item__bullet"></span>
-                                <span class="menu-item__label">ارتباط کدینگ با . . .</span>
-                            </summary>
-                            <div class="submenu submenu--level-3">
-                                <a class="menu-item menu-item--level-3" href="pages/tab-09.html"><span
-                                        class="menu-item__bullet"></span><span class="menu-item__label">گروههای صورتهای
-                                        مالی</span></a>
-                                <a class="menu-item menu-item--level-3" href="pages/tab-10.html"><span
-                                        class="menu-item__bullet"></span><span class="menu-item__label">گروههای گزارشات
-                                        مالی</span></a>
-                            </div>
-                        </details>
+              
                     </div>
                 </details>
                 <details class="menu-group">
@@ -421,6 +408,58 @@
             document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
             if (lang !== 'fa') document.documentElement.classList.add('translating');
         })();
-    </script>
+ 
+ 
+// =========================================================
+// انیمیشن فوق‌العاده نرم و روان برای باز و بسته شدن منوها
+// =========================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const menuGroups = document.querySelectorAll('.menu-group');
+
+  menuGroups.forEach((details) => {
+    const summary = details.querySelector('summary');
+    const submenu = details.querySelector('.submenu');
+console.log( '1111111111',summary,submenu);
+
+    if (!summary || !submenu) return;
+
+    summary.addEventListener('click', (e) => {
+      e.preventDefault(); // جلوگیری از باز/بسته شدن آنی مرورگر
+
+      // اگر منو باز است -> انیمیشن بسته شدن
+      if (details.open) {
+        const startHeight = `${submenu.offsetHeight}px`;
+        const anim = submenu.animate(
+          [
+            { height: startHeight, opacity: 1 },
+            { height: '0px', opacity: 0 }
+          ],
+          { duration: 400, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }
+        );
+
+        anim.onfinish = () => {
+          details.removeAttribute('open');
+          submenu.style.height = '';
+        };
+      } 
+      // اگر منو بسته است -> انیمیشن باز شدن
+      else {
+        details.setAttribute('open', '');
+        const endHeight = `${submenu.offsetHeight}px`;
+        
+        submenu.animate(
+          [
+            { height: '0px', opacity: 0 },
+            { height: endHeight, opacity: 1 }
+          ],
+          { duration: 500, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }
+        );
+      }
+    });
+  });
+});
+
+ 
+ </script>
 </body>
 </html>
