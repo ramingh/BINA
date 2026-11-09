@@ -78,17 +78,21 @@
 
       try {
         let result;
-         switch (params.reportType) {
+        switch (params.reportType) {
           case 'accountMovement':
             result = await this._generateAccountMovement(params, metrics);
             break;
 
-          case 'taraz': // ← جدید
+          case 'taraz':
             result = await this._generateTaraz(params, metrics);
             break;
 
+          case 'daftarTafsil':                    // 👈 این ۳ خط را اضافه کن
+            result = await this._generateDaftarTafsil(params, metrics);
+            break;
+
           default:
-            throw new Error(`نوع گزارش ناشناخته: ${params.reportType}. انواع پشتیبانی‌شده: accountMovement, taraz`);
+            throw new Error(`نوع گزارش ناشناخته: ${params.reportType}. انواع پشتیبانی‌شده: accountMovement, taraz, daftarTafsil`);
         }
 
 
@@ -107,7 +111,58 @@
         throw error;
       }
     }
+    /**
+     * دفتر تفصیل (ریز اسناد یک حساب)
+     */
+    async _generateDaftarTafsil(params, metrics) {
+      const { companyCode, fiscalYear, filter } = params;
+      let t0 = performance.now();
 
+      // ۱. خواندن داده‌های Sanad
+      const sanadData = await this.dbManager.getReadyData(companyCode, 'sanad', fiscalYear);
+      const sanadRows = await this.decompressor.inflateBlocks(
+        sanadData.blocks, sanadData.columns, { family: 'sanad', companyCode, fiscalYear }
+      );
+
+      metrics.phases.sanadLoad = { durationMs: performance.now() - t0, rowCount: sanadRows.length };
+      
+      // ۲. فیلتر کردن بر اساس کدهای حساب
+      t0 = performance.now();
+      const result = [];
+      let sumMandeh = 0;
+
+      for (const row of sanadRows) {
+        // اعمال فیلتر
+        if (filter.KOl_Code !== undefined && Number(row.kol_code) !== Number(filter.KOl_Code)) continue;
+        if (filter.Moien_Code !== undefined && Number(row.moien_code) !== Number(filter.Moien_Code)) continue;
+        if (filter.Tafsil_Code !== undefined && Number(row.tafsil_code) !== Number(filter.Tafsil_Code)) continue;
+
+        const bed = Number(row.bedehkar) || 0;
+        const bes = Number(row.bestankar) || 0;
+        
+        // محاسبه مانده تجمعی (مثل VBA)
+        sumMandeh += (bed - bes);
+        const vaziat = sumMandeh > 0 ? 'بد' : 'بس';
+
+        result.push({
+          ShomarehSanad: row.shomarehsanad,
+          Tarikh: row.tarikh,
+          SharhSanad: row.sharhsanad,
+          Bedehkar: bed,
+          Bestankar: bes,
+          Mandeh: Math.abs(sumMandeh), // قدر مطلق مانده
+          Vaziat: vaziat
+        });
+      }
+
+      // مرتب‌سازی بر اساس شماره سند (مثل ORDER BY ShomarehSanad در VBA)
+      result.sort((a, b) => a.ShomarehSanad - b.ShomarehSanad);
+
+      metrics.phases.filterAndSort = { durationMs: performance.now() - t0, resultCount: result.length };
+      sanadRows.length = 0;
+      
+      return result;
+    }
     /**
      * ═══════════════════════════════════════════════════════════════════════
      * گزارش گردش و مانده حساب (Account Movement & Balance Report)
