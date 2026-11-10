@@ -1,4 +1,4 @@
-/* BINA Sanad Browser v1.0.0 — standalone UI; existing core files are unchanged.
+/* BINA Accounting Documents Bina15_1 v1.1.0 — standalone UI; existing core files are unchanged.
  * IndexedDB: public/columns + public/TK_sherkat; company db: Coding and Sanad.
  * Reuses BinaDBManager, DataDecompressor.inflateSingleBlock and BinaGrid.
  * Unlike DataDecompressor.inflateBlocks (default cap 250000), streams ALL blocks
