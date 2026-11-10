@@ -24,7 +24,7 @@ const sources=[
  manager._updateSharedSchemas=async()=>order.push('save-shared-schema');
  const r=await manager.bootstrap();
  assert.equal(r.tkTables.length,3);
- assert.equal(r.tkdic,2);assert.equal(r.tkSherkat,1);
+ assert.equal(r.tkdik,2);assert.equal(r.tkSherkat,1);
  assert.equal(order.filter(x=>x.startsWith('tk-data:')).length,3);
  assert(order.lastIndexOf('tk-data:tk_Extra') < order.indexOf('discover-stats'),'TK باید قبل از stats سند تمام شده باشد');
  assert(!order.some(x=>x.startsWith('sync:')));

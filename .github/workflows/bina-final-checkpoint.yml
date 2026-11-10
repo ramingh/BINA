@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/bina-final-checkpoint.yml'
+      - 'admin/tests/test-tk-first-persistent.cjs'
   workflow_dispatch:
 
 permissions:
