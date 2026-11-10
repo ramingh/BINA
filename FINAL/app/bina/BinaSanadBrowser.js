@@ -64,7 +64,111 @@
       this.busy = false;
       this._yearRequest = 0;
       this._showRequest = 0;
+      this._hostObserver = null;
+      this._onStorage = null;
+      this._translationTimer = null;
+      this._language = 'fa';
+      this._ownsTranslator = false;
+      this.translator = null;
+      this._watchPreferences();
       this._bind();
+    }
+
+
+    // The sidebar owns the dictionary, language, palette and theme. Keep this
+    // iframe in sync; never initialize another source of translations.
+    _hostRoot() {
+      try {
+        return root.parent !== root && root.parent.document
+          ? root.parent.document.documentElement : null;
+      } catch (_) {
+        return null; // standalone / cross-origin
+      }
+    }
+
+    _syncPreferences() {
+      const host = this._hostRoot();
+      const html = root.document.documentElement;
+      const stored = key => {
+        try { return root.localStorage.getItem(key); } catch (_) { return null; }
+      };
+      const lang = (host && host.lang) || stored('sidebarLanguage') || 'fa';
+      const language = ['fa', 'en', 'ar'].includes(lang) ? lang : 'fa';
+      const direction = language === 'en' ? 'ltr' : 'rtl';
+      const theme = (host && host.dataset.theme) || stored('sidebarTheme') || 'light';
+      const palette = (host && host.style.getPropertyValue('--palette-color').trim()) ||
+        stored('sidebarPaletteColor') || '#285F92';
+      const directionChanged = html.dir !== direction;
+      const languageChanged = this._language !== language;
+      this._language = language;
+      html.lang = language;
+      html.dir = direction;
+      html.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+      if (palette && /^#[0-9a-f]{6}$/i.test(palette)) {
+        html.style.setProperty('--palette-color', palette);
+      }
+      if (this.grid) {
+        // BinaGrid creates one Tabulator. Do not rebuild it just to switch direction.
+        this.grid.options.rtl = direction === 'rtl';
+        if (this.grid.root) this.grid.root.dir = direction;
+        if (directionChanged && this.grid.table && this.grid.table.redraw) {
+          this.grid.table.redraw(true);
+        }
+      }
+      if (languageChanged) this._scheduleTranslation();
+    }
+
+    _watchPreferences() {
+      const host = this._hostRoot();
+      if (host && root.MutationObserver) {
+        this._hostObserver = new root.MutationObserver(() => this._syncPreferences());
+        this._hostObserver.observe(host, {
+          attributes: true,
+          attributeFilter: ['lang', 'dir', 'data-theme', 'style']
+        });
+      }
+      this._onStorage = event => {
+        if (['sidebarLanguage','sidebarTheme','sidebarPaletteColor'].includes(event.key)) {
+          this._syncPreferences();
+        }
+      };
+      root.addEventListener('storage', this._onStorage);
+      this._syncPreferences();
+    }
+
+    async _initTranslation() {
+      // When in the BINA shell use its already established WebTranslator instance:
+      // the parent translator has the authoritative tk_dic and original text cache.
+      let parentTranslator = null;
+      try {
+        if (root.parent !== root) parentTranslator = root.parent.translator || null;
+      } catch (_) {}
+      if (parentTranslator) {
+        this.translator = parentTranslator;
+      } else if (root.WebTranslator) {
+        // Only used when tab-16.html is opened without the main sidebar.
+        this.translator = new root.WebTranslator();
+        root.translator = this.translator;
+        this._ownsTranslator = true;
+      }
+      if (!this.translator) return;
+      if (!this.translator.isLoaded) await this.translator.init();
+      this._syncPreferences();
+      await this.translator.setLanguage(this._language || 'fa');
+    }
+
+    _scheduleTranslation() {
+      if (!this.translator || !this.translator.isLoaded || this._translationTimer) return;
+      this._translationTimer = root.setTimeout(async () => {
+        this._translationTimer = null;
+        try {
+          // Includes dynamic grid headers and status messages. BinaGrid's
+          // noTranslateBody protects all actual accounting row values.
+          await this.translator.setLanguage(this._language || 'fa');
+        } catch (error) {
+          console.warn('[BinaSanadBrowser:translation]', error);
+        }
+      }, 90);
     }
 
     _bind() {
@@ -87,6 +191,7 @@
     _status(message, error = false) {
       this.ui.status.textContent = message;
       this.ui.status.classList.toggle('sb-error', error);
+      if (!this.busy) this._scheduleTranslation();
     }
 
     _busy(value) {
@@ -95,6 +200,7 @@
       this.ui.year.disabled = value || !this.ui.company.value;
       this.ui.load.disabled = value || !this.ui.company.value || !this.ui.year.value;
       this._updateButtons();
+      if (!value) this._scheduleTranslation();
     }
 
     _updateButtons() {
@@ -149,6 +255,8 @@
           noTranslateBody:true, storagePrefix:'BinaSanadBrowser'
         });
         this.grid.on('rowClick', event => this._showAccount(event.data));
+        this._syncPreferences();
+        this._initTranslation().catch(e => console.warn('[BinaSanadBrowser:translator]', e));
         const companies = await this.dbManager.getCompanies();
         if (!companies.length) throw new Error('شرکتی در Public/TK_sherkat یافت نشد.');
         this.ui.company.replaceChildren();
@@ -341,6 +449,7 @@
       this.ui.account.textContent = 'برای نمایش عنوان، یک ردیف سند را انتخاب کنید.';
       try {
         await this.grid.setData(doc.rows, 'SanadBrowser_' + this.loadedKey, {own:true});
+        this._scheduleTranslation();
       } catch (err) {
         this._status('خطای نمایش گرید: ' + err.message, true);
         console.error(err);
@@ -362,6 +471,12 @@
     }
 
     destroy() {
+      if (this._translationTimer) root.clearTimeout(this._translationTimer);
+      if (this._hostObserver) this._hostObserver.disconnect();
+      if (this._onStorage) root.removeEventListener('storage', this._onStorage);
+      if (this._ownsTranslator && this.translator && this.translator._stopObserver) {
+        this.translator._stopObserver();
+      }
       if (this.grid) { this.grid.destroy(); this.grid = null; }
       if (this.dbManager) { this.dbManager.closeAll(); this.dbManager = null; }
       this.docs = [];
