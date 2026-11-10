@@ -99,6 +99,13 @@ jobs:
               assert len(z.namelist()) == len(selected) + 1
           print('ZIP:', target, 'files:', len(selected), 'bytes:', target.stat().st_size)
           PY
+      - name: Attach verified source ZIP to this workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: BINA_FINAL_2026-11-10_SOURCE
+          path: releases/BINA_FINAL_2026-11-10_SOURCE.zip
+          if-no-files-found: error
+          retention-days: 90
       - name: Publish frozen source ZIP in GitHub
         shell: bash
         run: |
