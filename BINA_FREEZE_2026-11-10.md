@@ -29,11 +29,12 @@ The current accounting-documents form is:
 3. The root `FastDataHandler.ashx` file is just an ASP.NET handler directive pointing at `FastDataHandler.ashx.vb`. Its server-side implementation is **not** included; SQL→IndexedDB sync needs the deployed external endpoint.
 4. `ARCHITECTURE.md` is an older design document; some of its database naming details differ from the implemented per-company IndexedDB strategy. Source code and `admin/README_FA.md` are more useful for the current runtime.
 5. Actual browser execution with the user's SQL Server, populated IndexedDB, CORS and network environment is **not** established by static inspection or Node unit tests.
+6. The historical source `legacy/bina_db-v01.js` contains a JavaScript syntax error. It is **archived and excluded from active-source syntax checks**, not silently repaired.
 
 ## Automated checks
 A GitHub Actions checkpoint workflow runs:
-- `node --check` for first-party JavaScript;
-- `admin/tests/run_tests.sh` (manager/SQL tests);
+- `node --check` for active first-party JavaScript (`FINAL` + `admin`, excluding minified vendor scripts); historical `.Js` source files are fed on standard input for Node compatibility;
+- `admin/tests/run_tests.sh` (manager/SQL tests). Its test doubles were updated to use the current `getServerTables()` and `_saveServerTables()` method names; runtime manager code was not modified;
 - essential active form reference checks;
 - creation and validation of a frozen source ZIP.
 

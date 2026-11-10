@@ -26,9 +26,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          find FINAL admin legacy -type f \
+          # Legacy source is archived, not an active executable. Node --check
+          # does not recognize historical upper-case .Js extension as a path;
+          # parse its contents over stdin instead.
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              *.Js) node --check --input-type=commonjs < "$file" ;;
+              *)    node --check "$file" ;;
+            esac
+          done < <(find FINAL admin -type f \
             \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) \
-            ! -name '*.min.js' -print0 | xargs -0 -n1 node --check
+            ! -name '*.min.js' -print0)
       - name: Existing SQL and IndexedDB unit tests
         id: unit
         continue-on-error: true

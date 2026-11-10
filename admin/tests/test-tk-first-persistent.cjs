@@ -17,10 +17,10 @@ const sources=[
  };
  const manager=new BinaDBManager({webservice:ws});
  manager.initialize=async()=>({});
- manager.getservertables=async()=>[];
+ manager.getServerTables=async()=>[];
  manager._ensureTKStores=async()=>order.push('create-tk-stores');
  manager._fetchTK=async(store,table,count)=>{order.push('tk-data:'+table);return count;};
- manager._saveservertables=async()=>order.push('save-tables');
+ manager._saveServerTables=async()=>order.push('save-tables');
  manager._updateSharedSchemas=async()=>order.push('save-shared-schema');
  const r=await manager.bootstrap();
  assert.equal(r.tkTables.length,3);
@@ -30,7 +30,7 @@ const sources=[
  assert(!order.some(x=>x.startsWith('sync:')));
  // اگر TK ناقص/خطادار باشد، دریافت سند متوقف می‌شود.
  const failed=new BinaDBManager({webservice:ws});
- failed.initialize=async()=>{};failed.getservertables=async()=>[];
+ failed.initialize=async()=>{};failed.getServerTables=async()=>[];
  failed._ensureTKStores=async()=>{};
  failed._fetchTK=async()=>{throw Error('TK incomplete')};
  failed._syncOne=async()=>{throw Error('FATAL: started sanad before TK')};
