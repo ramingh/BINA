@@ -1,0 +1,3 @@
+html, body { height: 100%; margin: 0; background: #f2f5fa }
+    body { padding: 10px; box-sizing: border-box }
+    #view { height: 100% }

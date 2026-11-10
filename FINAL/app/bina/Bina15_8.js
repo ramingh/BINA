@@ -1,5 +1,5 @@
 /* =========================================
-   taraz.js - منطق و کامپوننت فرم تراز
+   Bina15_8.js - منطق و کامپوننت مرور حسابها / تراز
    ========================================= */
 window.BinaTarazApp = (function() {
   'use strict';
@@ -204,18 +204,6 @@ function closeModal() {
   if (modalGrid) { modalGrid.destroy(); modalGrid = null; }
   document.getElementById('modalGrid').innerHTML = '';
 }
-
-// ==========================================
-// ۵. رویدادهای اولیه (شروع به کار)
-// ==========================================
-document.getElementById('companyCode').addEventListener('change', async (e) => {
-  await loadYears(e.target.value);
-  runTaraz();
-});
-
-document.getElementById('fiscalYear').addEventListener('change', () => {
-  runTaraz();
-});
 
 // ==========================================
 // ۵. رویدادهای اولیه (شروع به کار)

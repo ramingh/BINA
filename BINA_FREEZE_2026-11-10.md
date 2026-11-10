@@ -49,3 +49,20 @@ The workflow reports test outcomes in its logs. An existing issue must not be tr
 - The archive contains no IndexedDB browser data or server/database credentials.
 
 **No runtime behavior has been modified to create this checkpoint.**
+
+## نام‌گذاری و تثبیت چهار فرم فعال (اصلاح تکمیلی)
+
+مرجع نام‌گذاری: فایل `Sidbar.xlsx` ارسالی کاربر. فقط چهار فرم متصل به فایل اجرایی در `FINAL/pages` نام‌گذاری شدند:
+
+| کد | زیرمنو | HTML | JavaScript | CSS |
+|---|---|---|---|---|
+| 10-1 | معرفی شرکتها | Bina10_1.html | Bina10_1.js | Bina10_1.css |
+| 10-2 | کدینگ شرکتها | Bina10_2.html | Bina10_2.js | Bina10_2.css |
+| 15-1 | اسناد حسابداری | Bina15_1.html | Bina15_1.js | Bina15_1.css |
+| 15-8 | مرور حسابها | Bina15_8.html | Bina15_8.js | Bina15_8.css |
+
+فایل‌های HTML در `FINAL/pages`، JS اختصاصی در `FINAL/app/bina` و CSS اختصاصی در `FINAL/css` قرار دارند. نام فایل‌های مشترک (Grid/SQL/IndexedDB/Dic/Palette) عمداً تغییر نکرده است. شناسه‌های داخلی توصیف‌گر `tab-01` و `tab-02` برای سازگاری با موتور قدیمی حفظ شدند.
+
+**اصلاحات قطعی:** پیوندهای سایدبار، استخراج CSS/JS فرم‌ها، یکتاسازی `gridContainer`، حذف ثبت مضاعف رویدادهای شرکت و سال مالی تراز، و مسیر با حروف صحیح `Dic_sek.Js`. سایر محاسبات مالی و ساختار بانک تغییر نکرده‌اند.
+
+**ریسک‌ها / کارهای باز:** توصیف‌گر `tab-01` هنوز از `family: Sanad` استفاده می‌کند؛ پس نمایش «معرفی شرکتها» لزوماً درست نیست. سقف پیش‌فرض ۲۵۰هزار ردیفی `DataDecompressor`، مرتب‌سازی/مانده تجمعی در موتور تراز، لینک منوهای هنوز پیاده‌نشده و بررسی واقعی مرورگر با IndexedDB به تست جداگانه نیاز دارند. آرشیو ZIP به معنی تأیید تمامی محاسبات مالی نیست.

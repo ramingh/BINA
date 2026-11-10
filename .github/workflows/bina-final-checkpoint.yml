@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/bina-final-checkpoint.yml'
       - 'admin/tests/test-tk-first-persistent.cjs'
+      - 'FINAL/**'
   workflow_dispatch:
 
 permissions:
@@ -52,6 +53,14 @@ jobs:
           assert 'pages/Bina15_1.html' in s
           assert '../app/bina/Bina15_1.js' in page
           assert '../css/Bina15_1.css' in page
+          for code in ('Bina10_1','Bina10_2','Bina15_1','Bina15_8'):
+              assert f'pages/{code}.html' in s, f'Unlinked menu: {code}'
+              body = Path(f'FINAL/pages/{code}.html').read_text(encoding='utf-8')
+              assert f'../app/bina/{code}.js' in body
+              assert f'../css/{code}.css' in body
+              assert Path(f'FINAL/app/bina/{code}.js').is_file()
+              assert Path(f'FINAL/css/{code}.css').is_file()
+          assert Path('FINAL/pages/Bina15_8.html').read_text(encoding='utf-8').count('id="gridContainer"') == 1
           for f in ('FINAL/app/bina/Bina15_1.js','FINAL/css/Bina15_1.css',
                     'FINAL/app/bina/BinaDBManager.js','FINAL/app/bina/bina-grid.js',
                     'FINAL/Dic_sek.Js','FINAL/palette.css','admin/manager/index.html',
