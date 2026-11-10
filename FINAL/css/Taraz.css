@@ -36,12 +36,11 @@ body {
 /* نوار کنترل بالا (رادیوها و کمبوها) */
 .top-controls {
   display: flex;
-  flex-direction: row-reverse; /* 👈 این خط جادو می‌کند */
+  flex-direction: row; /* 👈 این رو به row تغییر بده */
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
   margin-bottom: 15px;
-  /* direction: ltr; 👈 این را کاملاً پاک کن */
 }
 /* کادر رادیو باتوم‌ها */
 .radio-group {

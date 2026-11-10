@@ -1,7 +1,10 @@
 /* =========================================
    taraz.js - منطق و کامپوننت فرم تراز
    ========================================= */
-
+window.BinaTarazApp = (function() {
+  'use strict';
+  
+  
 let grid = null;
 let modalGrid = null;
 const engine = new BinaReportEngine();
@@ -120,75 +123,79 @@ async function runTaraz() {
 // ==========================================
 // ۳. تابع باز کردن پنجره Drill-down
 // ==========================================
-async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear) {
-  // استخراج کدها از CodeHesab (مثلاً "11 - 1103 - 100001")
-  const parts = String(parentRow.CodeHesab).split('-').map(s => s.trim());
-  const filter = { KOl_Code: Number(parts[0]) };
-  
-  if (nextLevel === 'tafsil' || nextLevel === 'daftar') {
-    filter.Moien_Code = Number(parts[1]);
-    filter.Tafsil_Code = Number(parts[2]);
-  } else if (nextLevel === 'moien') {
-    filter.Moien_Code = Number(parts[1]);
-  }
-
-  let title = '';
-  let reportType = 'taraz';
-  
-  if (nextLevel === 'daftar') {
-      title = `دفتر تفصیل: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab}`;
-      reportType = 'daftarTafsil';
-  } else {
-      title = `جزئیات: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab} (سطح ${nextLevel === 'moien' ? 'معین' : 'تفصیل'})`;
-  }
-
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalOverlay').classList.add('open');
-  
-  try {
-    const rows = await engine.execute({
-      reportType: reportType, 
-      companyCode: companyCode, 
-      fiscalYear: fiscalYear,
-      level: nextLevel === 'daftar' ? 'tafsil' : nextLevel,
-      filter: filter
-    });
+  async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear) {
+    // 🔧 استخراج کدها از CodeHesab
+    const parts = String(parentRow.CodeHesab).split('-').map(s => s.trim());
     
-    if (modalGrid) { modalGrid.destroy(); document.getElementById('modalGrid').innerHTML = ''; }
+    // همیشه کد کل را داریم
+    const filter = { KOl_Code: Number(parts[0]) };
     
-    let captions = {};
+    // فقط اگر سطح معین یا بالاتر بود، کد معین را اضافه کن
+    if (nextLevel === 'tafsil' || nextLevel === 'daftar') {
+      if (parts[1] !== undefined) filter.Moien_Code = Number(parts[1]);
+    }
+    
+    // فقط اگر سطح دفتر بود، کد تفصیل را اضافه کن
     if (nextLevel === 'daftar') {
-        captions = {
-            ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', SharhSanad: 'شرح سند',
-            Bedehkar: 'بدهکار', Bestankar: 'بستانکار', Mandeh: 'مانده', Vaziat: 'وضعیت'
-        };
-    } else {
-        captions = { 
-            CodeHesab: 'کد حساب', OnvanHesab: 'عنوان حساب', 
-            GardeshBedehkar: 'بدهکار', GardeshBestankar: 'بستانکار', 
-            MandehBedehkar: 'مانده بد', MandehBestankar: 'مانده بس' 
-        };
+      if (parts[2] !== undefined) filter.Tafsil_Code = Number(parts[2]);
     }
-    
-    modalGrid = new BinaGrid('#modalGrid', {
-      pageSize: 500, height: '100%', captions: captions
-    });
-    
-    await modalGrid.setData(rows, `Drill_${nextLevel}`, { own: true });
-    
-    // فعال‌سازی Drill-down برای سطوح بعدی
-    if (nextLevel === 'moien') {
-      modalGrid.on('rowClick', (e) => openDrillDown(e.data, 'tafsil', companyCode, fiscalYear));
-    } else if (nextLevel === 'tafsil') {
-      modalGrid.on('rowClick', (e) => openDrillDown(e.data, 'daftar', companyCode, fiscalYear));
-    }
-    
-  } catch (err) {
-    console.error(err);
-    document.getElementById('modalGrid').innerHTML = '<p style="color:red;padding:10px;">خطا: ' + err.message + '</p>';
-  }
-}
 
+    let title = '';
+    let reportType = 'taraz';
+    
+    if (nextLevel === 'daftar') {
+        title = `دفتر تفصیل: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab}`;
+        reportType = 'daftarTafsil';
+    } else {
+        title = `جزئیات: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab} (سطح ${nextLevel === 'moien' ? 'معین' : 'تفصیل'})`;
+    }
+
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalOverlay').classList.add('open');
+    
+    try {
+      const rows = await engine.execute({
+        reportType: reportType, 
+        companyCode: companyCode, 
+        fiscalYear: fiscalYear,
+        level: nextLevel === 'daftar' ? 'tafsil' : nextLevel,
+        filter: filter
+      });
+      
+      if (modalGrid) { modalGrid.destroy(); document.getElementById('modalGrid').innerHTML = ''; }
+      
+      let captions = {};
+      if (nextLevel === 'daftar') {
+          captions = {
+              ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', SharhSanad: 'شرح سند',
+              Bedehkar: 'بدهکار', Bestankar: 'بستانکار', Mandeh: 'مانده', Vaziat: 'وضعیت'
+          };
+      } else {
+          captions = { 
+              CodeHesab: 'کد حساب', OnvanHesab: 'عنوان حساب', 
+              GardeshBedehkar: 'بدهکار', GardeshBestankar: 'بستانکار', 
+              MandehBedehkar: 'مانده بد', MandehBestankar: 'مانده بس' 
+          };
+      }
+      
+      modalGrid = new BinaGrid('#modalGrid', {
+        pageSize: 500, height: '100%', captions: captions
+      });
+      
+      await modalGrid.setData(rows, `Drill_${nextLevel}`, { own: true });
+      
+      // فعال‌سازی Drill-down برای سطوح بعدی
+      if (nextLevel === 'moien') {
+        modalGrid.on('rowClick', (e) => openDrillDown(e.data, 'tafsil', companyCode, fiscalYear));
+      } else if (nextLevel === 'tafsil') {
+        modalGrid.on('rowClick', (e) => openDrillDown(e.data, 'daftar', companyCode, fiscalYear));
+      }
+      
+    } catch (err) {
+      console.error(err);
+      document.getElementById('modalGrid').innerHTML = '<p style="color:red;padding:10px;">خطا: ' + err.message + '</p>';
+    }
+  }
 // ==========================================
 // ۴. بستن پنجره Modal
 // ==========================================
@@ -235,3 +242,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadCompanies();
   runTaraz();
 });
+
+  // در دسترس قرار دادن توابع برای HTML
+  return {
+    runTaraz: runTaraz,
+    openDrillDown: openDrillDown,
+    closeModal: closeModal,
+    loadCompanies: loadCompanies
+  };
+})();

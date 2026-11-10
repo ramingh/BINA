@@ -3,29 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>اسناد حسابداری</title>
+  <title>مرور ترازها و دفاتر مالی</title>
+  
+  <!-- ۱. استایل‌های پایه -->
   <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css"
     onerror="this.href='../tabulator.min.css'">
+    
+  <link rel="stylesheet" href="../css/Taraz.css">
+
   <style>
     html, body { height: 100%; margin: 0; background: #f2f5fa }
     body { padding: 10px; box-sizing: border-box }
-    #view { height: 100% }
+    #app-container { height: 100%; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="view"></div>
+    <div class="top-controls">
+      <!-- ۱. نام شرکت و سال مالی (اول می‌آید، پس در RTL می‌رود سمت راست) -->
+      <div class="company-controls">
+        <label>نام شرکت: 
+          <select id="companyCode"><option value="">در حال بارگذاری...</option></select>
+        </label>
+        <label>سال مالی: 
+          <select id="fiscalYear"><option value="">--</option></select>
+        </label>
+      </div>
+
+      <!-- ۲. دکمه زرد -->
+      <div>
+        <button class="btn-yellow" style="margin:0;" onclick="alert('بعدا پیاده‌سازی می‌شود')">تراز مقایسه ایی سالانه</button>
+      </div>
+
+      <!-- ۳. رادیو باتوم‌ها (آخر می‌آید، پس در RTL می‌رود سمت چپ) -->
+      <div>
+        <div class="radio-group">
+          <label><input type="radio" name="level" value="kol" checked onchange="BinaTarazApp.runTaraz()"> تراز کل</label>
+          <label><input type="radio" name="level" value="moien" onchange="BinaTarazApp.runTaraz()"> تراز معین</label>
+          <label><input type="radio" name="level" value="tafsil" onchange="BinaTarazApp.runTaraz()"> تراز تفصیل</label>
+        </div>
+        <div class="radio-group">
+          <label><input type="radio" name="docType" value="all" checked> همه اسناد</label>
+          <label><input type="radio" name="docType" value="bastan"> بدون بستن حساب‌ها</label><br>
+          <label><input type="radio" name="docType" value="ekhtetamieh"> بدون بستن اسناد اختتامیه</label>
+          <label><input type="radio" name="docType" value="eftetahieh"> بدون بستن تفصیلی</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- دکمه زرد قبلی رو کلاً پاک کن، چون رفت بالای صفحه -->
+    
+    <!-- گرید -->
+    <div id="gridContainer" style="flex:1;"></div>
+
+    <div id="gridContainer" style="flex:1;"></div>
+  </div>
+  
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">جزئیات</h3>
+    <button class="modal-close" onclick="BinaTarazApp.closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalGrid"></div>
+    </div>
+  </div>
+
+  <!-- ۲. کتابخانه‌های پایه -->
   <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
-  <script>if (typeof Tabulator === 'undefined') document.write('<scr' + 'ipt src="../tabulator.min.js"><\/scr' + 'ipt>');</script>
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <!-- موتور از shell می‌آید (parent.BinaBank)؛ فقط برای باز کردن مستقل همین صفحه، AlaSQL و موتور هم لود می‌شوند -->
-  <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
-  <script>if (typeof alasql === 'undefined') document.write('<scr' + 'ipt src="../app/bina/alasql.min.js"><\/scr' + 'ipt>');</script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  
+  <!-- ۳. موتور گزارش و کامپوننت‌ها (از مسیر app/bina) -->
+ 
+   <script src="../app/bina/DataDecompressor.js"></script>
+  <script src="../app/bina/BinaDBManager.js"></script>
+  <script src="../app/bina/BinaReportEngine.js"></script>
   <script src="../app/bina/bina-grid.js"></script>
-  <script src="../../FINAL/app/bina/bina-local-sql.js"</script>
-  <script src="../bina/bina-query-view0.js?ver0.01"></script>
-  <script src="../bina/bina-pages.js"></script>
-  <script src="../bina/bina-page.js"></script>
+
+  <!-- ۴. مترجم (اگر لازم بود) -->
   <script src="../dic_sek.Js"></script>
-  <script>BinaPage.mount('tab-13');</script>
+
+  <!-- ۵. اسکریپت اصلی فرم تراز -->
+  <script src="../app/bina/BinaTaraz.js"></script>
+
 </body>
 </html>
