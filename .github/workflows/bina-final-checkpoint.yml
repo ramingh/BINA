@@ -1,0 +1,106 @@
+name: BINA final checkpoint tests and source ZIP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bina-final-checkpoint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout frozen sources
+        uses: actions/checkout@v4
+      - name: Configure Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        id: syntax
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          find FINAL admin legacy -type f \
+            \( -iname '*.js' -o -iname '*.mjs' -o -iname '*.cjs' \) \
+            ! -name '*.min.js' -print0 | xargs -0 -n1 node --check
+      - name: Existing SQL and IndexedDB unit tests
+        id: unit
+        continue-on-error: true
+        run: sh admin/tests/run_tests.sh
+      - name: Validate active menu paths
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('FINAL/side_bar.html').read_text(encoding='utf-8')
+          page = Path('FINAL/pages/Bina15_1.html').read_text(encoding='utf-8')
+          assert 'pages/Bina15_1.html' in s
+          assert '../app/bina/Bina15_1.js' in page
+          assert '../css/Bina15_1.css' in page
+          for f in ('FINAL/app/bina/Bina15_1.js','FINAL/css/Bina15_1.css',
+                    'FINAL/app/bina/BinaDBManager.js','FINAL/app/bina/bina-grid.js',
+                    'FINAL/Dic_sek.Js','FINAL/palette.css','admin/manager/index.html',
+                    'admin/manager/bina-db-manager.js'):
+              assert Path(f).is_file(), f
+          print('PASS key active-form paths and common modules')
+          PY
+      - name: Package all tracked source (no fonts or old binary archives)
+        shell: bash
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, zipfile, hashlib
+          from pathlib import Path
+          source_commit = os.environ['SOURCE_COMMIT']
+          target = Path('releases/BINA_FINAL_2026-11-10_SOURCE.zip')
+          target.parent.mkdir(exist_ok=True)
+          tracked = subprocess.check_output(['git','ls-files','-z']).split(b'\0')
+          excluded_ext = ('.ttf','.otf','.woff','.woff2','.rar','.zip','.7z','.exe','.dll')
+          selected = []
+          for raw in tracked:
+              if not raw: continue
+              name = raw.decode('utf-8')
+              if name.startswith('releases/') or name.lower().endswith(excluded_ext): continue
+              path = Path(name)
+              if not path.is_file(): continue
+              selected.append(name)
+          selected.sort()
+          manifest = [
+              'BINA frozen source checkpoint: 2026-11-10',
+              'source Git SHA: ' + source_commit,
+              'Note: /releases, font binaries, and old nested ZIP/RAR files excluded.',
+              'All paths are relative to repository root.',
+              ''
+          ]
+          for name in selected:
+              data = Path(name).read_bytes()
+              manifest.append(hashlib.sha256(data).hexdigest() + '  ' + name)
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=8) as z:
+              for name in selected: z.write(name, name)
+              z.writestr('SOURCE_MANIFEST.txt', '\n'.join(manifest) + '\n')
+          with zipfile.ZipFile(target) as z:
+              assert z.testzip() is None, 'Corrupt ZIP member'
+              assert len(z.namelist()) == len(selected) + 1
+          print('ZIP:', target, 'files:', len(selected), 'bytes:', target.stat().st_size)
+          PY
+      - name: Publish frozen source ZIP in GitHub
+        shell: bash
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f releases/BINA_FINAL_2026-11-10_SOURCE.zip
+          git commit -m "release: BINA final source ZIP checkpoint 2026-11-10"
+          git push origin HEAD:main
+      - name: Report any check failures
+        if: steps.syntax.outcome == 'failure' || steps.unit.outcome == 'failure'
+        run: |
+          echo "One or more checks failed. ZIP was still archived; see logs."
+          exit 1
