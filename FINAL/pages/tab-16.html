@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>مرور اسناد حسابداری - BINA</title>
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css">
+  <link rel="stylesheet" href="../css/SanadBrowser.css">
+</head>
+<body>
+  <main class="sanad-browser" aria-label="مرور اسناد حسابداری">
+    <header class="sb-top">
+      <div class="sb-field sb-company">
+        <label for="sb-company">نام شرکت:</label>
+        <select id="sb-company" aria-label="نام شرکت"><option value="">در حال بارگذاری شرکت‌ها…</option></select>
+      </div>
+      <div class="sb-field sb-year">
+        <label for="sb-year">سال مالی:</label>
+        <select id="sb-year" aria-label="سال مالی" disabled><option value="">—</option></select>
+      </div>
+      <button type="button" id="sb-load" class="sb-primary" disabled>نمایش اسناد</button>
+      <span id="sb-status" class="sb-status" role="status" aria-live="polite">در حال آماده‌سازی…</span>
+    </header>
+
+    <section class="sb-toolbar" aria-label="انتخاب سند و پیمایش">
+      <div class="sb-document-info">
+        <span class="sb-caption">شماره سند</span><output id="sb-number" class="sb-number">—</output>
+        <span class="sb-caption">تاریخ سند</span><output id="sb-date" class="sb-date">—</output>
+      </div>
+      <div class="sb-doc-picker">
+        <label for="sb-document">انتخاب سند (شماره و تاریخ):</label>
+        <select id="sb-document" disabled aria-label="شماره و تاریخ اسناد"><option value="">ابتدا اطلاعات را نمایش دهید</option></select>
+        <output id="sb-counter" class="sb-counter">۰ از ۰</output>
+      </div>
+      <div class="sb-navigation" role="group" aria-label="پیمایش اسناد">
+        <button type="button" id="sb-first" title="اولین سند" aria-label="اولین سند" disabled>⏮</button>
+        <button type="button" id="sb-prev" title="سند قبلی" aria-label="سند قبلی" disabled>◀</button>
+        <button type="button" id="sb-next" title="سند بعدی" aria-label="سند بعدی" disabled>▶</button>
+        <button type="button" id="sb-last" title="آخرین سند" aria-label="آخرین سند" disabled>⏭</button>
+        <button type="button" id="sb-print" title="چاپ سند فعلی" aria-label="چاپ سند" disabled>🖨</button>
+      </div>
+    </section>
+
+    <section class="sb-grid-panel" aria-label="اقلام سند">
+      <div id="sb-grid" class="sb-grid"></div>
+    </section>
+
+    <footer class="sb-footer">
+      <section class="sb-totals" aria-label="جمع سند">
+        <div class="sb-total"><span>جمع بدهکار</span><output id="sb-total-debit">۰</output></div>
+        <div class="sb-total"><span>جمع بستانکار</span><output id="sb-total-credit">۰</output></div>
+        <div class="sb-balance" id="sb-balance" aria-live="polite">—</div>
+      </section>
+      <div class="sb-account">
+        <label for="sb-account-title">عنوان حساب انتخاب‌شده:</label>
+        <output id="sb-account-title" class="sb-account-title">برای نمایش عنوان، یک ردیف سند را انتخاب کنید.</output>
+      </div>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <script src="../app/bina/BinaDBManager.js"></script>
+  <script src="../app/bina/DataDecompressor.js"></script>
+  <script src="../app/bina/bina-grid.js"></script>
+  <script src="../app/bina/BinaSanadBrowser.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const browser = new BinaSanadBrowser(document.querySelector('.sanad-browser'));
+      window.BinaSanadPage = browser;
+      browser.init();
+    });
+  </script>
+</body>
+</html>

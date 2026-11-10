@@ -1,0 +1,72 @@
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("../IRANYekanX-Light.ttf") format("truetype");
+  font-weight: 300 700;
+  font-display: swap;
+}
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { font: 14px "IRANYekanX", Tahoma, sans-serif; color:#17283c; background:#cbb99f; }
+button, input, select { font: inherit; }
+button { cursor:pointer; }
+button:disabled, select:disabled { cursor:not-allowed; opacity:.58; }
+.sanad-browser { height:100vh; min-height:460px; display:flex; flex-direction:column; gap:10px; padding:13px 15px 12px; overflow:hidden; }
+.sb-top { display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; padding:12px 8px; }
+.sb-field { display:flex; align-items:center; gap:8px; }
+.sb-field label { white-space:nowrap; font-weight:700; }
+.sb-field select, .sb-doc-picker select { height:38px; border:1px solid #b2a084; background:#f3f4f7; border-radius:4px; padding:4px 10px; color:#14243c; }
+.sb-company select { width:min(440px, 45vw); }
+.sb-year select { width:102px; }
+.sb-primary { border:1px solid #78603f; background:#94754b; color:#fff; border-radius:4px; font-weight:700; padding:9px 17px; min-height:38px; }
+.sb-primary:not(:disabled):hover { background:#765936; }
+.sb-status { flex:1 1 260px; min-width:150px; font-size:12px; color:#3f4a56; }
+.sb-status.sb-error { color:#a31e26; font-weight:700; }
+.sb-toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:12px; background:rgba(255,255,255,.16); padding:10px; border:1px solid #ad997b; }
+.sb-document-info { display:flex; align-items:center; flex-wrap:wrap; gap:7px; }
+.sb-caption { background:#987d52; color:#fff; padding:7px 11px; border-radius:3px; white-space:nowrap; }
+.sb-number,.sb-date { min-width:92px; padding:6px 10px; text-align:center; background:#f7f7f3; border:1px solid #b39c73; font-weight:700; direction:ltr; color:#112d7c; }
+.sb-doc-picker { display:flex; align-items:center; gap:8px; flex:1 1 285px; min-width:240px; }
+.sb-doc-picker label { white-space:nowrap; font-weight:600; }
+.sb-doc-picker select { flex:1; min-width:130px; background:#e2ffe1; border-color:#83b77d; }
+.sb-counter { white-space:nowrap; min-width:65px; text-align:center; font-size:12px; }
+.sb-navigation { display:flex; direction:ltr; gap:4px; align-items:center; }
+.sb-navigation button { min-width:37px; height:37px; border:1px solid #988468; border-radius:5px; background:#eef2f8; color:#12409a; font-size:18px; font-weight:700; }
+.sb-navigation button:hover:not(:disabled) { background:#d8e6fa; }
+.sb-grid-panel { background:#f4f4f1; flex:1 1 auto; min-height:125px; border:1px solid #a48d6b; padding:3px; overflow:hidden; }
+.sb-grid { width:100%; height:100%; }
+.sb-grid .bina-grid { height:100%; display:flex; flex-direction:column; }
+.sb-grid .bina-wrap { flex:1 1 auto; min-height:0; }
+.sb-grid .tabulator { font-family:inherit; background:#f6f6f5; font-size:13px; }
+.sb-grid .tabulator-header, .sb-grid .tabulator-col { background:#987d52 !important; color:#fff7cb !important; }
+.sb-grid .tabulator-row { background:#f9f9f7; }
+.sb-grid .tabulator-row:nth-child(even) { background:#ececec; }
+.sb-grid .tabulator-row:hover { background:#e5efff; }
+.sb-footer { display:flex; flex-wrap:wrap; align-items:stretch; gap:12px; min-height:95px; }
+.sb-totals { display:grid; grid-template-columns: minmax(130px,1fr) minmax(130px,1fr); grid-template-rows:auto auto; flex:0 1 430px; gap:4px; }
+.sb-total { display:flex; flex-direction:column; min-width:120px; }
+.sb-total span { text-align:center; background:#987d52; color:#fff6d4; padding:5px; font-weight:700; }
+.sb-total output { padding:8px; background:#f4f1e7; min-height:35px; border:1px solid #b6a487; color:#122b87; text-align:center; font-size:16px; font-weight:700; direction:ltr; }
+.sb-balance { grid-column:1/-1; color:#168038; text-align:center; font-weight:700; font-size:14px; min-height:20px; }
+.sb-balance.sb-unbalanced { color:#b91f28; }
+.sb-account { flex:1 1 390px; display:flex; flex-direction:column; gap:6px; }
+.sb-account label { font-weight:700; }
+.sb-account-title { min-height:59px; padding:10px 12px; background:#f0ece3; border:1px solid #b6a487; color:#102c7a; font-weight:700; display:flex; align-items:center; }
+@media(max-width:820px) {
+  .sanad-browser { overflow:auto; min-height:620px; }
+  .sb-top { padding:4px; gap:8px; }
+  .sb-company select { width: min(66vw,450px); }
+  .sb-status { flex-basis:100%; }
+  .sb-toolbar { align-items:center; }
+  .sb-doc-picker { flex-basis:100%; }
+  .sb-grid-panel { min-height:300px; }
+  .sb-footer { gap:8px; }
+}
+@media print {
+  body { background:#fff; }
+  .sanad-browser { height:auto; overflow:visible; padding:0; }
+  .sb-primary,.sb-navigation,.sb-doc-picker,.sb-status { display:none !important; }
+  .sb-grid-panel { overflow:visible; min-height:0; }
+  .sb-grid .bina-toolbar { display:none !important; }
+  .sb-footer { break-inside:avoid; }
+}
