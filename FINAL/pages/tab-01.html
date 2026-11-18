@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>نام و کد شرکت‌ها</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 16px;
+      font-size: 13px;
+      color: #1e293b;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 16px;
+      margin: 0 0 12px;
+      color: #b91c1c;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+
+    .status {
+      margin-bottom: 10px;
+      color: #475569;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid #e2e8f0;
+      padding: 7px 10px;
+      text-align: right;
+    }
+
+    th {
+      background: #1e293b;
+      color: #fff;
+      font-weight: normal;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    td.num {
+      text-align: center;
+      width: 60px;
+      color: #64748b;
+    }
+
+    .error {
+      color: #b91c1c;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>نام و کد شرکت‌ها</h1>
+    <div class="status" id="status">در حال خواندن از IndexedDB…</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ردیف</th>
+          <th>کد شرکت</th>
+          <th>نام شرکت</th>
+          <th>نوع شرکت</th>
+          <th>شناسه</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // ۱) خواندن فیلد بدون حساسیت به بزرگی/کوچکی حرف
+    function getField(obj, name) {
+      if (!obj) return '';
+      if (obj[name] !== undefined) return obj[name];
+      const lower = name.toLowerCase();
+      for (const k in obj) {
+        if (k.toLowerCase() === lower) return obj[k];
+      }
+      return '';
+    }
+
+    // ۲) باز کردن دیتابیس public و خواندن استور tk_sherkat
+    function readCompanies() {
+      return new Promise((resolve, reject) => {
+        const openReq = indexedDB.open('public');
+
+        openReq.onerror = () => reject(new Error('باز کردن دیتابیس public ممکن نشد.'));
+        openReq.onupgradeneeded = () => {
+          // اگر دیتابیس وجود نداشت، نساخته و متوقف می‌شویم
+          reject(new Error('دیتابیس public وجود ندارد.'));
+        };
+
+        openReq.onsuccess = () => {
+          const db = openReq.result;
+          const storeName = Array.from(db.objectStoreNames)
+            .find(n => n.toLowerCase() === 'tk_sherkat');
+
+          if (!storeName) {
+            db.close();
+            reject(new Error('استور tk_sherkat در دیتابیس public پیدا نشد.'));
+            return;
+          }
+
+          const tx = db.transaction([storeName], 'readonly');
+          const req = tx.objectStore(storeName).getAll();
+
+          req.onsuccess = () => {
+            const rows = req.result.map(rec => {
+              const obj = (rec && rec.value) ? rec.value : rec;
+              return {
+                code: String(getField(obj, 'codesherkat')),
+                name: String(getField(obj, 'esmsherkat')),
+                noe: String(getField(obj, 'noesherkat')),
+                id: Number(getField(obj, 'id')) || 0
+              };
+            });
+
+            // ۳) حذف تکراری‌ها و مرتب‌سازی بر اساس کد شرکت
+            const unique = new Map();
+            rows.forEach(r => { if (r.code) unique.set(r.code, r); });
+            const list = Array.from(unique.values())
+              .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+
+            db.close();
+            resolve(list);
+          };
+
+          req.onerror = () => {
+            db.close();
+            reject(new Error('خواندن جدول tk_sherkat ممکن نشد.'));
+          };
+        };
+      });
+    }
+
+    // ۴) نمایش در جدول ساده
+    readCompanies()
+      .then(list => {
+        const tbody = document.getElementById('rows');
+        tbody.innerHTML = list.map((r, i) =>
+          '<tr>' +
+            '<td class="num">' + (i + 1) + '</td>' +
+            '<td>' + r.code + '</td>' +
+            '<td>' + r.name + '</td>' +
+            '<td>' + r.noe + '</td>' +
+            '<td class="num">' + r.id + '</td>' +
+          '</tr>'
+        ).join('');
+
+        document.getElementById('status').textContent =
+          list.length + ' شرکت خوانده شد.';
+      })
+      .catch(err => {
+        document.getElementById('status').innerHTML =
+          '<span class="error">خطا: ' + err.message + '</span>';
+      });
+  </script>
+</body>
+
+</html>

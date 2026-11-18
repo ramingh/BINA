@@ -1,0 +1,143 @@
+/* BinaGrid v1.2.31 — visual rules extracted byte-for-byte from v1.2.29.
+   Shared layout, toolbar, record selector, column manager, footer and vivid themes.
+   Do not apply the grid theme to the column manager header itself. */
+.bina-grid{position:relative;display:flex;flex-direction:column;gap:8px;outline:none;font-family:IRANYekanX,Tahoma,Arial,sans-serif}
+.bina-grid .tabulator{font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:11px}
+.bina-grid .tabulator-header .tabulator-header-filter input{height:26px!important;min-height:26px!important;max-height:26px!important;border-radius:8px!important;background:#fff8f4!important;border:1px solid #d9c8c0!important;box-sizing:border-box!important;padding:2px 7px!important;font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:10px!important}
+.bina-grid .tabulator-header .tabulator-header-filter input:focus{outline:1px solid #b78b7a;outline-offset:0;background:#fffaf7!important}
+.bina-grid,.bina-grid *{box-sizing:border-box}
+/* Toolbar and controls */
+.bina-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bina-search{flex:0 1 260px;min-width:170px;padding:7px 12px;border:1px solid #b9c8d4;border-radius:9px;font:inherit;font-size:12.5px;background:#fff;color:#20374b}
+.bina-search:focus{outline:2px solid #0e8f6f33;border-color:#0e8f6f}
+.bina-btn{padding:7px 12px;border:1px solid #b9c8d4;border-radius:9px;background:#fff;color:#20374b;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.bina-btn:hover{background:#eef4f8;border-color:#8fa8ba}
+.bina-btn:disabled{opacity:.5;cursor:default}
+.bina-btn-columns{display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:34px;padding:4px;border:0;background:transparent;box-shadow:none;color:#245476;border-radius:8px}
+.bina-btn-columns:hover{background:rgba(36,84,118,.08);border-color:transparent}
+.bina-btn-columns:focus-visible{outline:2px solid #245476;outline-offset:2px}
+.bina-count{font-size:12.5px;color:#41586c;background:#eef4f8;border-radius:99px;padding:5px 12px;white-space:nowrap}
+.bina-spacer{flex:1}
+.bina-wrap{position:relative;height:560px}
+.bina-table{height:100%}
+.bina-empty{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;background:#f7fafc;color:#7b8b99;font-size:14px;z-index:5;border:1px dashed #c3d0da;border-radius:12px;text-align:center;padding:20px}
+.bina-empty b{color:#41586c;font-size:15px}
+.bina-toast{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#12395e;color:#fff;padding:8px 16px;border-radius:99px;font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9500}
+.bina-toast.show{opacity:.95}
+.bina-grid .tabulator-header .tabulator-col:not(.bina-selector-cell){min-width:1px}
+.bina-grid .tabulator-tableholder .tabulator-cell:not(.bina-selector-cell){min-width:0}
+.bina-grid .tabulator-header .tabulator-col-content,.bina-grid .tabulator-header .tabulator-col-title-holder,.bina-grid .tabulator-header .tabulator-header-filter{min-width:0;overflow:hidden}
+.bina-grid .tabulator-cell{white-space:normal}
+.bina-grid .smart{display:block;width:100%;min-width:0;line-height:1.55;overflow:hidden;white-space:nowrap;text-align:inherit;font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:11px!important}
+.bina-grid .smart.num{font-variant-numeric:tabular-nums}
+.bina-grid .bina-bottom-calc{display:block;width:100%;min-width:0;direction:ltr;font-variant-numeric:tabular-nums;line-height:1.55}
+.bina-grid .smart.bina-bold{font-weight:700!important;font-synthesis:weight;text-shadow:.18px 0 currentColor,-.18px 0 currentColor}
+.bina-grid .smart.w2,.bina-grid .smart.w3{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;overflow-wrap:anywhere;word-break:break-word}
+.bina-grid .smart.w2{-webkit-line-clamp:2}
+.bina-grid .smart.w3{-webkit-line-clamp:3}
+.bina-grid .tabulator-tableholder .tabulator-row,.bina-grid .tabulator-calcs-holder .tabulator-row{min-height:var(--bina-row-min-height,30px)!important}
+.bina-grid .tabulator-tableholder .tabulator-row>.tabulator-cell,.bina-grid .tabulator-calcs-holder .tabulator-row>.tabulator-cell{min-height:var(--bina-row-min-height,30px)!important;padding-top:var(--bina-row-padding-y,4px)!important;padding-bottom:var(--bina-row-padding-y,4px)!important}
+.bina-grid.bina-row-user-sized .tabulator-tableholder .tabulator-row,.bina-grid.bina-row-user-sized .tabulator-calcs-holder .tabulator-row{height:var(--bina-row-min-height,30px)!important;min-height:var(--bina-row-min-height,30px)!important;max-height:var(--bina-row-min-height,30px)!important}
+.bina-grid.bina-row-user-sized .tabulator-tableholder .tabulator-row>.tabulator-cell,.bina-grid.bina-row-user-sized .tabulator-calcs-holder .tabulator-row>.tabulator-cell{height:var(--bina-row-min-height,30px)!important;min-height:var(--bina-row-min-height,30px)!important;max-height:var(--bina-row-min-height,30px)!important;overflow:hidden!important}
+.bina-grid .tabulator-tableholder .tabulator-row{position:relative}
+.bina-grid .bina-row-resizer{position:absolute;left:0;right:0;bottom:-2px;height:7px;z-index:12;cursor:row-resize;user-select:none;touch-action:none}
+.bina-grid .bina-row-resizer:hover,.bina-grid.bina-row-dragging .bina-row-resizer{border-bottom:2px solid #3581ae;background:rgba(53,129,174,.08)}
+.bina-grid.bina-row-dragging,.bina-grid.bina-row-dragging *{cursor:row-resize!important;user-select:none!important}
+.bina-grid .bina-selector-cell{padding:0!important;text-align:center!important;background:#edf2f5!important;border-inline:1px solid #a9bac6!important}
+.bina-grid .tabulator-tableholder .tabulator-cell.bina-selector-cell{width:25px!important;min-width:25px!important;max-width:25px!important;flex:0 0 25px!important}
+.bina-grid .bina-selector-gutter,.bina-grid .bina-selector-corner{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:21px;padding:0;border:0;border-radius:0;background:transparent;color:#49667b;cursor:default;user-select:none;touch-action:pan-y}
+.bina-grid .bina-selector-gutter:hover{background:#d2e2ed}
+.bina-grid .bina-selector-gutter:focus-visible,.bina-grid .bina-selector-corner:focus-visible{outline:2px solid #3682a4;outline-offset:-2px}
+.bina-grid .bina-selector-gutter::before{content:'';width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:7px solid transparent;opacity:0;transition:opacity .06s}
+.bina-grid .bina-selector-gutter[aria-selected="true"]{background:#b7d4e7;color:#164568}
+.bina-grid .bina-selector-gutter[aria-selected="true"]::before{border-left-color:#164568;opacity:1}
+.bina-grid[dir="rtl"] .bina-selector-gutter::before{border-left-color:transparent;border-right:7px solid transparent}
+.bina-grid[dir="rtl"] .bina-selector-gutter[aria-selected="true"]::before{border-right-color:#164568}
+.bina-grid .bina-selector-corner{border:0;cursor:pointer;background:#dfe8ee}
+.bina-grid .tabulator-header .bina-selector-cell{cursor:pointer}
+.bina-grid .bina-selector-corner[aria-pressed="true"]{background:#a9cee4}
+.bina-grid .tabulator-header .bina-selector-cell{background:#dfe8ee!important}
+.bina-grid .tabulator-cell.bina-sel{background:rgba(14,143,111,.16)!important}
+.bina-grid .tabulator-cell.bina-active{box-shadow:inset 0 0 0 2px #0e8f6f;position:relative;z-index:2}
+.bina-grid .tabulator-row.bina-row-sel .tabulator-cell{background:rgba(18,57,94,.10)!important}
+.bina-grid .tabulator-tableholder .tabulator-row{border-bottom:1px solid #b8c7d2!important}
+.bina-grid .tabulator-tableholder .tabulator-row>.tabulator-cell{position:relative}
+.bina-grid .tabulator-tableholder .tabulator-row>.tabulator-cell::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background-color:#b8c7d2;pointer-events:none;z-index:4}
+/* Column manager */
+.bina-cm{position:fixed;top:80px;left:80px;z-index:9300;width:374px;max-width:calc(100vw - 16px);background:#fff;border:1px solid #b9c8d4;border-radius:12px;box-shadow:0 18px 50px rgba(15,34,51,.28);display:none;direction:rtl;overflow:hidden}
+.bina-cm.open{display:block}
+.bina-cm header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:#12395e;color:#fff;font-weight:600;font-size:13.5px;cursor:grab;user-select:none}
+.bina-cm.dragging header{cursor:grabbing}
+.bina-cm-actions{display:flex;gap:6px;align-items:center}
+.bina-cm-actions button{border:none;border-radius:7px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+.bina-cm-reset{background:#1d5a86;color:#fff}
+.bina-cm-reset:hover{background:#276da3}
+.bina-cm-close{background:rgba(255,255,255,.15);color:#fff}
+.bina-cm-list{max-height:46vh;overflow:auto;padding:6px 8px}
+.bina-cm-row{display:grid;grid-template-columns:minmax(75px,1fr) 33px 30px 28px 40px 31px 24px 24px;gap:1.5px;align-items:center;padding:3px 2px;border-bottom:1px dashed #e3ebf1}
+.bina-cm-heading{position:sticky;top:0;z-index:1;background:#edf3f8;color:#21405a;padding:7px 2px;border-bottom:1px solid #c8d6e1;font-size:10.5px;font-weight:700}
+.bina-cm-heading span{white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
+.bina-cm-heading span:first-child{text-align:right}
+.bina-cm-heading span[title]{cursor:help}
+.bina-cm-row:last-child{border-bottom:none}
+.bina-cm-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:#20374b;text-align:right;unicode-bidi:plaintext}
+.bina-cm-color-button{width:16.2px;height:15px;padding:1px;background:transparent;border:1px solid #b9c8d4;border-radius:3px;cursor:pointer;justify-self:center}
+.bina-cm-color-button:hover,.bina-cm-color-button:focus-visible{outline:1px solid #417ca3}
+.bina-cm-color-chip{display:block;width:100%;height:100%;border-radius:2px;border:1px solid #abb9c6}
+.bina-cm-color-chip.is-default{background-image:linear-gradient(135deg,transparent 46%,#b7c3cc 47%,#b7c3cc 53%,transparent 54%)}
+.bina-cm-row input[type=checkbox]{cursor:pointer;justify-self:center}
+.bina-cm-align{width:23px;height:21px;min-width:0;padding:1px;display:grid;place-items:center;justify-self:center;border:1px solid #b9c8d4;border-radius:5px;background:linear-gradient(#fff,#f0f5f9);color:#315a77;cursor:pointer}
+.bina-cm-align:hover,.bina-cm-align:focus-visible{border-color:#43799b;background:#e5f0f8;outline-offset:1px}
+.bina-cm-align:active{background:#d7e8f5}
+.bina-cm-font{width:38.4px;min-width:0;height:20.8px;border:1px solid #b9c8d4;border-radius:5px;padding:0 2px;background:#fff;color:#20374b;font:inherit;font-size:11px;cursor:pointer;text-align:center}
+.bina-cm-actions button:disabled{opacity:.55;cursor:wait}
+.bina-cm-overlay{position:fixed;inset:0;z-index:9200;display:none;background:rgba(15,34,51,.14)}
+.bina-cm-overlay.open{display:block}
+.bina-cm-actions .bina-cm-theme-button{width:25px;min-width:25px;height:24px;padding:3px;border:1px solid rgba(255,255,255,.48);border-radius:6px;background:rgba(255,255,255,.13);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.bina-cm-actions .bina-cm-theme-button:hover{background:rgba(255,255,255,.26)}
+.bina-cm-theme-chip{display:block;width:17px;height:16px;border-radius:4px;border:1px solid rgba(13,33,52,.23);box-shadow:0 1px 1px rgba(0,0,0,.13)}
+/* User-configured grid theme */
+.bina-grid.bina-themed .tabulator{background:var(--bina-theme-soft)!important;color:var(--bina-theme-on-soft)!important;border-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-header,.bina-grid.bina-themed .tabulator-header .tabulator-col,.bina-grid.bina-themed .tabulator-header .tabulator-col-group{background:var(--bina-theme-strong)!important;color:var(--bina-theme-on-strong)!important;border-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-header{box-shadow:inset 0 -2px 0 var(--bina-theme-strong-edge)}
+.bina-grid.bina-themed .tabulator-header .tabulator-col-title{color:var(--bina-theme-on-strong)!important}
+.bina-grid.bina-themed .tabulator-header .tabulator-col-sorter{color:var(--bina-theme-on-strong)!important}
+.bina-grid.bina-themed .tabulator-header .tabulator-header-filter input{background:var(--bina-theme-soft)!important;color:var(--bina-theme-on-soft)!important;border-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-row{background:var(--bina-theme-soft)!important;color:var(--bina-theme-on-soft)!important;border-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-row:nth-child(even){background:var(--bina-theme-soft-alt)!important}
+.bina-grid.bina-themed .tabulator-row:hover{background:var(--bina-theme-hover)!important}
+.bina-grid.bina-themed .tabulator-row .tabulator-cell{color:var(--bina-theme-on-soft)}
+.bina-grid.bina-themed .tabulator-footer,.bina-grid.bina-themed .tabulator-calcs-holder,.bina-grid.bina-themed .tabulator-calcs-holder .tabulator-row,.bina-grid.bina-themed .tabulator-calcs-holder .tabulator-cell{background:var(--bina-theme-footer)!important;color:var(--bina-theme-on-footer)!important;border-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-page,.bina-grid.bina-themed .tabulator-page-size{background:var(--bina-theme-soft);color:var(--bina-theme-on-soft);border-color:var(--bina-theme-border)}
+.bina-grid.bina-themed .tabulator-tableholder .tabulator-row{border-bottom-color:var(--bina-theme-border)!important}
+.bina-grid.bina-themed .tabulator-tableholder .tabulator-row>.tabulator-cell::after{background:var(--bina-theme-border)}
+
+/* Header titles: shared font controls in column manager, isolated from data cells.
+   Source font is a static *Light* font. Some host pages register it for the
+   whole 300–700 range, which stops browsers from synthesizing bold at 700.
+   Register a header-only alias at its REAL weight so weight 700 can synthesize.
+   This does not alter the font used by data cells or other UI components. */
+@font-face{
+  font-family:'BinaGrid-Title';
+  src:url('../IRANYekanX-Light.ttf') format('truetype');
+  font-style:normal;
+  font-weight:300;
+  font-display:swap;
+}
+.bina-grid.bina-title-size .tabulator-header .tabulator-col-title{font-size:var(--bina-title-size)!important}
+.bina-grid.bina-title-bold .tabulator-header .tabulator-col-title{
+  font-family:'BinaGrid-Title',Tahoma,Arial,sans-serif!important;
+  font-weight:700!important;
+  font-synthesis:weight!important;
+}
+.bina-cm-actions .bina-cm-title-font{height:24px;width:54px;min-width:0;border-radius:6px;border:1px solid rgba(255,255,255,.6);background:#fff;color:#193a56;font:inherit;font-size:11px;padding:0 2px;text-align:center;cursor:pointer}
+.bina-cm-actions .bina-cm-title-bold{width:25px;min-width:25px;height:24px;padding:1px!important;border:1px solid rgba(255,255,255,.55)!important;background:rgba(255,255,255,.15);color:#fff;font:bold 14px Arial,sans-serif!important;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}
+.bina-cm-actions .bina-cm-title-bold.is-active{background:#dff4ff;color:#12395e;box-shadow:inset 0 0 0 1px #8ad0f0}
+.bina-cm-actions .bina-cm-title-bold:hover{background:rgba(255,255,255,.3)}
+.bina-cm-actions .bina-cm-title-bold.is-active:hover{background:#c7edff}
+/* Keep the column-manager title on one line beside the compact controls. */
+.bina-cm header{padding-inline:9px;gap:5px}
+.bina-cm header>span:first-child{white-space:nowrap;font-size:12.5px}
+.bina-cm-actions{gap:4px}
+.bina-cm-actions .bina-cm-title-font{width:46px}
+.bina-cm-actions .bina-cm-reset,.bina-cm-actions .bina-cm-close{padding-inline:6px}

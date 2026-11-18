@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>بینا | مدیریت هوشمند نگاشت حساب‌ها (Coding-Index)</title>
+        <link rel="stylesheet" href="../FINAL/mapping.css">
+        <style>
+.scroll-box {
+  background: rgba(59, 116, 29, 0.194);
+}
+/* var(--bg) = #0b1220  ← آبی-مشبی بسیار تیره */
+        .hidden-row { display: none; }
+        .pagination { display: flex; gap: 5px; align-items: center; margin-top: 10px; }
+        .pagination button { padding: 5px 10px; font-size: 12px; }
+        .pagination button.active { background: #8b5cf6; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+ 
+/* رنگ ردیف‌ها - شفاف و هماهنگ با تم تیره */
+.row-synced   { background: rgba(34, 197, 94, 0.10) !important; }   /* 🟢 سبز ملایم */
+ .row-no-group { background: rgba(239, 68, 68, 0.119) !important; }   /* 🔴 قرمز ملایم */
+.row-changed { background: rgba(245, 158, 11, 0.18) !important; }  /* کمی قوی‌تر */
+
+        select.group-select { 
+            width: 100%; 
+            padding: 4px 8px; 
+            font-size: 12px;
+            background: var(--panel2);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-bar input, .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+        .record-info {
+            font-size: 12px;
+            color: var(--muted);
+            margin-right: auto;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="topbar">
+                <h1>مدیریت هوشمند نگاشت حساب‌ها (Coding-Index)</h1>
+                <div class="selectors">
+                    <select id="companySelect">
+                        <option value>انتخاب شرکت...</option>
+                    </select>
+                    <button id="loadAndSyncBtn" class="ok">بارگذاری و
+                        همگام‌سازی</button>
+                    <button id="pushToServerBtn"
+                        style="background: #5c83f69a;">ارسال تغییرات به
+                        سرور</button>
+                </div>
+            </div>
+
+            <!-- پنل فیلتر و جستجو -->
+            <div class="panel full-width">
+                <div class="filter-bar">
+                    <input type="text" id="searchInput"
+                        placeholder="🔍 جستجو در کد یا عنوان حساب...">
+                    <select id="filterGroup">
+                        <option value>همه گروه‌ها</option>
+                    </select>
+                    <select id="filterStatus">
+                        <option value>همه وضعیت‌ها</option>
+                        <option value="synced">همگام</option>
+                        <option value="pending">در انتظار ارسال</option>
+                        <option value="no-group">بدون گروه</option>
+                    </select>
+                    <span class="record-info" id="recordInfo">رکورد: 0 از
+                        0</span>
+                </div>
+            </div>
+
+            <!-- جدول واحد نگاشت‌ها -->
+            <div class="panel full-width">
+                <h2>حساب‌های نگاشت‌شده <span id="pendingCount"
+                        style="color: #f59e0b; font-size: 12px;"></span></h2>
+                <div class="scroll-box" style="max-height: 500px;">
+                    <table id="unifiedTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">ردیف</th>
+                                <th style="width: 180px;">گروه صورت مالی</th>
+                                <th style="width: 80px;">کد کل</th>
+                                <th>عنوان کل</th>
+                                <th style="width: 80px;">کد معین</th>
+                                <th>عنوان معین</th>
+                                <th style="width: 80px;">کد تفصیلی</th>
+                                <th>عنوان تفصیلی</th>
+                                <th style="width: 80px;">وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+
+        <script src="../admin/manager/bina-db-manager.js"></script>
+        <script src="indx.js"></script>
+    </body>
+</html>

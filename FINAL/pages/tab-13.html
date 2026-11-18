@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>مرور ترازها و دفاتر مالی</title>
+
+  <!-- کتابخانه‌های بیرونی -->
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+
+  <!-- گرید اختصاصی بینا -->
+  <script src="../app/bina/bina-grid.js"></script>
+
+  <!-- استایل اختصاصی تراز -->
+  <link rel="stylesheet" href="./../css/Taraz.css">
+
+  <style>
+    /* استایل‌های ضروری برای اینکه فرم کل صفحه‌ی iframe را پر کند */
+    html, body { height: 100%; margin: 0; background: #f2f5fa }
+    body { padding: 10px; box-sizing: border-box }
+    #app-container { height: 100%; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="access-container" id="app-container">
+    <div class="title-area">مرور ترازها و دفاتر مالی</div>
+
+    <div class="top-controls">
+      <!-- نام شرکت و سال مالی -->
+      <div class="company-controls">
+        <label>نام شرکت:
+          <select id="companyCode">
+            <option value="">در حال بارگذاری...</option>
+          </select>
+        </label>
+        <label>سال مالی:
+          <select id="fiscalYear">
+            <option value="">--</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- سطح تراز و نوع اسناد -->
+      <div>
+        <div class="radio-group">
+          <label><input type="radio" name="level" value="kol" checked onchange="runTaraz()"> تراز کل</label>
+          <label><input type="radio" name="level" value="moien" onchange="runTaraz()"> تراز معین</label>
+          <label><input type="radio" name="level" value="tafsil" onchange="runTaraz()"> تراز تفصیل</label>
+        </div>
+        <div class="radio-group">
+          <label><input type="radio" name="docType" value="all" checked> همه اسناد</label>
+          <label><input type="radio" name="docType" value="bastan"> بدون بستن حساب‌ها</label>
+          <label><input type="radio" name="docType" value="ekhtetamieh"> بدون بستن اسناد اختتامیه</label>
+          <label><input type="radio" name="docType" value="eftetahieh"> بدون بستن تفصیلی</label>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: left;">
+      <button class="btn-yellow" onclick="alert('بعدا پیاده‌سازی می‌شود')">تراز مقایسه ایی سالانه</button>
+    </div>
+
+    <!-- گرید اصلی -->
+    <div id="gridContainer" style="flex:1;"></div>
+  </div>
+  <script src="../app/bina/BinaTaraz.js"></script>
+  <!-- لود فایل اصلی جاوااسکریپت تراز -->
+ 
+</body>
+</html>

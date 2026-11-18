@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>بینا | مدیریت نگاشت حساب‌ها (Coding-Index)</title>
+  <link rel="stylesheet" href="mapping.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <h1>سیستم مالی بینا — مدیریت نگاشت حساب‌ها به گروه‌های صورت مالی</h1>
+      <div class="selectors">
+        <select id="companySelect">
+          <option value="">انتخاب شرکت...</option>
+        </select>
+        <button id="loadDataBtn" class="primary">بارگذاری اطلاعات</button>
+      </div>
+    </header>
+
+    <main class="grid-layout">
+      <!-- بخش راست: گروه‌های استاندارد صورت‌های مالی -->
+      <section class="panel">
+        <h2>گروه‌های استاندارد صورت‌های مالی</h2>
+        <div class="scroll-box">
+          <table id="standardGroupsTable">
+            <thead>
+              <tr>
+                <th>انتخاب</th>
+                <th>عنوان گروه</th>
+                <th>کاربرد</th>
+                <th>ماهیت</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- بخش چپ: حساب‌های کدینگ شرکت -->
+      <section class="panel">
+        <h2>حساب‌های کل، معین و تفصیلی شرکت</h2>
+        <div class="filter-row">
+          <input type="text" id="searchAccount" placeholder="جستجو در حساب‌ها (کد یا عنوان)...">
+        </div>
+        <div class="scroll-box">
+          <table id="companyAccountsTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAllAccounts"></th>
+                <th>کد کل</th>
+                <th>عنوان کل</th>
+                <th>کد معین</th>
+                <th>عنوان معین</th>
+                <th>تفصیلی</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="actions-bar">
+          <button id="mapSelectedBtn" class="ok">اتصال حساب‌های انتخاب‌شده به گروه هدف</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- بخش پایین: نگاشت‌های ثبت‌شده (Coding-Index) -->
+    <section class="panel full-width">
+      <h2>حساب‌های نگاشت‌شده (Coding-Index)</h2>
+      <div class="scroll-box">
+        <table id="mappedIndexTable">
+          <thead>
+            <tr>
+              <th>کد و مشخصات حساب</th>
+              <th>گروه صورت مالی مرتبط</th>
+              <th>کاربرد</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="actions-bar" style="margin-top: 10px; display: flex; gap: 10px;">
+  <button id="syncServerBtn" class="ok">همگام‌سازی و ارسال نگاشت‌ها به سرور</button>
+</div>
+  </div>
+
+  <script src="../admin/manager/bina-db-manager.js"></script>
+  <script src="mapping.js"></script>
+
+  <script>
+
+    
+  </script>
+</body>
+</html>

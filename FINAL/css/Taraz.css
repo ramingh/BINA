@@ -1,0 +1,290 @@
+/* BinaTaraz — Account Browser, compact standard toolbar.
+   Field and label styles are role-based; no Persian title text is used as a selector.
+   Drill-down styles and the report engine remain unchanged. */
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("../IRANYekanX-Light.ttf") format("truetype");
+  font-weight: 300 700;
+  font-display: swap;
+}
+:root {
+  --taraz-accent: var(--palette-color, #0e7490);
+  --taraz-heading: color-mix(in srgb, var(--taraz-accent) 76%, #1e293b);
+  --taraz-heading-text: #fff;
+  --taraz-background: color-mix(in srgb, var(--taraz-accent) 7%, #f4f6f8);
+  --taraz-panel: color-mix(in srgb, var(--taraz-accent) 7%, #f7fbfd);
+  --taraz-border: color-mix(in srgb, var(--taraz-accent) 30%, #c9d7e0);
+  --taraz-field-border: color-mix(in srgb, var(--taraz-accent) 28%, #a9b1b8);
+}
+* { box-sizing: border-box; }
+html, body { height:100%; margin:0; }
+body {
+  font: 13px "IRANYekanX", Tahoma, sans-serif;
+  padding: 9px 11px;
+  background: var(--taraz-background);
+  color: #18212a;
+}
+button, select, input { font: inherit; }
+.access-container {
+  height: 100%; min-height:0; display:flex; flex-direction:column;
+  background:#fff; border-radius:8px; padding:8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.07);
+}
+/* RTL: first group (company/year) on the right, filters on the left. */
+.top-controls {
+  display:flex; flex-direction:row; direction:rtl;
+  justify-content:space-between; align-items:flex-start;
+  flex-wrap:wrap; gap:10px 16px; width:100%; margin-bottom:10px;
+}
+.company-controls {
+  display:flex; flex-wrap:wrap; align-items:center; gap:7px 11px;
+  flex:0 1 auto; min-width:0;
+  background:var(--taraz-panel); border:1px solid var(--taraz-border);
+  border-radius:6px; padding:5px 7px;
+}
+.taraz-field {
+  display:inline-flex; align-items:center; gap:5px; min-width:0;
+  font-size:12px; white-space:nowrap;
+}
+.taraz-label {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--taraz-heading); color:var(--taraz-heading-text);
+  padding:4px 8px; min-height:26px; border-radius:4px;
+  font-size:11px; line-height:16px; font-weight:700;
+}
+.company-controls select {
+  height:30px; padding:2px 7px;
+  background:#fff; color:#111;
+  border:1px solid var(--taraz-field-border); border-radius:5px;
+  font-size:12px; outline-offset:2px;
+}
+#companyCode { width:min(395px, 43vw); max-width:100%; }
+#fiscalYear { width:86px; }
+.taraz-filters {
+  display:flex; flex-direction:column; align-items:stretch; gap:6px;
+  flex:0 1 auto; min-width:0;
+}
+.radio-group {
+  display:flex; flex-wrap:wrap; align-items:center; gap:5px 14px;
+  min-height:33px; padding:5px 10px;
+  background:var(--taraz-panel); border:1px solid var(--taraz-border); border-radius:6px;
+}
+/* Document filters: exactly two readable rows, in the requested order. */
+.radio-group.doc-type-group {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  grid-template-rows: repeat(2, auto);
+  gap: 7px 20px;
+  justify-content: start;
+  align-content: center;
+  padding-block: 7px;
+}
+@media (max-width: 540px) {
+  .radio-group.doc-type-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+.radio-group label {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:500; color:#334155;
+  white-space:nowrap; cursor:pointer;
+}
+.radio-group input[type="radio"] { margin:0; accent-color:var(--taraz-accent); }
+@media(max-width:1080px) {
+  .company-controls, .taraz-filters { width:100%; }
+  .taraz-filters { align-items:stretch; }
+  #companyCode { width:min(395px, 55vw); }
+}
+@media(max-width:540px) {
+  body { padding:6px; }
+  .access-container { padding:5px; }
+  .company-controls { width:100%; gap:6px; }
+  .taraz-field { flex:1 1 100%; }
+  #companyCode { flex:1 1 auto; width:auto; min-width:0; }
+  .radio-group { gap:6px 10px; }
+}
+
+/* دکمه زرد */
+.btn-yellow {
+  background: #fef08a;
+  border: 1px solid #eab308;
+  color: #713f12;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  border-radius: 6px;
+  width: 220px;
+  text-align: center;
+  transition: all 0.2s;
+  margin-bottom: 15px;
+}
+
+.btn-yellow:hover {
+  background: #fde047;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* کانتینر گرید */
+/* Clear, theme-aware frame around the complete report grid, including toolbar. */
+#gridContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #fff;
+  border: 1px solid var(--taraz-border);
+  border-top: 2px solid var(--taraz-heading);
+  border-radius: 7px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(22, 46, 66, .10);
+  overflow: hidden;
+}
+#gridContainer > .bina-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#gridContainer .bina-grid > .bina-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+}
+/* Account code is displayed and read from left to right: Kol → Moien → Tafsil. */
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"],
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"] .smart {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+}
+.taraz-grid-error {
+  position: absolute;
+  z-index: 3;
+  inset-inline: 10px;
+  top: 10px;
+  padding: 8px 10px;
+  background: #fff1f2;
+  border: 1px solid #fda4af;
+  border-radius: 5px;
+  color: #991b1b;
+}
+
+/* =========================================
+   Modal (پنجره باز شونده Drill-down)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5); /* تاریکی ملایم */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-box {
+  background: #fff;
+  width: 90vw;
+  height: 85vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  /* چیدمان آبشاری سطوح Drill-down */
+  transition: transform 0.15s ease, width 0.15s ease, height 0.15s ease;
+}
+
+.modal-loading {
+  padding: 24px;
+  text-align: center;
+  color: #475569;
+  font-size: 13px;
+}
+
+.modal-header {
+  padding: 12px 15px;
+  background: #1e293b; /* سرمه‌ای تیره و شیک */
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+/* نوار بالای فرم گرید (همان نواری که دکمهٔ ✕ دارد):
+   هر سطح Drill-down رنگ خودش را دارد تا سطح‌ها از هم تشخیص داده شوند. */
+.modal-overlay[data-level="moien"] .modal-header {
+  background: #1d4ed8; /* آبی — سطح معین */
+}
+
+.modal-overlay[data-level="tafsil"] .modal-header {
+  background: #b45309; /* کهربایی — سطح تفصیل */
+}
+
+.modal-overlay[data-level="daftar"] .modal-header {
+  background: #15803d; /* سبز — سطح دفتر */
+}
+
+.modal-close {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.modal-body {
+  flex: 1;
+  padding: 10px;
+  overflow: auto;
+  background: #f8fafc;
+}
+/* Drill-down selector lives inside this report's toolbar only. */
+#gridContainer .taraz-drill-controls {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 9px;
+  border-inline-start: 1px solid var(--taraz-border);
+  direction: rtl;
+  white-space: nowrap;
+  font: 12px "IRANYekanX", Tahoma, sans-serif;
+}
+#gridContainer .taraz-drill-controls .taraz-drill-title { font-weight: 600; }
+#gridContainer .taraz-drill-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+#gridContainer .taraz-drill-controls input[type="radio"] {
+  margin: 0;
+  accent-color: var(--taraz-accent);
+}
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"] { cursor: pointer; }
+
+/* Document viewer reuses the existing Sanad page, restricted to this drill-down modal. */
+.modal-overlay[data-level="sanad"] .modal-box { width: min(96vw, 1500px); height: min(94vh, 950px); }
+.modal-overlay[data-level="sanad"] .modal-body { padding: 0; overflow: hidden; }
+.taraz-sanad-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--bg, #fff); }
