@@ -25,7 +25,7 @@
     let currentCompanyCode = null;
 
     // ─── ۱. راه‌اندازی BinaGrid و دیتابیس ───
-async function init() {
+    async function init() {
         try {
             grid = new BinaGrid("#gridContainer", {
                 height: "640px",
@@ -85,8 +85,8 @@ async function init() {
             alert("خطا: " + err.message);
         }
     }
-// تابع مشترک برای همگام‌سازی با سرور و نمایش در گرید
-// تابع مشترک: اول تلاش برای همگام‌سازی با سرور، و در هر صورت نمایش داده‌های محلی
+    // تابع مشترک برای همگام‌سازی با سرور و نمایش در گرید
+    // تابع مشترک: اول تلاش برای همگام‌سازی با سرور، و در هر صورت نمایش داده‌های محلی
     async function syncAndLoadCompany(companyCode, silentOffline = false) {
         if (!companyCode) return;
         currentCompanyCode = companyCode;
@@ -137,15 +137,15 @@ async function init() {
             await loadAllData();
         };
     }
-    // ─── ۲. خواندن جدول پایه tk_g_soratmali_sherkat بر اساس CodeGorohSoratMali ───
+    // ─── ۲. خواندن جدول پایه tk_g_soratmali_sh بر اساس CodeGorohSoratMali ───
     async function loadStandardGroups() {
         try {
             const pubDb = await dbManager._publicDB();
-            if (!pubDb.objectStoreNames.contains("tk_g_soratmali_sherkat")) return;
+            if (!pubDb.objectStoreNames.contains("tk_g_soratmali_sh")) return;
 
-            const tx = pubDb.transaction("tk_g_soratmali_sherkat", "readonly");
+            const tx = pubDb.transaction("tk_g_soratmali_sh", "readonly");
             standardGroups = await new Promise((res, rej) => {
-                const req = tx.objectStore("tk_g_soratmali_sherkat").getAll();
+                const req = tx.objectStore("tk_g_soratmali_sh").getAll();
                 req.onsuccess = () => res(req.result || []);
                 req.onerror = () => rej(req.error);
             });
@@ -448,7 +448,8 @@ async function init() {
     };
 
     // ─── ۸. اتصال دکمه‌ها ───
-   // ─── ۸. اتصال دکمه‌ها (ایمن در برابر null) ───
+    // ─── ۸. اتصال دکمه‌ها (ایمن در برابر null) ───
+    // ─── ۸. اتصال دکمه‌ها ───
     if (applyGroupBtn) {
         applyGroupBtn.onclick = () => {
             const groupCode = assignGroupSelect?.value;
@@ -467,38 +468,30 @@ async function init() {
         };
     }
 
-
-
-
-if (companySelect) {
+    if (companySelect) {
         companySelect.onchange = async () => {
             if (!companySelect.value) return;
             currentCompanyCode = companySelect.value;
-            // ✅ فقط خواندن از IndexedDB محلی (بدون هیچ درخواستی به سرور)
             await loadAllData();
         };
     }
 
-if (loadAndSyncBtn) {
-        loadAndSyncBtn.onclick = async () => {
+    if (loadAndSyncBtn) {
+        loadAndSyncBtn.onclick = () => {
             if (!companySelect?.value) return alert("لطفاً یک شرکت انتخاب کنید.");
-            currentCompanyCode = companySelect.value;
-            loadAndSyncBtn.disabled = true;
-            loadAndSyncBtn.textContent = "در حال همگام‌سازی...";
-            try {
-                // ✅ جلوگیری از استعلام مجدد جداول پایه TK_* در این فرم
-                dbManager._tkReady = true;
-                await dbManager.syncCodingIndex(currentCompanyCode);
-                await loadAllData();
-            } catch (err) {
-                alert("خطا: " + err.message);
-            } finally {
-                loadAndSyncBtn.disabled = false;
-                loadAndSyncBtn.textContent = "بارگذاری و همگام‌سازی";
-            }
+            syncAndLoadCompany(companySelect.value);
         };
     }
 
+    // ─── ۹. همگام‌سازی زبان با سایدبار اصلی ───
+    window.addEventListener("storage", (e) => {
+        if (e.key === "sidebarLanguage" && e.newValue) {
+            const isRtl = e.newValue === "fa" || e.newValue === "ar";
+            document.documentElement.lang = e.newValue;
+            document.documentElement.dir = isRtl ? "rtl" : "ltr";
+            if (grid?.table?.redraw) grid.table.redraw(true);
+        }
+    });
+
     await init();
- 
 })();

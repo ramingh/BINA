@@ -1352,7 +1352,13 @@ if (!Number.isInteger(limit) || limit < 1 || limit > 50000)
       const tafsilIdx = findIdx("tafsil_code");
       const groupIdx = findIdx("groupid", "group_id");
       const karbordIdx = findIdx("karbord");
-      const keyIdx = findIdx("key");
+      // ستون کلید در سرور جدید [CodeHesab] است؛ «key» فقط برای سازگاری با جدول قدیمی
+      const keyIdx = findIdx("codehesab", "key");
+      // ستون‌های چهارگانه نگاشت در ساختار جدید coding_index
+      const csStIdx = findIdx("code_soratmali_st");
+      const csShIdx = findIdx("code_soratmali_sh");
+      const gzShIdx = findIdx("code_gozareshat_sh");
+      const gzStIdx = findIdx("code_gozareshat_st");
       if (companyIdx < 0) throw new Error("ستون CompanyCode در جدول coding_index پیدا نشد.");
       // ردیف ممکن است آرایه (حالت پیش‌فرض FastDataHandler) یا آبجکت باشد
       const valueAt = (row, i) => {
@@ -1395,11 +1401,19 @@ if (!Number.isInteger(limit) || limit < 1 || limit > 50000)
           const kol = String(valueAt(row, kolIdx) ?? "").trim();
           const moien = String(valueAt(row, moienIdx) ?? "").trim();
           const tafsil = String(valueAt(row, tafsilIdx) ?? "").trim();
-          const key = String(valueAt(row, keyIdx) ?? "").trim() || `${company}_${kol}_${moien}_${tafsil}`;
+          const codeHesab = String(valueAt(row, keyIdx) ?? "").trim();
+          const key = codeHesab || `${company}_${kol}_${moien}_${tafsil}`;
+          const csSt = String(valueAt(row, csStIdx) ?? "").trim();
+          const csSh = String(valueAt(row, csShIdx) ?? "").trim();
+          const gzSh = String(valueAt(row, gzShIdx) ?? "").trim();
+          const gzSt = String(valueAt(row, gzStIdx) ?? "").trim();
+          const legacyGroup = String(valueAt(row, groupIdx) ?? "").trim();
           if (!grouped.has(company)) grouped.set(company, new Map());
           grouped.get(company).set(key, {
-            key, companyCode: company, kol_code: kol, moien_code: moien, tafsil_code: tafsil,
-            groupId: String(valueAt(row, groupIdx) ?? "0").trim() || "0",
+            key, codehesab: key, companyCode: company, kol_code: kol, moien_code: moien, tafsil_code: tafsil,
+            code_soratmali_st: csSt, code_soratmali_sh: csSh,
+            code_gozareshat_sh: gzSh, code_gozareshat_st: gzSt,
+            groupId: legacyGroup || csSh || "0",
             karbord: String(valueAt(row, karbordIdx) ?? "").trim() || "صورت مالی",
             status: "synced", lastModified: Date.now(),
           });
