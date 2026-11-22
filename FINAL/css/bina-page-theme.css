@@ -1,0 +1,93 @@
+/* bina-page-theme.css — تم روشن/تیره و رنگ پالت سایدبار برای صفحات iframe
+   متغیرها با bina-page-theme.js از سایدبار (یا localStorage) پر می‌شوند. */
+:root {
+  --palette-color: #285f92;
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --border: #dbe3ea;
+  --ink: #1e293b;
+  --muted: #64748b;
+  --accent: #285f92;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: color-mix(in srgb, var(--palette-color) 4%, #f1f5f9);
+  --panel: #ffffff;
+  --panel-2: color-mix(in srgb, var(--palette-color) 5%, #f8fafc);
+  --border: color-mix(in srgb, var(--palette-color) 18%, #dbe3ea);
+  --ink: #1e293b;
+  --muted: #64748b;
+  --accent: var(--palette-color);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: color-mix(in srgb, var(--palette-color) 9%, #0b1220);
+  --panel: color-mix(in srgb, var(--palette-color) 12%, #101827);
+  --panel-2: color-mix(in srgb, var(--palette-color) 15%, #17202f);
+  --border: color-mix(in srgb, var(--palette-color) 26%, #26344d);
+  --ink: #e8eef8;
+  --muted: #94a3b8;
+  --accent: color-mix(in srgb, var(--palette-color) 45%, #ffffff);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.topbar {
+  background: linear-gradient(135deg, var(--palette-color) 0%, color-mix(in srgb, var(--palette-color) 45%, #0b1220) 100%);
+  border-color: color-mix(in srgb, var(--palette-color) 45%, transparent);
+  color: #fff;
+}
+.topbar h1 { color: #fff; }
+
+.action-bar {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+select,
+input[type="text"] {
+  background: var(--panel-2);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+button { background-color: var(--palette-color); }
+button:hover:not(:disabled) { filter: brightness(1.1); }
+
+.pill {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--muted);
+}
+.pill b { color: var(--ink); }
+
+#gridContainer { border-color: var(--border); }
+
+/* مودال انتخاب از جدول مرجع */
+.picker-modal {
+  background: var(--panel);
+  border-color: var(--border);
+}
+.picker-head {
+  background: linear-gradient(135deg, var(--palette-color) 0%, color-mix(in srgb, var(--palette-color) 45%, #0b1220) 100%);
+  border-bottom-color: var(--border);
+  color: #fff;
+}
+.picker-head h3 { color: #fff; }
+.picker-toolbar {
+  background: var(--panel-2);
+  border-bottom-color: var(--border);
+}
+.picker-toolbar input {
+  background: var(--panel);
+  border-color: var(--border);
+}
+button.picker-trigger {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--ink);
+}

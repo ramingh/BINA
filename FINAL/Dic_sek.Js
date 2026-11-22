@@ -225,13 +225,13 @@ class WebTranslator {
           } else {
             this.isLoaded = true;
             db.close(); /* اتصال باز نماند تا ارتقای بعدی بانک بلوکه نشود */
-            console.log(
-              `✅ دیکشنری از بانک '${dbName}' استور '${storeName}' بارگذاری شد.\n` +
-              `📊 کل رکوردها: ${totalRecords} | ترجمه‌های معتبر: ${matchedRecords}\n` +
-              `📖 (en: ${Object.keys(this.dictionaries.en).length} | ` +
-              `ar: ${Object.keys(this.dictionaries.ar).length} | ` +
-              `fa: ${Object.keys(this.dictionaries.fa).length})`
-            );
+            // console.log(
+            //   `✅ دیکشنری از بانک '${dbName}' استور '${storeName}' بارگذاری شد.\n` +
+            //   `📊 کل رکوردها: ${totalRecords} | ترجمه‌های معتبر: ${matchedRecords}\n` +
+            //   `📖 (en: ${Object.keys(this.dictionaries.en).length} | ` +
+            //   `ar: ${Object.keys(this.dictionaries.ar).length} | ` +
+            //   `fa: ${Object.keys(this.dictionaries.fa).length})`
+            // );
             if (totalRecords === 0) {
               console.warn(`⚠️ استور '${storeName}' در بانک '${dbName}' خالی است؛ چیزی برای ترجمه نیست.`);
             } else if (matchedRecords === 0) {
