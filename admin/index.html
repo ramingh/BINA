@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بینا | نگاشت حساب‌ها به جداول گزارش‌گیری استاندارد</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: IRANYekanX, Tahoma, sans-serif;
+            font-size: 13px;
+            background: #0b1220;
+            color: #e8eef8;
+            min-height: 100vh;
+        }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 28px 16px; }
+        h1 { font-size: 1.15rem; margin: 0 0 6px; }
+        p.hint { color: #94a3b8; margin: 0 0 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+        a.card {
+            display: block;
+            padding: 16px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            background: linear-gradient(135deg, #1e3a5f, #0f766e 130%);
+            border: 1px solid #243047;
+            transition: filter 0.15s;
+        }
+        a.card:hover { filter: brightness(1.12); }
+        a.card b { display: block; font-size: 0.95rem; margin-bottom: 6px; }
+        a.card span { color: #cbd5e1; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>بینا | نگاشت حساب‌ها به جداول گزارش‌گیری استاندارد</h1>
+        <p class="hint">هر صفحه یک جدول پایهٔ سرور را به حساب‌های شرکت (کل-معین-تفصیل) نگاشت می‌کند.</p>
+        <div class="cards">
+            <a class="card" href="SoratMali_sh.html">
+                <b>صورت‌های مالی — شرکتی (SoratMali_sh)</b>
+                <span>جدول پایه: tk_g_soratmali_sh — فیلد ثبت: Code_SoratMali_sh</span>
+            </a>
+            <a class="card" href="SoratMali_st.html">
+                <b>صورت‌های مالی — استاندارد (SoratMali_st)</b>
+                <span>جدول پایه: tk_g_soratmali_st — فیلد ثبت: Code_SoratMali_st</span>
+            </a>
+            <a class="card" href="Gozareshat_st.html">
+                <b>گزارشات مالی — استاندارد (Gozareshat_st)</b>
+                <span>جدول پایه: tk_c_Gozareshat_st — فیلد ثبت: Code_Gozareshat_st</span>
+            </a>
+            <a class="card" href="Gozareshat_sh.html">
+                <b>گزارشات مالی — شرکتی (Gozareshat_sh)</b>
+                <span>جدول پایه: tk_g_GozareshMali_sh — فیلد ثبت: Code_Gozareshat_sh</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

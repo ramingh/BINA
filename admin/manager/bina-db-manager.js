@@ -388,13 +388,23 @@ const DATA_STORES = ["coding", "sanad"];
     }
 async _companyDB(company) {
       const code = codeOf(company);
-      if (this._company?.code === code) return this._company.db;
+      if (this._company?.code === code) {
+        try {
+          // اگر اتصال به‌خاطر versionchange در تب دیگر بسته شده باشد، دوباره باز شود
+          this._company.db.transaction("coding_index", "readonly").abort();
+          return this._company.db;
+        } catch (_) {
+          this._closeCompany();
+        }
+      }
       this._closeCompany();
-      
+
       // اضافه کردن coding_index همراه با کلید key به دیتابیس شرکت
       const stores = [...DATA_STORES.map(s => [s, null]), ["coding_index", "key"]];
       const db = await openDB(code, stores);
-      
+      db.onversionchange = () => { try { db.close(); } catch (_) {} if (this._company && this._company.db === db) this._company = null; };
+      db.onclose = () => { if (this._company && this._company.db === db) this._company = null; };
+
       this._company = { code, db };
       return db;
     }

@@ -257,18 +257,49 @@ async function syncAndLoadCompany(companyCode, silentOffline = false) {
     }
 
     // ─── ۴. خواندن تمام حساب‌های Coding شرکت ───
+    // خواندن حساب‌های coding از سرور وقتی حافظهٔ محلی خالی است
+    async function fetchCodingFromServer(companyCode) {
+        const rows = await fetchGroupsFromServer("coding_" + companyCode);
+        return rows.map((obj, i) => ({
+            id: Number(pick(obj, "Id", "id")) || (i + 1),
+            kol_code: pick(obj, "KOl_Code", "Kol_Code", "kol_code"),
+            kol_onvan: pick(obj, "KOl_Onvan", "Kol_Onvan", "kol_onvan"),
+            moien_code: pick(obj, "MOien_Code", "Moien_Code", "moien_code"),
+            moien_onvan: pick(obj, "MOien_Onvan", "Moien_Onvan", "moien_onvan"),
+            tafsil_code: pick(obj, "Tafsil_Code", "tafsil_code"),
+            tafsil_onvan: pick(obj, "Tafsil_Onvan", "tafsil_onvan")
+        }));
+    }
+
     async function fetchAllCodingRows(companyCode) {
         const all = [];
         let afterId = -1;
         const BATCH = 10000;
-        while (true) {
-            const batch = await dbManager.getRows({
-                companyCode, family: "coding", afterId, limit: BATCH
-            });
-            if (!batch.length) break;
-            all.push(...batch);
-            afterId = batch[batch.length - 1].id;
-            if (batch.length < BATCH) break;
+        try {
+            while (true) {
+                const batch = await dbManager.getRows({
+                    companyCode, family: "coding", afterId, limit: BATCH
+                });
+                if (!batch.length) break;
+                all.push(...batch);
+                afterId = batch[batch.length - 1].id;
+                if (batch.length < BATCH) break;
+            }
+        } catch (err) {
+            console.warn("⚠️ خواندن coding از حافظه محلی نشد:", err.message);
+        }
+
+        if (all.length) return all;
+
+        // حافظه محلی خالی است → مستقیم از سرور (تا صفحه در هر مرورگری کار کند)
+        try {
+            const srv = await fetchCodingFromServer(companyCode);
+            if (srv.length) {
+                console.log("حساب‌های شرکت " + companyCode + " از سرور: " + srv.length);
+                return srv;
+            }
+        } catch (err) {
+            console.warn("⚠️ خواندن coding_" + companyCode + " از سرور نشد:", err.message);
         }
         return all;
     }
@@ -297,8 +328,14 @@ async function syncAndLoadCompany(companyCode, silentOffline = false) {
             const key = `${currentCompanyCode}_${kol}_${moien}_${tafsil}`;
             const mapping = mappingMap.get(key);
 
-            const groupCode = mapping ? String(mapping.groupId || "").trim() : "";
-            const status = mapping ? (mapping.status || "synced") : "no-group";
+            let groupCode = mapping ? String(mapping.groupId || mapping.code_soratmali_sh || "").trim() : "";
+            if (groupCode === "0") groupCode = "";
+            // وضعیت از رکورد محلی خوانده شود تا «حذف در انتظار» بعد از رفرش گم نشود
+            let status = "no-group";
+            if (mapping) {
+                if (groupCode) status = mapping.status || "synced";
+                else if (mapping.status === "pending-delete") status = "pending-delete";
+            }
 
             const rowObj = {
                 __id: idx + 1,
@@ -348,146 +385,252 @@ async function syncAndLoadCompany(companyCode, silentOffline = false) {
         pushToServerBtn.textContent = `ارسال تغییرات به سرور (${pending})`;
     }
 
-    // ─── ۶. تخصیص گروه (ذخیره CodeGorohSoratMali در فیلد groupId) ───
+    // ─── ۶. تخصیص گروه (ذخیره Code_SoratMali_sh) ───
+    // سرور هر ردیف coding_index را کامل جایگزین می‌کند؛ پس بقیهٔ کدهای نگاشت
+    // باید حفظ و همراه همان ردیف ارسال شوند، وگرنه پاک می‌شوند.
+    function otherCodeValues(rec) {
+        const get = (...names) => {
+            if (!rec) return "";
+            for (const n of names) {
+                const v = rec[n];
+                if (v !== null && v !== undefined && String(v).trim() !== "") return String(v).trim();
+            }
+            return "";
+        };
+        return {
+            code_soratmali_st: get("code_soratmali_st", "Code_SoratMali_st"),
+            code_gozareshat_sh: get("code_gozareshat_sh", "Code_Gozareshat_sh"),
+            code_gozareshat_st: get("code_gozareshat_st", "Code_Gozareshat_st")
+        };
+    }
+
+    function hasOtherCodes(rec) {
+        const o = otherCodeValues(rec);
+        return !!(o.code_soratmali_st || o.code_gozareshat_sh || o.code_gozareshat_st);
+    }
+
     async function applyGroupToKeys(keys, newGroupCode) {
-        if (!keys.length) return;
+        if (!keys.length || !currentCompanyCode) return;
+        const cleanGroup = String(newGroupCode || "").trim();
 
-        const compDb = await dbManager._companyDB(currentCompanyCode);
-        const tx = compDb.transaction("coding_index", "readwrite");
-        const store = tx.objectStore("coding_index");
+        try {
+            const compDb = await dbManager._companyDB(currentCompanyCode);
 
-        const updatesForGrid = [];
-
-        for (const key of keys) {
-            const row = rowByKey.get(key);
-            if (!row) continue;
-
-            const existing = await new Promise(res => {
-                const req = store.get(key);
-                req.onsuccess = () => res(req.result);
+            // ۱) خواندن رکوردهای موجود در یک تراکنش کوتاه
+            const existingMap = new Map();
+            await new Promise((res, rej) => {
+                const tx = compDb.transaction("coding_index", "readonly");
+                const store = tx.objectStore("coding_index");
+                for (const key of keys) {
+                    const req = store.get(key);
+                    req.onsuccess = () => { if (req.result) existingMap.set(key, req.result); };
+                }
+                tx.oncomplete = res;
+                tx.onerror = () => rej(tx.error);
             });
 
-            let newStatus = "no-group";
-            if (!newGroupCode) {
-                if (existing) {
-                    if (existing.status === "pending-insert") {
-                        store.delete(key);
+            const writes = [];
+            const updatesForGrid = [];
+
+            for (const key of keys) {
+                const row = rowByKey.get(key) || allRows.find(r => r._key === key);
+                if (!row) continue;
+                const rec = existingMap.get(key) || null;
+                const others = otherCodeValues(rec);
+
+                let newStatus;
+                if (!cleanGroup) {
+                    if (rec && rec.status === "pending-insert") {
+                        writes.push({ op: "delete", key });
+                        newStatus = "no-group";
+                    } else if (rec) {
+                        // اگر کد نگاشت دیگری روی همین حساب هست، فقط گروه را خالی کن
+                        newStatus = hasOtherCodes(rec) ? "pending-update" : "pending-delete";
+                        writes.push({
+                            op: "put",
+                            rec: Object.assign({}, rec, others, {
+                                key: key, codehesab: key, companyCode: currentCompanyCode,
+                                groupId: "", code_soratmali_sh: "",
+                                status: newStatus, lastModified: Date.now()
+                            })
+                        });
                     } else {
-                        existing.status = "pending-delete";
-                        existing.lastModified = Date.now();
-                        store.put(existing);
-                        newStatus = "pending-delete";
+                        newStatus = "no-group";
                     }
+                } else {
+                    newStatus = (rec && rec.status && rec.status !== "pending-insert") ? "pending-update" : "pending-insert";
+                    writes.push({
+                        op: "put",
+                        rec: Object.assign({}, rec || {}, others, {
+                            key: key, codehesab: key, companyCode: currentCompanyCode,
+                            kol_code: row.Kol_Code,
+                            moien_code: row.Moien_Code,
+                            tafsil_code: row.Tafsil_Code,
+                            groupId: cleanGroup,
+                            code_soratmali_sh: cleanGroup,
+                            karbord: "صورت مالی",
+                            status: newStatus,
+                            lastModified: Date.now()
+                        })
+                    });
                 }
-            } else {
-                newStatus = (existing && existing.status !== "pending-insert") ? "pending-update" : "pending-insert";
-                store.put({
-                    key,
-                    companyCode: currentCompanyCode,
-                    kol_code: row.Kol_Code,
-                    moien_code: row.Moien_Code,
-                    tafsil_code: row.Tafsil_Code,
-                    groupId: newGroupCode, // ✅ مقدار CodeGorohSoratMali ذخیره می‌شود
-                    karbord: "صورت مالی",
-                    lastModified: Date.now(),
-                    status: newStatus
+
+                row._groupId = cleanGroup;
+                row._status = newStatus;
+                row.GroupTitle = cleanGroup ? (groupNameMap.get(cleanGroup) || ("کد " + cleanGroup)) : "— بدون گروه —";
+                row.StatusLabel = statusToPersian(newStatus);
+                updatesForGrid.push({
+                    __id: row.__id,
+                    _groupId: row._groupId,
+                    _status: row._status,
+                    GroupTitle: row.GroupTitle,
+                    StatusLabel: row.StatusLabel
                 });
             }
 
-            row._groupId = newGroupCode || "";
-            row._status = newStatus;
-            row.GroupTitle = newGroupCode ? (groupNameMap.get(newGroupCode) || `کد ${newGroupCode}`) : "— بدون گروه —";
-            row.StatusLabel = statusToPersian(newStatus);
+            if (writes.length) {
+                await new Promise((res, rej) => {
+                    const tx = compDb.transaction("coding_index", "readwrite");
+                    const store = tx.objectStore("coding_index");
+                    for (const w of writes) {
+                        if (w.op === "delete") store.delete(w.key);
+                        else store.put(w.rec);
+                    }
+                    tx.oncomplete = res;
+                    tx.onerror = () => rej(tx.error);
+                });
+            }
 
-            updatesForGrid.push({
-                __id: row.__id,
-                _groupId: row._groupId,
-                _status: row._status,
-                GroupTitle: row.GroupTitle,
-                StatusLabel: row.StatusLabel
-            });
+            if (updatesForGrid.length) {
+                await grid.table.updateData(updatesForGrid);
+                for (const u of updatesForGrid) {
+                    const r = grid.table.getRow(u.__id);
+                    if (r) r.reformat();
+                }
+                grid._toast(updatesForGrid.length + " حساب به‌روزرسانی شد ✓");
+            }
+        } catch (err) {
+            console.error("❌ applyGroupToKeys:", err);
+            alert("❌ خطا در ذخیرهٔ محلی نگاشت: " + err.message);
+        } finally {
+            updateStats();
         }
-
-        await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-
-        if (updatesForGrid.length) {
-            await grid.table.updateData(updatesForGrid);
-        }
-
-        updateStats();
-        grid._toast(`${updatesForGrid.length} حساب به‌روزرسانی شد ✓`);
     }
 
     // ─── ۷. ارسال تغییرات به سرور ───
     pushToServerBtn.onclick = async () => {
-        const pendingRows = allRows.filter(r => r._status !== "synced" && r._status !== "no-group");
+        const pendingRows = allRows.filter(r => r._status && r._status !== "synced" && r._status !== "no-group");
         if (!pendingRows.length) return;
 
-        const payload = pendingRows.map(r => ({
-            key: r._key,
-            companyCode: currentCompanyCode,
-            kol_code: r.Kol_Code,
-            moien_code: r.Moien_Code,
-            tafsil_code: r.Tafsil_Code,
-            groupId: r._groupId, // ارسال CodeGorohSoratMali به سرور
-            karbord: "صورت مالی",
-            status: r._status,
-            lastModified: Date.now()
-        }));
-
-        pushToServerBtn.disabled = true;
-        pushToServerBtn.textContent = "در حال ارسال...";
         try {
+            const compDb = await dbManager._companyDB(currentCompanyCode);
+
+            const existingMap = new Map();
+            await new Promise((res, rej) => {
+                const tx = compDb.transaction("coding_index", "readonly");
+                const store = tx.objectStore("coding_index");
+                for (const r of pendingRows) {
+                    const req = store.get(r._key);
+                    req.onsuccess = () => { if (req.result) existingMap.set(r._key, req.result); };
+                }
+                tx.oncomplete = res;
+                tx.onerror = () => rej(tx.error);
+            });
+
+            const payload = [];
+            for (const r of pendingRows) {
+                const old = existingMap.get(r._key) || {};
+                const others = otherCodeValues(old);
+                const group = String(r._groupId || old.groupId || old.code_soratmali_sh || "").trim();
+                const hasOther = !!(others.code_soratmali_st || others.code_gozareshat_sh || others.code_gozareshat_st);
+                const effectiveStatus = r._status === "pending-delete" && hasOther ? "pending-update" : r._status;
+
+                payload.push({
+                    key: r._key,
+                    codehesab: r._key,
+                    companyCode: currentCompanyCode,
+                    kol_code: r.Kol_Code,
+                    moien_code: r.Moien_Code,
+                    tafsil_code: r.Tafsil_Code,
+                    groupId: group,
+                    code_soratmali_sh: group,
+                    code_soratmali_st: others.code_soratmali_st,
+                    code_gozareshat_sh: others.code_gozareshat_sh,
+                    code_gozareshat_st: others.code_gozareshat_st,
+                    karbord: "صورت مالی",
+                    status: effectiveStatus,
+                    lastModified: Date.now()
+                });
+            }
+
+            pushToServerBtn.disabled = true;
+            pushToServerBtn.textContent = "در حال ارسال...";
+
             const endpoint = localStorage.getItem("bina_manager_endpoint") || "http://localhost/FastDataHandler.ashx";
-            const res = await fetch(`${endpoint}?mode=save_coding_index`, {
+            const res = await fetch(endpoint + "?mode=save_coding_index", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ companyCode: currentCompanyCode, mappings: payload })
             });
-            const result = await res.json();
-            if (!result.ok) throw new Error(result.error || "خطای سرور");
+            const text = await res.text();
+            let result;
+            try { result = JSON.parse(text); }
+            catch (_) { throw new Error("پاسخ غیر JSON از سرور (" + res.status + "): " + text.slice(0, 220)); }
+            if (!res.ok || result.ok === false) throw new Error(result.error || result.message || ("خطای سرور (" + res.status + ")"));
 
-            const compDb = await dbManager._companyDB(currentCompanyCode);
-            const writeTx = compDb.transaction("coding_index", "readwrite");
-            const store = writeTx.objectStore("coding_index");
-            const updatesForGrid = [];
-
-            for (const r of pendingRows) {
-                if (r._status === "pending-delete") {
-                    store.delete(r._key);
-                    r._status = "no-group";
-                    r._groupId = "";
-                    r.GroupTitle = "— بدون گروه —";
-                } else {
-                    r._status = "synced";
-                    store.put({
-                        key: r._key,
-                        companyCode: currentCompanyCode,
-                        kol_code: r.Kol_Code,
-                        moien_code: r.Moien_Code,
-                        tafsil_code: r.Tafsil_Code,
-                        groupId: r._groupId,
-                        karbord: "صورت مالی",
-                        status: "synced",
-                        lastModified: Date.now()
-                    });
+            await new Promise((res2, rej2) => {
+                const writeTx = compDb.transaction("coding_index", "readwrite");
+                const store = writeTx.objectStore("coding_index");
+                for (const r of pendingRows) {
+                    const old = existingMap.get(r._key) || {};
+                    const others = otherCodeValues(old);
+                    if (r._status === "pending-delete") {
+                        if (hasOtherCodes(old)) {
+                            store.put(Object.assign({}, old, others, {
+                                key: r._key, codehesab: r._key, companyCode: currentCompanyCode,
+                                groupId: "", code_soratmali_sh: "",
+                                status: "synced", lastModified: Date.now()
+                            }));
+                        } else {
+                            store.delete(r._key);
+                        }
+                        r._status = "no-group";
+                        r._groupId = "";
+                        r.GroupTitle = "— بدون گروه —";
+                    } else {
+                        r._status = r._groupId ? "synced" : "no-group";
+                        store.put(Object.assign({}, old, others, {
+                            key: r._key, codehesab: r._key, companyCode: currentCompanyCode,
+                            kol_code: r.Kol_Code,
+                            moien_code: r.Moien_Code,
+                            tafsil_code: r.Tafsil_Code,
+                            groupId: r._groupId,
+                            code_soratmali_sh: r._groupId,
+                            karbord: "صورت مالی",
+                            status: "synced", lastModified: Date.now()
+                        }));
+                    }
+                    r.StatusLabel = statusToPersian(r._status);
                 }
-                r.StatusLabel = statusToPersian(r._status);
-                updatesForGrid.push({
-                    __id: r.__id,
-                    _groupId: r._groupId,
-                    _status: r._status,
-                    GroupTitle: r.GroupTitle,
-                    StatusLabel: r.StatusLabel
-                });
+                writeTx.oncomplete = res2;
+                writeTx.onerror = () => rej2(writeTx.error);
+            });
+
+            const after = pendingRows.map(r => ({
+                __id: r.__id,
+                _groupId: r._groupId,
+                _status: r._status,
+                GroupTitle: r.GroupTitle,
+                StatusLabel: r.StatusLabel
+            }));
+            await grid.table.updateData(after);
+            for (const u of after) {
+                const rr = grid.table.getRow(u.__id);
+                if (rr) rr.reformat();
             }
-
-            await new Promise((res2, rej) => { writeTx.oncomplete = res2; writeTx.onerror = () => rej(writeTx.error); });
-
-            await grid.table.updateData(updatesForGrid);
-            updateStats();
-            grid._toast("✅ تغییرات با موفقیت در سرور ثبت شد");
+            grid._toast("✅ " + (result.saved ?? payload.length) + " نگاشت ثبت و " + (result.deleted ?? 0) + " حذف شد");
         } catch (err) {
+            console.error("❌ pushToServer error:", err);
             alert("❌ خطا در ارسال: " + err.message);
         } finally {
             updateStats();

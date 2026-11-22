@@ -1,7 +1,8 @@
- (async function () {
+(async function () {
     "use strict";
 
-    const REPORT_STORE = "tk_c_gozareshat_st";
+    const REPORT_TABLE = "tk_c_Gozareshat_st";   // نام واقعی جدول در سرور
+    const REPORT_STORE = "tk_c_gozareshat_st";   // نام استور محلی در دیتابیس public
     const SERVER_FIELD = "Code_Gozareshat_st";
     const LOCAL_FIELD = "code_gozareshat_st";
     const GRID_COL = "Report_St";
@@ -21,7 +22,6 @@
     const statPending = document.getElementById("statPending");
     const statNoGroup = document.getElementById("statNoGroup");
 
-    // عناصر مودال جدول‌نما
     const reportPickerModal = document.getElementById("reportPickerModal");
     const closePickerBtn = document.getElementById("closePickerBtn");
     const pickerSearchInput = document.getElementById("pickerSearchInput");
@@ -43,6 +43,7 @@
     const endpoint = () =>
         localStorage.getItem("bina_manager_endpoint") || "http://localhost/FastDataHandler.ashx";
 
+    // ─── ابزارها ───
     function pick(obj, ...names) {
         if (!obj) return "";
         for (const wanted of names) {
@@ -58,6 +59,18 @@
         return "";
     }
 
+    function normCode(v) {
+        const s = String(v ?? "").trim();
+        return s === "" ? "" : s;
+    }
+
+    // کد ترکیبی کل-معین-تفصیل که در فیلد Code_Gozareshat_st سرور ثبت می‌شود
+    function buildTripleCode(kol, moien, tafsil) {
+        return [normCode(kol), normCode(moien), normCode(tafsil)]
+            .filter(v => v !== "")
+            .join("-");
+    }
+
     function statusToPersian(st) {
         if (st === "synced") return "🟢 همگام";
         if (st === "no-group") return "🔴 بدون نگاشت";
@@ -65,15 +78,126 @@
         return "🟡 در انتظار ارسال";
     }
 
-    // ساخت کد ترکیبی کل-معین-تفصیل
-    function buildTripleCode(kol, moien, tafsil) {
-        return [kol, moien, tafsil]
-            .map(v => String(v ?? "").trim())
-            .filter(v => v !== "")
-            .join("-");
+    // خواندن جدول از سرویس (منبع اصلی؛ tk_c_Gozareshat_st هم در سرور هست)
+    async function fetchTableFromServer(tableName, batchSize = 20000) {
+        const ws = dbManager.webservice;
+        const stats = await ws.fetchStats(tableName);
+        const names = (stats.columns || []).map(c => String(c.name));
+        const out = [];
+        for await (const pack of ws.fetchTable({ table: tableName, batchSize, afterId: 0 })) {
+            for (const row of pack.rows) {
+                const obj = {};
+                if (Array.isArray(row)) names.forEach((n, i) => { obj[n] = row[i]; });
+                else names.forEach(n => { obj[n] = row[n]; });
+                out.push(obj);
+            }
+        }
+        return { rows: out, columns: names };
     }
 
-    // ─── ۱. دریافت نام دیتابیس‌های عددی شرکت‌ها از IndexedDB (کاملاً لوکال) ───
+    // ─── ۱. خواندن جدول پایه tk_c_Gozareshat_st ───
+    function parseReportRow(row) {
+        if (!row || typeof row !== "object") return null;
+
+        const rowKey = pick(row, "Id", "id", "key");
+        const kolCode = pick(row, "KOl_Code_st", "Kol_Code_st", "kol_code_st");
+        const kolOnvan = pick(row, "KOl_Onvan_st", "Kol_Onvan_st", "kol_onvan_st");
+        const moienCode = pick(row, "MOien_Code_st", "Moien_Code_st", "moien_code_st");
+        const moienOnvan = pick(row, "MOien_Onvan_st", "Moien_Onvan_st", "moien_onvan_st");
+        const tafsilCode = pick(row, "Tafsil_Code_st", "tafsil_code_st");
+        const tafsilOnvan = pick(row, "Tafsil_Onvan_st", "tafsil_onvan_st");
+        const tafsilCode1 = pick(row, "Tafsil_Code1_st", "tafsil_code1_st");
+        const tafsilOnvan1 = pick(row, "Tafsil_Onvan1_st", "tafsil_onvan1_st");
+        const tafsilCode2 = pick(row, "Tafsil_Code2_st", "tafsil_code2_st");
+        const tafsilOnvan2 = pick(row, "Tafsil_Onvan2_st", "tafsil_onvan2_st");
+        const active = pick(row, "Active", "active");
+
+        const tripleCode = buildTripleCode(kolCode, moienCode, tafsilCode);
+        if (!tripleCode) return null;
+
+        const titleParts = [kolOnvan, moienOnvan, tafsilOnvan, tafsilOnvan1, tafsilOnvan2]
+            .filter(Boolean);
+        const shortTitle = titleParts.join(" / ") || `کد ${tripleCode}`;
+        const searchBlob = [
+            rowKey, tripleCode, kolCode, kolOnvan, moienCode, moienOnvan,
+            tafsilCode, tafsilOnvan, tafsilCode1, tafsilOnvan1, tafsilCode2, tafsilOnvan2, active
+        ].join(" ").toLowerCase();
+
+        return {
+            rowKey,
+            tripleCode,
+            kolCode, kolOnvan,
+            moienCode, moienOnvan,
+            tafsilCode, tafsilOnvan,
+            tafsilCode1, tafsilOnvan1,
+            tafsilCode2, tafsilOnvan2,
+            active,
+            shortTitle,
+            searchBlob
+        };
+    }
+
+    async function readReportsFromLocal() {
+        const pubDb = await dbManager._publicDB();
+        let storeName = null;
+        for (const name of pubDb.objectStoreNames) {
+            if (String(name).toLowerCase() === REPORT_STORE) { storeName = name; break; }
+        }
+        if (!storeName) return [];
+
+        return await new Promise((res, rej) => {
+            const tx = pubDb.transaction(storeName, "readonly");
+            const req = tx.objectStore(storeName).getAll();
+            req.onsuccess = () => res(req.result || []);
+            req.onerror = () => rej(req.error);
+        });
+    }
+
+    async function loadStandardReports() {
+        let rows = null;
+
+        // ۱) سرور (منبع اصلی)
+        try {
+            const server = await fetchTableFromServer(REPORT_TABLE);
+            rows = server.rows;
+            console.log(`گزارش‌های استاندارد از سرور (${REPORT_TABLE}): ${rows.length}`);
+        } catch (err) {
+            console.warn(`⚠️ خواندن ${REPORT_TABLE} از سرور نشد، تلاش از حافظه محلی:`, err.message);
+        }
+
+        // ۲) حافظه محلی
+        if (!rows || !rows.length) {
+            try {
+                rows = await readReportsFromLocal();
+                console.log(`گزارش‌های استاندارد از حافظه محلی (${REPORT_STORE}): ${(rows || []).length}`);
+            } catch (err2) {
+                console.warn("⚠️ خواندن گزارش‌ها از حافظه محلی هم نشد:", err2.message);
+                rows = [];
+            }
+        }
+
+        reportItems = [];
+        reportByTriple.clear();
+
+        for (const r of (rows || [])) {
+            const parsed = parseReportRow(r);
+            if (!parsed) continue;
+            reportItems.push(parsed);
+            if (!reportByTriple.has(parsed.tripleCode)) {
+                reportByTriple.set(parsed.tripleCode, parsed);
+            }
+        }
+
+        // مرتب‌سازی دقیقاً بر اساس Id جدول
+        reportItems.sort((a, b) =>
+            Number(a.rowKey || 0) - Number(b.rowKey || 0) ||
+            a.tripleCode.localeCompare(b.tripleCode, "en", { numeric: true })
+        );
+
+        return reportItems.length;
+    }
+
+    // ─── ۲. کدهای شرکت: اول سرور، بعد دیتابیس‌های عددی محلی ───
     async function getNumericCompanyDBs() {
         const set = new Set();
 
@@ -97,113 +221,83 @@
             } catch (_) { /* ادامه */ }
         }
 
-        if (!set.size && dbManager && typeof dbManager.getCompanyCodes === "function") {
-            try {
-                const codes = await dbManager.getCompanyCodes();
-                for (const c of (codes || [])) {
-                    const s = String(c || "").trim();
-                    if (/^\d+$/.test(s)) set.add(s);
-                }
-            } catch (_) { /* ادامه */ }
-        }
-
         return Array.from(set).sort((a, b) => Number(a) - Number(b));
     }
 
-    // ─── ۲. خواندن دقیق استور tk_c_gozareshat_st از دیتابیس public لوکال ───
-    function parseReportRow(row) {
-        if (!row || typeof row !== "object") return null;
-
-        const rowKey = pick(row, "key", "id", "Id");
-        const kolCode = pick(row, "kol_code_st", "KOl_Code_st", "Kol_Code_st");
-        const kolOnvan = pick(row, "kol_onvan_st", "KOl_Onvan_st", "Kol_Onvan_st");
-        const moienCode = pick(row, "moien_code_st", "MOien_Code_st", "Moien_Code_st");
-        const moienOnvan = pick(row, "moien_onvan_st", "MOien_Onvan_st", "Moien_Onvan_st");
-        const tafsilCode = pick(row, "tafsil_code_st", "Tafsil_Code_st");
-        const tafsilOnvan = pick(row, "tafsil_onvan_st", "Tafsil_Onvan_st");
-        const tafsilCode1 = pick(row, "tafsil_code1_st", "Tafsil_Code1_st");
-        const tafsilOnvan1 = pick(row, "tafsil_onvan1_st", "Tafsil_Onvan1_st");
-        const tafsilCode2 = pick(row, "tafsil_code2_st", "Tafsil_Code2_st");
-        const tafsilOnvan2 = pick(row, "tafsil_onvan2_st", "Tafsil_Onvan2_st");
-        const active = pick(row, "active", "Active");
-
-        const tripleCode = buildTripleCode(kolCode, moienCode, tafsilCode) || rowKey;
-        if (!tripleCode) return null;
-
-        const titleParts = [kolOnvan, moienOnvan, tafsilOnvan, tafsilOnvan1, tafsilOnvan2].filter(Boolean);
-        const shortTitle = titleParts.join(" / ") || `کد ${tripleCode}`;
-        const searchBlob = [
-            rowKey, tripleCode, kolCode, kolOnvan, moienCode, moienOnvan,
-            tafsilCode, tafsilOnvan, tafsilCode1, tafsilOnvan1, tafsilCode2, tafsilOnvan2, active
-        ].join(" ").toLowerCase();
-
-        return {
-            rowKey,
-            tripleCode,
-            kolCode,
-            kolOnvan,
-            moienCode,
-            moienOnvan,
-            tafsilCode,
-            tafsilOnvan,
-            tafsilCode1,
-            tafsilOnvan1,
-            tafsilCode2,
-            tafsilOnvan2,
-            active,
-            shortTitle,
-            searchBlob
-        };
+    async function loadCompanyCodes() {
+        let codes = [];
+        try {
+            codes = (await dbManager.getCompanyCodes()) || [];
+        } catch (err) {
+            console.warn("⚠️ فهرست شرکت‌ها از سرور خوانده نشد:", err.message);
+        }
+        if (!codes.length) codes = await getNumericCompanyDBs();
+        return codes.filter(c => /^\d+$/.test(String(c)))
+            .sort((a, b) => Number(a) - Number(b));
     }
 
-    async function loadStandardReportsFromLocal() {
-        const pubDb = await dbManager._publicDB();
-        let storeName = null;
-        for (const name of pubDb.objectStoreNames) {
-            if (String(name).toLowerCase() === REPORT_STORE) {
-                storeName = name;
-                break;
-            }
-        }
-
-        let rows = [];
-        if (storeName) {
-            rows = await new Promise((res, rej) => {
-                const tx = pubDb.transaction(storeName, "readonly");
-                const req = tx.objectStore(storeName).getAll();
-                req.onsuccess = () => res(req.result || []);
-                req.onerror = () => rej(req.error);
-            });
-        }
-
-        reportItems = [];
-        reportByTriple.clear();
-
-        for (const r of rows) {
-            const parsed = parseReportRow(r);
-            if (!parsed) continue;
-            reportItems.push(parsed);
-            if (!reportByTriple.has(parsed.tripleCode)) {
-                reportByTriple.set(parsed.tripleCode, parsed);
-            }
-        }
-
-        reportItems.sort((a, b) =>
-            Number(a.rowKey || 0) - Number(b.rowKey || 0) ||
-            a.tripleCode.localeCompare(b.tripleCode, "en", { numeric: true })
-        );
+    // ─── ۳. خواندن حساب‌های coding شرکت (لوکال، با پشتیبان سرور) ───
+    async function fetchCodingFromServer(companyCode) {
+        const table = `coding_${companyCode}`;
+        const { rows } = await fetchTableFromServer(table, 20000);
+        return rows.map((obj, i) => ({
+            id: Number(pick(obj, "Id", "id")) || (i + 1),
+            kol_code: normCode(pick(obj, "KOl_Code", "Kol_Code", "kol_code")),
+            kol_onvan: pick(obj, "KOl_Onvan", "Kol_Onvan", "kol_onvan"),
+            moien_code: normCode(pick(obj, "MOien_Code", "Moien_Code", "moien_code")),
+            moien_onvan: pick(obj, "MOien_Onvan", "Moien_Onvan", "moien_onvan"),
+            tafsil_code: normCode(pick(obj, "Tafsil_Code", "tafsil_code")),
+            tafsil_onvan: pick(obj, "Tafsil_Onvan", "tafsil_onvan")
+        }));
     }
 
-    // ─── ۳. مودال جدول‌نما برای ستون‌های tk_c_gozareshat_st ───
+    async function fetchAllCodingRows(companyCode) {
+        const all = [];
+        let afterId = -1;
+        const BATCH = 10000;
+
+        try {
+            while (true) {
+                const batch = await dbManager.getRows({
+                    companyCode, family: "coding", afterId, limit: BATCH
+                });
+                if (!batch.length) break;
+                all.push(...batch);
+                afterId = batch[batch.length - 1].id;
+                if (batch.length < BATCH) break;
+            }
+        } catch (err) {
+            console.warn("⚠️ خواندن coding از حافظه محلی نشد:", err.message);
+        }
+
+        if (all.length) return all;
+
+        // حافظه محلی خالی است → مستقیم از سرور (تا صفحه در هر مرورگری کار کند)
+        try {
+            const srv = await fetchCodingFromServer(companyCode);
+            if (srv.length) {
+                console.log(`حساب‌های شرکت ${companyCode} از سرور (coding_${companyCode}): ${srv.length}`);
+                return srv;
+            }
+        } catch (err) {
+            console.warn(`⚠️ خواندن coding_${companyCode} از سرور نشد:`, err.message);
+        }
+        return all;
+    }
+
+    // ─── ۴. مودال جدول‌نما (همهٔ ستون‌های tk_c_Gozareshat_st) ───
+    // نمایش حداکثر ۲۰۰ ردیف در هر بار (بقیه با جستجو) تا باز شدن مودال صفحه را قفل نکند
+    const PICKER_RENDER_LIMIT = 200;
+    let pickerSearchTimer = 0;
+
     function renderPickerRows(filterText = "") {
         const q = String(filterText || "").trim().toLowerCase();
-        const filtered = q
-            ? reportItems.filter(it => it.searchBlob.includes(q))
-            : reportItems;
+        const filtered = q ? reportItems.filter(it => it.searchBlob.includes(q)) : reportItems;
 
         if (pickerCount) pickerCount.textContent = filtered.length.toLocaleString("fa-IR");
 
-        const html = filtered.slice(0, 500).map(it => {
+        const shown = filtered.slice(0, PICKER_RENDER_LIMIT);
+        const html = shown.map(it => {
             const selClass = it.tripleCode === pickerSelectedCode ? "is-selected" : "";
             return `<tr class="${selClass}" data-code="${it.tripleCode}">
                 <td>${it.rowKey || "-"}</td>
@@ -218,12 +312,16 @@
                 <td>${it.tafsilOnvan1 || "-"}</td>
                 <td>${it.tafsilCode2 || "-"}</td>
                 <td>${it.tafsilOnvan2 || "-"}</td>
-                <td>${it.active || "-"}</td>
+                <td>${it.active === "" ? "-" : it.active}</td>
             </tr>`;
         }).join("");
 
-        pickerTableBody.innerHTML = html ||
-            '<tr><td colspan="13" style="text-align:center;padding:16px;color:#64748b;">موردی یافت نشد</td></tr>';
+        const hint = filtered.length > shown.length
+            ? `<tr><td colspan="13" style="text-align:center;padding:10px;color:#475569;background:#f1f5f9;">نمایش ${shown.length.toLocaleString("fa-IR")} از ${filtered.length.toLocaleString("fa-IR")} ردیف — برای دیدن بقیه در کادر جستجو تایپ کنید</td></tr>`
+            : "";
+
+        pickerTableBody.innerHTML = (html ||
+            '<tr><td colspan="13" style="text-align:center;padding:16px;color:#64748b;">موردی یافت نشد</td></tr>') + hint;
     }
 
     function openReportPicker(currentCode, onSelect) {
@@ -240,9 +338,22 @@
         pickerCallback = null;
     }
 
+    async function openBulkPicker() {
+        if (!reportItems.length) await loadStandardReports();
+        openReportPicker(assignReportValue.value, (code) => {
+            assignReportValue.value = code;
+            if (bulkPickerLabel) {
+                bulkPickerLabel.textContent = code
+                    ? displayReportSummary(code)
+                    : "— انتخاب از جدول گزارش استاندارد —";
+            }
+        });
+    }
+
     if (pickerSearchInput) {
         pickerSearchInput.addEventListener("input", () => {
-            renderPickerRows(pickerSearchInput.value);
+            clearTimeout(pickerSearchTimer);
+            pickerSearchTimer = setTimeout(() => renderPickerRows(pickerSearchInput.value), 150);
         });
     }
 
@@ -272,83 +383,102 @@
         });
     }
 
-    // ─── ۴. راه‌اندازی اولیه کاملاً لوکال ───
+    // ─── ۵. راه‌اندازی ───
     async function init() {
-        grid = new BinaGrid("#gridContainer", {
-            height: "640px",
-            pageSize: 100,
-            pageSizeOptions: [100, 500, 1000, 5000, true],
-            rowSelector: true,
-            storagePrefix: "BinaCodingGozareshatStV4",
-            captions: {
-                [GRID_COL]: "گزارش استاندارد (tk_c_gozareshat_st)",
-                StatusLabel: "وضعیت",
-                Kol_Code: "کد کل",
-                Kol_Onvan: "عنوان کل",
-                Moien_Code: "کد معین",
-                Moien_Onvan: "عنوان معین",
-                Tafsil_Code: "کد تفصیلی",
-                Tafsil_Onvan: "عنوان تفصیلی"
-            },
-            presetcolumns: {
-                [GRID_COL]: { width: 320, minWidth: 210, kind: "text" },
-                StatusLabel: { width: 125, minWidth: 95, kind: "text" },
-                Kol_Code: { width: 85, minWidth: 65, kind: "text" },
-                Kol_Onvan: { width: 190, minWidth: 110, kind: "text" },
-                Moien_Code: { width: 95, minWidth: 70, kind: "text" },
-                Moien_Onvan: { width: 200, minWidth: 120, kind: "text" },
-                Tafsil_Code: { width: 105, minWidth: 75, kind: "text" },
-                Tafsil_Onvan: { width: 200, minWidth: 120, kind: "text" }
-            }
-        });
-
-        grid.on("selectionChanged", ({ rows }) => {
-            const disabled = !rows;
-            if (applyGroupBtn) applyGroupBtn.disabled = disabled;
-            if (clearGroupBtn) clearGroupBtn.disabled = disabled;
-        });
-
-        dbManager = new Index_db({
-            webservice: new window.webservice({ endpoint: endpoint() })
-        });
-        await dbManager.initialize();
-
-        const codes = await getNumericCompanyDBs();
-        if (companySelect) {
-            companySelect.innerHTML =
-                '<option value="">انتخاب شرکت...</option>' +
-                codes.map(c => `<option value="${c}">${c}</option>`).join("");
-        }
-
-        await loadStandardReportsFromLocal();
-
-        if (codes.length > 0) {
-            currentCompanyCode = codes[0];
-            companySelect.value = codes[0];
-            await loadAllData();
-        }
-    }
-
-    // ─── ۵. خواندن حساب‌های coding شرکت از IndexedDB ───
-    async function fetchAllCodingRows(companyCode) {
-        const all = [];
-        let afterId = -1;
-        const BATCH = 10000;
-        while (true) {
-            const batch = await dbManager.getRows({
-                companyCode,
-                family: "coding",
-                afterId,
-                limit: BATCH
+        try {
+            grid = new BinaGrid("#gridContainer", {
+                height: "640px",
+                pageSize: 100,
+                pageSizeOptions: [100, 500, 1000, 5000, true],
+                rowSelector: true,
+                storagePrefix: "BinaCodingGozareshatSt",
+                captions: {
+                    [GRID_COL]: "گزارش استاندارد (کل-معین-تفصیل)",
+                    StatusLabel: "وضعیت",
+                    Kol_Code: "کد کل",
+                    Kol_Onvan: "عنوان کل",
+                    Moien_Code: "کد معین",
+                    Moien_Onvan: "عنوان معین",
+                    Tafsil_Code: "کد تفصیلی",
+                    Tafsil_Onvan: "عنوان تفصیلی"
+                },
+                presetcolumns: {
+                    [GRID_COL]: { width: 320, minWidth: 210, kind: "text" },
+                    StatusLabel: { width: 125, minWidth: 95, kind: "text" },
+                    Kol_Code: { width: 85, minWidth: 65, kind: "text" },
+                    Kol_Onvan: { width: 190, minWidth: 110, kind: "text" },
+                    Moien_Code: { width: 95, minWidth: 70, kind: "text" },
+                    Moien_Onvan: { width: 200, minWidth: 120, kind: "text" },
+                    Tafsil_Code: { width: 105, minWidth: 75, kind: "text" },
+                    Tafsil_Onvan: { width: 200, minWidth: 120, kind: "text" }
+                }
             });
-            if (!batch.length) break;
-            all.push(...batch);
-            afterId = batch[batch.length - 1].id;
-            if (batch.length < BATCH) break;
+
+            grid.on("selectionChanged", ({ rows }) => {
+                const hasSelection = rows > 0;
+                if (applyGroupBtn) applyGroupBtn.disabled = !hasSelection;
+                if (clearGroupBtn) clearGroupBtn.disabled = !hasSelection;
+            });
+
+            dbManager = new Index_db({
+                webservice: new window.webservice({ endpoint: endpoint() })
+            });
+            await dbManager.initialize();
+
+            const codes = await loadCompanyCodes();
+            if (companySelect) {
+                companySelect.innerHTML = '<option value="">انتخاب شرکت...</option>' +
+                    codes.map(c => `<option value="${c}">${c}</option>`).join("");
+            }
+
+            await loadStandardReports();
+
+            // ✅ اجرای خودکار هنگام باز شدن فرم
+            if (codes.length > 0) {
+                companySelect.value = codes[0];
+                await syncAndLoadCompany(codes[0], true);
+            }
+        } catch (err) {
+            console.error("❌ خطا در راه‌اندازی:", err);
+            alert("خطا: " + err.message);
         }
-        return all;
     }
 
+    // ─── ۶. همگام‌سازی coding_index با سرور و سپس نمایش ───
+    async function syncAndLoadCompany(companyCode, silentOffline = false) {
+        if (!companyCode) return;
+        currentCompanyCode = companyCode;
+
+        if (loadAndSyncBtn) {
+            loadAndSyncBtn.disabled = true;
+            loadAndSyncBtn.textContent = "در حال همگام‌سازی...";
+        }
+
+        try {
+            dbManager._tkReady = true;
+            await dbManager.syncCodingIndex(currentCompanyCode);
+            if (!silentOffline && grid && grid._toast) grid._toast("✅ با سرور همگام شد");
+        } catch (err) {
+            console.warn("⚠️ همگام‌سازی coding_index انجام نشد (نمایش داده‌های محلی):", err.message);
+            if (grid && grid._toast) {
+                grid._toast("⚠️ همگام‌سازی coding_index نشد؛ داده‌های محلی/سرور بارگذاری می‌شوند");
+            }
+        }
+
+        try {
+            await loadAllData();
+        } catch (err) {
+            console.error(err);
+            alert("❌ خطا در خواندن اطلاعات: " + err.message);
+        } finally {
+            if (loadAndSyncBtn) {
+                loadAndSyncBtn.disabled = false;
+                loadAndSyncBtn.textContent = "همگام‌سازی با سرور";
+            }
+        }
+    }
+
+    // ─── ۷. ترکیب داده‌ها و تزریق به گرید ───
     function getSavedReportCode(rec) {
         if (!rec) return "";
         return String(
@@ -362,7 +492,7 @@
 
     function displayReportSummary(code) {
         const v = String(code || "").trim();
-        if (!v) return "— انتخاب از tk_c_gozareshat_st —";
+        if (!v) return "— انتخاب از جدول گزارش استاندارد —";
         const item = reportByTriple.get(v);
         return item ? `${v} | ${item.shortTitle}` : v;
     }
@@ -379,14 +509,18 @@
         rowByKey.clear();
 
         allRows = codingRows.map((r, idx) => {
-            const kol = String(r.kol_code || "").trim();
-            const moien = String(r.moien_code || "").trim();
-            const tafsil = String(r.tafsil_code || "").trim();
+            const kol = normCode(r.kol_code);
+            const moien = normCode(r.moien_code);
+            const tafsil = normCode(r.tafsil_code);
             const key = `${currentCompanyCode}_${kol}_${moien}_${tafsil}`;
             const rec = mappingMap.get(key);
 
             const code = getSavedReportCode(rec);
-            const status = rec && code ? (rec.status || "synced") : "no-group";
+            let status = "no-group";
+            if (rec) {
+                if (code) status = rec.status || "synced";
+                else if (rec.status === "pending-delete") status = "pending-delete";
+            }
 
             const rowObj = {
                 __id: idx + 1,
@@ -435,7 +569,7 @@
                 titleSpan.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
                 titleSpan.textContent = currentCode
                     ? (item ? item.shortTitle : currentCode)
-                    : "— انتخاب از tk_c_gozareshat_st —";
+                    : "— انتخاب از جدول گزارش استاندارد —";
 
                 const badgeSpan = document.createElement("span");
                 badgeSpan.className = "cell-combo-code";
@@ -443,9 +577,13 @@
 
                 btn.append(titleSpan, badgeSpan);
 
-                btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+                // جلوگیری از تداخل کلیک کمبو با انتخاب/بازسازی سلول در BinaGrid
+                // (اگر mousedown به گرید برسد، سلول بازسازی می‌شود و رویداد click از بین می‌رود)
+                ["pointerdown", "mousedown", "pointerup", "mouseup"].forEach(evtName => {
+                    btn.addEventListener(evtName, (e) => e.stopPropagation());
+                });
                 btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
+                                        e.stopPropagation();
                     openReportPicker(currentCode, async (pickedCode) => {
                         await applyReportCodeToKeys([rowData._key], pickedCode);
                     });
@@ -454,6 +592,25 @@
                 return btn;
             }
         });
+    }
+
+    // به‌روزرسانی داده و اجبار به رندر مجدد همان ردیف‌ها (وگرنه سلول قدیمی در DOM می‌ماند)
+    async function refreshUpdatedRows(updates) {
+        if (!updates.length) return;
+        try {
+            await grid.table.updateData(updates);
+        } catch (err) {
+            console.warn("⚠️ updateData ناموفق بود؛ ردیف‌به‌ردیف به‌روزرسانی می‌شود:", err.message);
+        }
+        for (const u of updates) {
+            const row = grid.table.getRow(u.__id);
+            if (!row) continue;
+            const data = row.getData();
+            if (data._reportCode !== u._reportCode || data[GRID_COL] !== u[GRID_COL]) {
+                try { row.update(u); } catch (err) { console.warn("⚠️ row.update:", err.message); }
+            }
+            row.reformat();
+        }
     }
 
     function updateStats() {
@@ -475,8 +632,8 @@
         }
     }
 
-    // ─── ۶. ذخیره کد ترکیبی کل-معین-تفصیل در استور لوکال coding_index ───
-    async function applyReportCodeToKeys(keys, newReportCode) {
+    // ─── ۸. ذخیره کد ترکیبی در استور لوکال coding_index ───
+    async function applyReportCodeToKeysCore(keys, newReportCode) {
         if (!keys.length || !currentCompanyCode) return;
         const cleanCode = String(newReportCode || "").trim();
 
@@ -488,10 +645,7 @@
             await Promise.all(
                 keys.map(key => new Promise(res => {
                     const req = store.get(key);
-                    req.onsuccess = () => {
-                        if (req.result) existing.set(key, req.result);
-                        res();
-                    };
+                    req.onsuccess = () => { if (req.result) existing.set(key, req.result); res(); };
                     req.onerror = () => res();
                 }))
             );
@@ -501,7 +655,7 @@
         const updatesForGrid = [];
 
         for (const key of keys) {
-            const row = rowByKey.get(key);
+            const row = rowByKey.get(key) || allRows.find(r => r._key === key);
             if (!row) continue;
 
             const rec = existing.get(key);
@@ -575,17 +729,36 @@
             });
         }
 
-        if (updatesForGrid.length) {
-            await grid.table.updateData(updatesForGrid);
-        }
+        await refreshUpdatedRows(updatesForGrid);
         updateStats();
         if (updatesForGrid.length && grid._toast) {
             grid._toast(`${updatesForGrid.length} حساب به‌روزرسانی شد ✓`);
         }
     }
 
-    // ─── ۷. ارسال به سرور با فیلد Code_Gozareshat_st ───
-// ─── ۷. ارسال به سرور با فیلد Code_Gozareshat_st ───
+    async function applyReportCodeToKeys(keys, newReportCode) {
+        try {
+            await applyReportCodeToKeysCore(keys, newReportCode);
+        } catch (err) {
+            console.error("❌ applyReportCodeToKeys:", err);
+        } finally {
+            updateStats();
+        }
+    }
+
+    // ─── ۹. ارسال به سرور (فیلد Code_Gozareshat_st) ───
+    function hasAnyOtherCode(rec) {
+        return (
+            String(rec.code_soratmali_sh ?? rec.Code_SoratMali_sh ?? "").trim() !== "" ||
+            String(rec.code_soratmali_st ?? rec.Code_SoratMali_st ?? "").trim() !== "" ||
+            String(rec.code_gozareshat_sh ?? rec.Code_Gozareshat_sh ?? "").trim() !== "" ||
+            (() => {
+                const g = String(rec.groupId ?? rec.GroupId ?? "").trim();
+                return g !== "" && g !== "0";
+            })()
+        );
+    }
+
     async function pushToServer() {
         const pendingRows = allRows.filter(
             r => r._status && r._status !== "synced" && r._status !== "no-group"
@@ -603,10 +776,7 @@
             await Promise.all(
                 pendingRows.map(r => new Promise(res => {
                     const req = store.get(r._key);
-                    req.onsuccess = () => {
-                        if (req.result) existingMap.set(r._key, req.result);
-                        res();
-                    };
+                    req.onsuccess = () => { if (req.result) existingMap.set(r._key, req.result); res(); };
                     req.onerror = () => res();
                 }))
             );
@@ -614,13 +784,8 @@
 
         const payload = pendingRows.map(r => {
             const old = existingMap.get(r._key) || {};
-            const hasOtherFields =
-                String(old.code_soratmali_sh ?? old.Code_SoratMali_sh ?? "").trim() !== "" ||
-                String(old.code_soratmali_st ?? old.Code_SoratMali_st ?? "").trim() !== "" ||
-                String(old.code_gozareshat_sh ?? old.Code_Gozareshat_sh ?? "").trim() !== "";
-
             const effectiveStatus =
-                r._status === "pending-delete" && hasOtherFields
+                r._status === "pending-delete" && hasAnyOtherCode(old)
                     ? "pending-update"
                     : r._status;
 
@@ -631,7 +796,10 @@
                 kol_code: r.Kol_Code,
                 moien_code: r.Moien_Code,
                 tafsil_code: r.Tafsil_Code,
-                Code_SoratMali_sh: old.code_soratmali_sh ?? old.Code_SoratMali_sh ?? null,
+                Code_SoratMali_sh: (() => {
+                    const v = String(old.code_soratmali_sh ?? old.Code_SoratMali_sh ?? old.groupId ?? "").trim();
+                    return /^\d+$/.test(v) && v !== "0" ? v : null;
+                })(),
                 Code_SoratMali_st: old.code_soratmali_st ?? old.Code_SoratMali_st ?? null,
                 Code_Gozareshat_sh: old.code_gozareshat_sh ?? old.Code_Gozareshat_sh ?? null,
                 Code_Gozareshat_st: r._reportCode || null,
@@ -639,8 +807,6 @@
                 lastModified: Date.now()
             };
         });
-
-        console.log("📤 Payload sent to save_coding_index:", payload);
 
         if (pushToServerBtn) {
             pushToServerBtn.disabled = true;
@@ -655,7 +821,6 @@
                 body: JSON.stringify({ companyCode: currentCompanyCode, mappings: payload })
             });
             const text = await res.text();
-            console.log("📥 Server response:", res.status, text);
 
             let result;
             try {
@@ -674,11 +839,7 @@
             for (const r of pendingRows) {
                 const old = existingMap.get(r._key) || {};
                 if (r._status === "pending-delete") {
-                    const hasOther =
-                        String(old.code_soratmali_sh ?? old.Code_SoratMali_sh ?? "").trim() !== "" ||
-                        String(old.code_soratmali_st ?? old.Code_SoratMali_st ?? "").trim() !== "" ||
-                        String(old.code_gozareshat_sh ?? old.Code_Gozareshat_sh ?? "").trim() !== "";
-                    if (hasOther) {
+                    if (hasAnyOtherCode(old)) {
                         store.put({
                             ...old,
                             [LOCAL_FIELD]: "",
@@ -724,7 +885,7 @@
                 tx.onerror = () => rej2(tx.error);
             });
 
-            await grid.table.updateData(updatesForGrid);
+            await refreshUpdatedRows(updatesForGrid);
             updateStats();
             if (grid._toast) {
                 grid._toast(`✅ ${result.saved ?? pendingRows.length} نگاشت ثبت و ${result.deleted ?? 0} حذف شد`);
@@ -736,7 +897,8 @@
             updateStats();
         }
     }
-    // ─── ۸. رویدادها ───
+
+    // ─── ۱۰. رویدادها ───
     if (companySelect) {
         companySelect.onchange = async () => {
             if (!companySelect.value) return;
@@ -748,30 +910,17 @@
     if (loadAndSyncBtn) {
         loadAndSyncBtn.onclick = async () => {
             if (!companySelect || !companySelect.value) return alert("لطفاً یک شرکت انتخاب کنید.");
-            currentCompanyCode = companySelect.value;
-            await loadStandardReportsFromLocal();
-            await loadAllData();
-            if (grid && grid._toast) grid._toast("✅ داده‌ها از tk_c_gozareshat_st لوکال بازخوانی شدند");
+            if (!reportItems.length) await loadStandardReports();
+            await syncAndLoadCompany(companySelect.value);
         };
     }
 
-    if (bulkPickerBtn) {
-        bulkPickerBtn.onclick = () => {
-            openReportPicker(assignReportValue.value, (code) => {
-                assignReportValue.value = code;
-                if (bulkPickerLabel) {
-                    bulkPickerLabel.textContent = code
-                        ? displayReportSummary(code)
-                        : "— انتخاب از tk_c_gozareshat_st —";
-                }
-            });
-        };
-    }
+    if (bulkPickerBtn) bulkPickerBtn.onclick = () => openBulkPicker();
 
     if (applyGroupBtn) {
         applyGroupBtn.onclick = async () => {
             const code = assignReportValue ? String(assignReportValue.value || "").trim() : "";
-            if (!code) return alert("ابتدا از جدول tk_c_gozareshat_st یک آیتم انتخاب کنید.");
+            if (!code) return alert("ابتدا از جدول گزارش استاندارد یک آیتم انتخاب کنید.");
             const selected = (grid && grid.getSelectedData && grid.getSelectedData()) || [];
             if (!selected.length) return alert("ابتدا ردیف‌ها را انتخاب کنید.");
             await applyReportCodeToKeys(selected.map(r => r._key), code);
@@ -797,10 +946,5 @@
         }
     });
 
-    try {
-        await init();
-    } catch (err) {
-        console.error("❌ خطا در راه‌اندازی:", err);
-        alert("خطا: " + err.message);
-    }
+    await init();
 })();

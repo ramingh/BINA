@@ -246,7 +246,7 @@
                 <select id="companySelect">
                     <option value="">انتخاب شرکت...</option>
                 </select>
-                <button id="loadAndSyncBtn" class="ok">بارگذاری مجدد لوکال</button>
+                <button id="loadAndSyncBtn" class="ok">همگام‌سازی با سرور</button>
                 <button id="pushToServerBtn" disabled>ثبت دایم در سرور (0)</button>
             </div>
         </div>
@@ -277,7 +277,7 @@
     <div id="reportPickerModal" class="picker-backdrop">
         <div class="picker-modal">
             <div class="picker-head">
-                <h3>انتخاب گزارش استاندارد (جدول tk_c_Gozareshat_st — کد ترکیبی کل-معین-تفصیل)</h3>
+                <h3>انتخاب گزارش استاندارد (جدول tk_c_Gozareshat_st — همهٔ ستون‌ها؛ ثبت در فیلد Code_Gozareshat_st)</h3>
                 <button type="button" id="closePickerBtn" class="bad">بستن ✕</button>
             </div>
             <div class="picker-toolbar">
@@ -289,6 +289,7 @@
                 <table class="picker-table">
                     <thead>
                         <tr>
+                            <th>Id</th>
                             <th>کد ثبت (کل-معین-تفصیل)</th>
                             <th>کد کل</th>
                             <th>عنوان کل</th>
@@ -312,6 +313,6 @@
     <script src="../FINAL/app/bina/tabulator.min.js"></script>
     <script src="../FINAL/app/bina/bina-grid.js"></script>
     <script src="../admin/manager/bina-db-manager.js"></script>
-    <script src="Gozareshat_st.js"></script>
+    <script src="Gozareshat_st.js?v=6"></script>
 </body>
 </html>
