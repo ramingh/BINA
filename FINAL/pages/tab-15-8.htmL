@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>مرور ترازها و دفاتر مالی</title>
+  <title>مرور حساب‌ها</title>
 
   <!-- کتابخانه‌های بیرونی -->
   <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
@@ -10,31 +10,25 @@
   <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 
   <!-- گرید اختصاصی بینا -->
-  <script src="../app/bina/bina-grid.js"></script>
+  <script src="../app/com/com_grid.js"></script>
 
   <!-- استایل اختصاصی تراز -->
-  <link rel="stylesheet" href="./../css/Taraz.css">
+  <link rel="stylesheet" href="./../css/Bina-15-8.css?v=1.2.55">
 
-  <style>
-    /* استایل‌های ضروری برای اینکه فرم کل صفحه‌ی iframe را پر کند */
-    html, body { height: 100%; margin: 0; background: #f2f5fa }
-    body { padding: 10px; box-sizing: border-box }
-    #app-container { height: 100%; display: flex; flex-direction: column; }
-  </style>
 </head>
 <body>
   <div class="access-container" id="app-container">
-    <div class="title-area">مرور ترازها و دفاتر مالی</div>
-
     <div class="top-controls">
       <!-- نام شرکت و سال مالی -->
-      <div class="company-controls">
-        <label>نام شرکت:
+      <div class="company-controls" role="group" aria-label="شرکت و سال مالی">
+        <label class="taraz-field">
+          <span class="taraz-label">نام شرکت:</span>
           <select id="companyCode">
             <option value="">در حال بارگذاری...</option>
           </select>
         </label>
-        <label>سال مالی:
+        <label class="taraz-field">
+          <span class="taraz-label">سال مالی:</span>
           <select id="fiscalYear">
             <option value="">--</option>
           </select>
@@ -42,17 +36,17 @@
       </div>
 
       <!-- سطح تراز و نوع اسناد -->
-      <div>
+      <div class="taraz-filters">
         <div class="radio-group">
-          <label><input type="radio" name="level" value="kol" checked onchange="runTaraz()"> تراز کل</label>
-          <label><input type="radio" name="level" value="moien" onchange="runTaraz()"> تراز معین</label>
-          <label><input type="radio" name="level" value="tafsil" onchange="runTaraz()"> تراز تفصیل</label>
+          <label><input type="radio" name="level" value="kol" checked> تراز کل</label>
+          <label><input type="radio" name="level" value="moien"> تراز معین</label>
+          <label><input type="radio" name="level" value="tafsil"> تراز تفصیل</label>
         </div>
-        <div class="radio-group">
+        <div class="radio-group doc-type-group" role="group" aria-label="نوع اسناد">
           <label><input type="radio" name="docType" value="all" checked> همه اسناد</label>
-          <label><input type="radio" name="docType" value="bastan"> بدون بستن حساب‌ها</label>
-          <label><input type="radio" name="docType" value="ekhtetamieh"> بدون بستن اسناد اختتامیه</label>
-          <label><input type="radio" name="docType" value="eftetahieh"> بدون بستن تفصیلی</label>
+          <label><input type="radio" name="docType" value="bastan"> بدون سند بستن حساب‌ها</label>
+          <label><input type="radio" name="docType" value="eftetahieh"> بدون سند افتتاحیه</label>
+          <label><input type="radio" name="docType" value="ekhtetamieh"> بدون سند اختتامیه</label>
         </div>
       </div>
     </div>
@@ -62,9 +56,9 @@
     </div>
 
     <!-- گرید اصلی -->
-    <div id="gridContainer" style="flex:1;"></div>
+    <div id="gridContainer"></div>
   </div>
-  <script src="../app/bina/tab-15-8.js"></script>
+  <script src="../app/bina/Bina-15-8.js?v=1.2.55"></script>
   <!-- لود فایل اصلی جاوااسکریپت تراز -->
  
 </body>

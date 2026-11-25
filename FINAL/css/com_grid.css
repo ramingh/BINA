@@ -1,9 +1,25 @@
-/* BinaGrid v1.2.31 — visual rules extracted byte-for-byte from v1.2.29.
-   Shared layout, toolbar, record selector, column manager, footer and vivid themes.
-   Do not apply the grid theme to the column manager header itself. */
-.bina-grid{position:relative;display:flex;flex-direction:column;gap:8px;outline:none;font-family:IRANYekanX,Tahoma,Arial,sans-serif}
-.bina-grid .tabulator{font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:11px}
-.bina-grid .tabulator-header .tabulator-header-filter input{height:26px!important;min-height:26px!important;max-height:26px!important;border-radius:8px!important;background:#fff8f4!important;border:1px solid #d9c8c0!important;box-sizing:border-box!important;padding:2px 7px!important;font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:10px!important}
+/* BinaGrid v1.2.61 — shared frame and regular IRANYekanX font.
+   Applied only to BinaGrid instances, including drill-down windows.
+   A licensed regular IRANYekanX.ttf can be placed under FINAL/.
+   Do not alias the bundled IRANYekanX-Light to the regular/bold weights. */
+@font-face {
+  font-family: 'BinaGrid-IRANYekanX';
+  src: local('IRANYekanX Regular'), local('IRANYekanX');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+.bina-grid{position:relative;display:flex;flex-direction:column;gap:8px;min-height:0;outline:none;
+  font-family:'BinaGrid-IRANYekanX',Tahoma,Arial,sans-serif;
+  font-synthesis:weight;
+  background:var(--bina-grid-surface,#fff);
+  border:1px solid var(--bina-grid-frame,#90acbf);
+  border-radius:8px;
+  padding:4px;
+  box-shadow:0 1px 3px rgba(22,46,66,.08);
+}
+.bina-grid .tabulator{font-family:'BinaGrid-IRANYekanX',Tahoma,Arial,sans-serif!important;font-size:11px}
+.bina-grid .tabulator-header .tabulator-header-filter input{height:26px!important;min-height:26px!important;max-height:26px!important;border-radius:8px!important;background:#fff8f4!important;border:1px solid #d9c8c0!important;box-sizing:border-box!important;padding:2px 7px!important;font-family:'BinaGrid-IRANYekanX',Tahoma,Arial,sans-serif!important;font-size:10px!important}
 .bina-grid .tabulator-header .tabulator-header-filter input:focus{outline:1px solid #b78b7a;outline-offset:0;background:#fffaf7!important}
 .bina-grid,.bina-grid *{box-sizing:border-box}
 /* Toolbar and controls */
@@ -13,6 +29,23 @@
 .bina-btn{padding:7px 12px;border:1px solid #b9c8d4;border-radius:9px;background:#fff;color:#20374b;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
 .bina-btn:hover{background:#eef4f8;border-color:#8fa8ba}
 .bina-btn:disabled{opacity:.5;cursor:default}
+/* v1.2.44: Uniform dimensions for standard BinaGrid export/print buttons.
+   Shared by all grids, including drill-down grids; does not affect column-manager buttons. */
+.bina-grid .bina-toolbar .bina-btn:is([data-act="print"],[data-act="excel"],[data-act="copy"]) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 70px;
+  width:70px;
+  min-width:70px;
+  height:38px;
+  min-height:38px;
+  max-height:38px;
+  padding:0 8px;
+  line-height:1;
+  border-radius:9px;
+  box-shadow:0 1px 2px rgba(22,46,66,.06);
+}
 .bina-btn-columns{display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:34px;padding:4px;border:0;background:transparent;box-shadow:none;color:#245476;border-radius:8px}
 .bina-btn-columns:hover{background:rgba(36,84,118,.08);border-color:transparent}
 .bina-btn-columns:focus-visible{outline:2px solid #245476;outline-offset:2px}
@@ -28,10 +61,10 @@
 .bina-grid .tabulator-tableholder .tabulator-cell:not(.bina-selector-cell){min-width:0}
 .bina-grid .tabulator-header .tabulator-col-content,.bina-grid .tabulator-header .tabulator-col-title-holder,.bina-grid .tabulator-header .tabulator-header-filter{min-width:0;overflow:hidden}
 .bina-grid .tabulator-cell{white-space:normal}
-.bina-grid .smart{display:block;width:100%;min-width:0;line-height:1.55;overflow:hidden;white-space:nowrap;text-align:inherit;font-family:IRANYekanX,Tahoma,Arial,sans-serif!important;font-size:11px!important}
+.bina-grid .smart{display:block;width:100%;min-width:0;line-height:1.55;overflow:hidden;white-space:nowrap;text-align:inherit;font-family:'BinaGrid-IRANYekanX',Tahoma,Arial,sans-serif!important;font-size:11px!important}
 .bina-grid .smart.num{font-variant-numeric:tabular-nums}
 .bina-grid .bina-bottom-calc{display:block;width:100%;min-width:0;direction:ltr;font-variant-numeric:tabular-nums;line-height:1.55}
-.bina-grid .smart.bina-bold{font-weight:700!important;font-synthesis:weight;text-shadow:.18px 0 currentColor,-.18px 0 currentColor}
+.bina-grid .smart.bina-bold{font-weight:700!important;font-synthesis:weight!important}
 .bina-grid .smart.w2,.bina-grid .smart.w3{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;overflow-wrap:anywhere;word-break:break-word}
 .bina-grid .smart.w2{-webkit-line-clamp:2}
 .bina-grid .smart.w3{-webkit-line-clamp:3}
@@ -112,23 +145,17 @@
 .bina-grid.bina-themed .tabulator-tableholder .tabulator-row{border-bottom-color:var(--bina-theme-border)!important}
 .bina-grid.bina-themed .tabulator-tableholder .tabulator-row>.tabulator-cell::after{background:var(--bina-theme-border)}
 
-/* Header titles: shared font controls in column manager, isolated from data cells.
-   Source font is a static *Light* font. Some host pages register it for the
-   whole 300–700 range, which stops browsers from synthesizing bold at 700.
-   Register a header-only alias at its REAL weight so weight 700 can synthesize.
-   This does not alter the font used by data cells or other UI components. */
-@font-face{
-  font-family:'BinaGrid-Title';
-  src:url('../IRANYekanX-Light.ttf') format('truetype');
-  font-style:normal;
-  font-weight:300;
-  font-display:swap;
+/* Column headings use exactly the same regular family as data cells.
+   The manager's Bold switch changes font-weight 400 ↔ 700 (synthetic bold
+   is allowed when only the regular font is installed). */
+.bina-grid .tabulator-header .tabulator-col-title {
+  font-family:'BinaGrid-IRANYekanX',Tahoma,Arial,sans-serif!important;
+  font-weight:400!important;
+  font-synthesis:weight!important;
 }
 .bina-grid.bina-title-size .tabulator-header .tabulator-col-title{font-size:var(--bina-title-size)!important}
 .bina-grid.bina-title-bold .tabulator-header .tabulator-col-title{
-  font-family:'BinaGrid-Title',Tahoma,Arial,sans-serif!important;
   font-weight:700!important;
-  font-synthesis:weight!important;
 }
 .bina-cm-actions .bina-cm-title-font{height:24px;width:54px;min-width:0;border-radius:6px;border:1px solid rgba(255,255,255,.6);background:#fff;color:#193a56;font:inherit;font-size:11px;padding:0 2px;text-align:center;cursor:pointer}
 .bina-cm-actions .bina-cm-title-bold{width:25px;min-width:25px;height:24px;padding:1px!important;border:1px solid rgba(255,255,255,.55)!important;background:rgba(255,255,255,.15);color:#fff;font:bold 14px Arial,sans-serif!important;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}
@@ -141,3 +168,28 @@
 .bina-cm-actions{gap:4px}
 .bina-cm-actions .bina-cm-title-font{width:46px}
 .bina-cm-actions .bina-cm-reset,.bina-cm-actions .bina-cm-close{padding-inline:6px}
+
+/* v1.2.45: A single continuous separator above the complete column-header row.
+   No card, outline, rounding or shadow around individual column titles.
+   Works for main and drill-down BinaGrid instances, including themed grids. */
+.bina-grid .tabulator > .tabulator-header {
+  border-top:1px solid var(--bina-theme-border,var(--bina-grid-frame,#90acbf)) !important;
+  border-top-left-radius:6px;
+  border-top-right-radius:6px;
+}
+/* The Tabulator pagination counter is disabled in JS; keep a safety fallback. */
+.bina-grid .tabulator-footer .tabulator-page-counter {display:none!important}
+
+/* v1.2.61: Compact rows consume exactly the height selected in Field Manager.
+   No spare inter-row margin/spacing; Tabulator's VDOM is also redrawn in JS. */
+.bina-grid.bina-row-user-sized .tabulator-tableholder .tabulator-row {
+  margin:0!important; padding:0!important; border-spacing:0!important;
+  box-sizing:border-box!important; line-height:normal;
+}
+.bina-grid.bina-row-user-sized .tabulator-tableholder .tabulator-row>.tabulator-cell {
+  margin:0!important; box-sizing:border-box!important;
+}
+.bina-grid.bina-row-user-sized .tabulator-tableholder .tabulator-row>.tabulator-cell .smart {
+  line-height:1.2!important;
+}
+.bina-grid.bina-row-user-sized .bina-row-resizer {bottom:0;height:4px;}

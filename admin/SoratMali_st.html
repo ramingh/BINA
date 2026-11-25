@@ -1,311 +1,364 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بینا | نگاشت حساب‌ها به صورت مالی استاندارد (Code_SoratMali_st)</title>
-    <link rel="stylesheet" href="../FINAL/css/tabulator.min.css">
-    <link rel="stylesheet" href="../FINAL/css/bina-grid.css?v=1.2.41">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      بینا | نگاشت حساب‌ها به صورت مالی استاندارد (Code_SoratMali_st)
+    </title>
+    <link rel="stylesheet" href="../FINAL/css/tabulator.min.css" />
+    <link rel="stylesheet" href="../FINAL/css/com_grid.css" />
     <style>
-        :root {
-            --bg: #0b1220;
-            --panel: #121a2b;
-            --panel-2: #182235;
-            --border: #26344d;
-            --ink: #e8eef8;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: IRANYekanX, Tahoma, sans-serif;
-            font-size: 13px;
-            background: var(--bg);
-            color: var(--ink);
-        }
-        .wrap {
-            max-width: 1500px;
-            margin: 0 auto;
-            padding: 12px 16px;
-        }
-        .topbar, .action-bar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-        }
-        .topbar {
-            background: linear-gradient(135deg, #1b365d 0%, #0f5c6e 100%);
-            border-color: rgba(255, 255, 255, 0.12);
-        }
-        .topbar h1 { margin: 0; font-size: 1rem; font-weight: 700; }
-        .controls, .assign-box, .stats-pills {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        select, button, input[type="text"] {
-            font-family: inherit;
-            font-size: 12.5px;
-            border-radius: 8px;
-            padding: 7px 12px;
-            outline: none;
-        }
-        select, input[type="text"] {
-            background: var(--panel-2);
-            color: var(--ink);
-            border: 1px solid #334666;
-        }
-        select { min-width: 170px; }
-        button {
-            cursor: pointer;
-            border: 0;
-            color: #fff;
-            font-weight: 600;
-            background: #2563eb;
-            transition: filter 0.15s;
-        }
-        button:hover:not(:disabled) { filter: brightness(1.12); }
-        button.ok { background: #15803d; }
-        button.warn { background: #d97706; }
-        button.bad { background: #dc2626; }
-        button.picker-trigger {
-            background: #1e293b;
-            border: 1px solid #3b5278;
-            color: #e2e8f0;
-            min-width: 260px;
-            text-align: right;
-            display: inline-flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-        button:disabled { opacity: 0.45; cursor: not-allowed; }
-        .pill {
-            padding: 5px 11px;
-            border-radius: 999px;
-            font-size: 12px;
-            background: var(--panel-2);
-            border: 1px solid var(--border);
-            color: #cbd5e1;
-        }
-        .pill b { color: #fff; }
-        #gridContainer {
-            background: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-        }
-        /* دکمه جدول‌نما داخل سلول گرید */
-        .cell-combo-btn {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            background: #f8fafc;
-            color: #0f172a;
-            font-size: 12px;
-            font-weight: 500;
-            text-align: right;
-            cursor: pointer;
-        }
-        .cell-combo-btn:hover {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-        .cell-combo-btn.has-val {
-            background: #ecfdf5;
-            border-color: #6ee7b7;
-            color: #065f46;
-            font-weight: 600;
-        }
-        .cell-combo-code {
-            font-family: Consolas, monospace;
-            background: #e2e8f0;
-            color: #1e293b;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-        .cell-combo-btn.has-val .cell-combo-code {
-            background: #a7f3d0;
-            color: #064e3b;
-        }
+      :root {
+        --bg: #0b1220;
+        --panel: #121a2b;
+        --panel-2: #182235;
+        --border: #26344d;
+        --ink: #e8eef8;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: IRANYekanX, Tahoma, sans-serif;
+        font-size: 13px;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 12px 16px;
+      }
+      .topbar,
+      .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+      }
+      .topbar {
+        background: linear-gradient(135deg, #1b365d 0%, #0f5c6e 100%);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .controls,
+      .assign-box,
+      .stats-pills {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      select,
+      button,
+      input[type="text"] {
+        font-family: inherit;
+        font-size: 12.5px;
+        border-radius: 8px;
+        padding: 7px 12px;
+        outline: none;
+      }
+      select,
+      input[type="text"] {
+        background: var(--panel-2);
+        color: var(--ink);
+        border: 1px solid #334666;
+      }
+      select {
+        min-width: 170px;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        color: #fff;
+        font-weight: 600;
+        background: #2563eb;
+        transition: filter 0.15s;
+      }
+      button:hover:not(:disabled) {
+        filter: brightness(1.12);
+      }
+      button.ok {
+        background: #15803d;
+      }
+      button.warn {
+        background: #d97706;
+      }
+      button.bad {
+        background: #dc2626;
+      }
+      button.picker-trigger {
+        background: #1e293b;
+        border: 1px solid #3b5278;
+        color: #e2e8f0;
+        min-width: 260px;
+        text-align: right;
+        display: inline-flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .pill {
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        color: #cbd5e1;
+      }
+      .pill b {
+        color: #fff;
+      }
+      #gridContainer {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      }
+      /* دکمه جدول‌نما داخل سلول گرید */
+      .cell-combo-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: right;
+        cursor: pointer;
+      }
+      .cell-combo-btn:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+      .cell-combo-btn.has-val {
+        background: #ecfdf5;
+        border-color: #6ee7b7;
+        color: #065f46;
+        font-weight: 600;
+      }
+      .cell-combo-code {
+        font-family: Consolas, monospace;
+        background: #e2e8f0;
+        color: #1e293b;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .cell-combo-btn.has-val .cell-combo-code {
+        background: #a7f3d0;
+        color: #064e3b;
+      }
 
-        /* مودال جدول‌نما برای انتخاب از tk_g_soratmali_st */
-        .picker-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 6, 23, 0.72);
-            backdrop-filter: blur(2px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 16px;
-        }
-        .picker-backdrop.open { display: flex; }
-        .picker-modal {
-            width: min(1220px, 96vw);
-            max-height: 84vh;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-        }
-        .picker-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #1e3a5f, #0f766e);
-            border-bottom: 1px solid #334155;
-        }
-        .picker-head h3 { margin: 0; font-size: 14px; }
-        .picker-toolbar {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            padding: 10px 14px;
-            background: #131c31;
-            border-bottom: 1px solid #26344d;
-        }
-        .picker-toolbar input {
-            flex: 1;
-            background: #0b1220;
-            border-color: #3b5278;
-        }
-        .picker-table-wrap {
-            overflow: auto;
-            flex: 1;
-            background: #ffffff;
-            color: #0f172a;
-        }
-        table.picker-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-        table.picker-table thead th {
-            position: sticky;
-            top: 0;
-            background: #1e293b;
-            color: #f8fafc;
-            padding: 8px 10px;
-            text-align: right;
-            white-space: nowrap;
-            border-bottom: 2px solid #475569;
-            z-index: 1;
-        }
-        table.picker-table tbody tr {
-            border-bottom: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-        table.picker-table tbody tr:nth-child(even) { background: #f8fafc; }
-        table.picker-table tbody tr:hover { background: #dbeafe; }
-        table.picker-table tbody tr.is-selected { background: #bbf7d0; font-weight: 700; }
-        table.picker-table td {
-            padding: 7px 10px;
-            white-space: nowrap;
-        }
-        .code-badge {
-            font-family: Consolas, monospace;
-            font-weight: 700;
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 2px 7px;
-            border-radius: 5px;
-        }
+      /* مودال جدول‌نما برای انتخاب از tk_g_soratmali_st */
+      .picker-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.72);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 16px;
+      }
+      .picker-backdrop.open {
+        display: flex;
+      }
+      .picker-modal {
+        width: min(1220px, 96vw);
+        max-height: 84vh;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      }
+      .picker-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #1e3a5f, #0f766e);
+        border-bottom: 1px solid #334155;
+      }
+      .picker-head h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .picker-toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 14px;
+        background: #131c31;
+        border-bottom: 1px solid #26344d;
+      }
+      .picker-toolbar input {
+        flex: 1;
+        background: #0b1220;
+        border-color: #3b5278;
+      }
+      .picker-table-wrap {
+        overflow: auto;
+        flex: 1;
+        background: #ffffff;
+        color: #0f172a;
+      }
+      table.picker-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      table.picker-table thead th {
+        position: sticky;
+        top: 0;
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: nowrap;
+        border-bottom: 2px solid #475569;
+        z-index: 1;
+      }
+      table.picker-table tbody tr {
+        border-bottom: 1px solid #e2e8f0;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      table.picker-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+      }
+      table.picker-table tbody tr:hover {
+        background: #dbeafe;
+      }
+      table.picker-table tbody tr.is-selected {
+        background: #bbf7d0;
+        font-weight: 700;
+      }
+      table.picker-table td {
+        padding: 7px 10px;
+        white-space: nowrap;
+      }
+      .code-badge {
+        font-family: Consolas, monospace;
+        font-weight: 700;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 2px 7px;
+        border-radius: 5px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="wrap">
-        <div class="topbar">
-            <h1>نگاشت حساب‌ها به صورت مالی استاندارد (Code_SoratMali_st)</h1>
-            <div class="controls">
-                <select id="companySelect">
-                    <option value="">انتخاب شرکت...</option>
-                </select>
-                <button id="loadAndSyncBtn" class="ok">همگام‌سازی با سرور</button>
-                <button id="pushToServerBtn" disabled>ثبت دایم در سرور (0)</button>
-            </div>
+      <div class="topbar">
+        <h1>نگاشت حساب‌ها به صورت مالی استاندارد (Code_SoratMali_st)</h1>
+        <div class="controls">
+          <select id="companySelect">
+            <option value="">انتخاب شرکت...</option>
+          </select>
+          <button id="loadAndSyncBtn" class="ok">همگام‌سازی با سرور</button>
+          <button id="pushToServerBtn" disabled>ثبت دایم در سرور (0)</button>
         </div>
+      </div>
 
-        <div class="action-bar">
-            <div class="assign-box">
-                <span>تخصیص به ردیف‌های انتخاب‌شده:</span>
-                <button type="button" id="bulkPickerBtn" class="picker-trigger">
-                    <span id="bulkPickerLabel">— انتخاب از جدول صورت مالی استاندارد —</span>
-                    <span>▼</span>
-                </button>
-                <input type="hidden" id="assignReportValue" value="">
-                <button id="applyGroupBtn" class="warn" disabled>اعمال به انتخاب‌شده‌ها</button>
-                <button id="clearGroupBtn" class="bad" disabled>حذف نگاشت</button>
-            </div>
-            <div class="stats-pills">
-                <span class="pill">کل حساب‌ها: <b id="statTotal">0</b></span>
-                <span class="pill">همگام: <b id="statSynced">0</b></span>
-                <span class="pill">در انتظار ارسال: <b id="statPending">0</b></span>
-                <span class="pill">بدون نگاشت: <b id="statNoGroup">0</b></span>
-            </div>
+      <div class="action-bar">
+        <div class="assign-box">
+          <span>تخصیص به ردیف‌های انتخاب‌شده:</span>
+          <button type="button" id="bulkPickerBtn" class="picker-trigger">
+            <span id="bulkPickerLabel"
+              >— انتخاب از جدول صورت مالی استاندارد —</span
+            >
+            <span>▼</span>
+          </button>
+          <input type="hidden" id="assignReportValue" value="" />
+          <button id="applyGroupBtn" class="warn" disabled>
+            اعمال به انتخاب‌شده‌ها
+          </button>
+          <button id="clearGroupBtn" class="bad" disabled>حذف نگاشت</button>
         </div>
+        <div class="stats-pills">
+          <span class="pill">کل حساب‌ها: <b id="statTotal">0</b></span>
+          <span class="pill">همگام: <b id="statSynced">0</b></span>
+          <span class="pill">در انتظار ارسال: <b id="statPending">0</b></span>
+          <span class="pill">بدون نگاشت: <b id="statNoGroup">0</b></span>
+        </div>
+      </div>
 
-        <div id="gridContainer"></div>
+      <div id="gridContainer"></div>
     </div>
 
     <!-- مودال جدول‌نما برای انتخاب آیتم از tk_g_soratmali_st -->
     <div id="reportPickerModal" class="picker-backdrop">
-        <div class="picker-modal">
-            <div class="picker-head">
-                <h3>انتخاب صورت مالی استاندارد (جدول tk_g_soratmali_st — همهٔ ستون‌ها؛ ثبت در فیلد Code_SoratMali_st)</h3>
-                <button type="button" id="closePickerBtn" class="bad">بستن ✕</button>
-            </div>
-            <div class="picker-toolbar">
-                <input type="text" id="pickerSearchInput" placeholder="🔍 جستجو بر اساس کد، عنوان، کاربرد یا ماهیت...">
-                <button type="button" id="pickerClearOptionBtn" class="warn">پاک کردن نگاشت این ردیف</button>
-                <span class="pill">تعداد: <b id="pickerCount">0</b></span>
-            </div>
-            <div class="picker-table-wrap">
-                <table class="picker-table">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>ترتیب نمایش</th>
-                            <th>کد صورت مالی استاندارد</th>
-                            <th>عنوان</th>
-                            <th>کاربرد</th>
-                            <th>ماهیت</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pickerTableBody"></tbody>
-                </table>
-            </div>
+      <div class="picker-modal">
+        <div class="picker-head">
+          <h3>
+            انتخاب صورت مالی استاندارد (جدول tk_g_soratmali_st — همهٔ ستون‌ها؛
+            ثبت در فیلد Code_SoratMali_st)
+          </h3>
+          <button type="button" id="closePickerBtn" class="bad">بستن ✕</button>
         </div>
+        <div class="picker-toolbar">
+          <input
+            type="text"
+            id="pickerSearchInput"
+            placeholder="🔍 جستجو بر اساس کد، عنوان، کاربرد یا ماهیت..."
+          />
+          <button type="button" id="pickerClearOptionBtn" class="warn">
+            پاک کردن نگاشت این ردیف
+          </button>
+          <span class="pill">تعداد: <b id="pickerCount">0</b></span>
+        </div>
+        <div class="picker-table-wrap">
+          <table class="picker-table">
+            <thead>
+              <tr>
+                <th>Id</th>
+                <th>ترتیب نمایش</th>
+                <th>کد صورت مالی استاندارد</th>
+                <th>عنوان</th>
+                <th>کاربرد</th>
+                <th>ماهیت</th>
+              </tr>
+            </thead>
+            <tbody id="pickerTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <script src="../FINAL/app/bina/tabulator.min.js"></script>
     <script src="../FINAL/app/bina/bina-grid.js"></script>
-    <script src="../admin/manager/bina-db-manager.js"></script>
     <script src="SoratMali_st.js?v=1"></script>
-</body>
+  </body>
 </html>

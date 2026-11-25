@@ -1,0 +1,103 @@
+/* Bina-10-3.css — اسناد حسابداری شرکت‌ها. ساختار انعطاف‌پذیر همانند کدینگ شرکت‌ها. */
+html, body { width:100%; height:100%; min-height:0; margin:0; }
+body.bina-form-page {
+  box-sizing:border-box;
+  padding:4px;
+  overflow:hidden;
+  background:#f7f9fb;
+  font-family:IRANYekanX, Tahoma, Arial, sans-serif;
+}
+body.bina-form-page *, body.bina-form-page *::before,
+body.bina-form-page *::after { box-sizing:border-box; }
+.bina-documents-page {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:100%;
+  min-height:0;
+  min-width:0;
+  padding:0;
+  overflow:hidden;
+}
+.bina-documents-controls {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  flex:0 0 auto;
+  gap:10px;
+  min-width:0;
+  min-height:42px;
+  margin:0 0 6px;
+  padding:3px 8px;
+  border:1px solid #b9ccdb;
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(22,46,66,.05);
+  color:#24485e;
+  font-size:12.5px;
+}
+.bina-documents-controls label { white-space:nowrap; font-weight:600; }
+.bina-documents-controls select {
+  height:32px;
+  min-width:95px;
+  max-width:100%;
+  padding:2px 10px;
+  border:1px solid #b9ccdb;
+  border-radius:8px;
+  background:#fff;
+  color:#21455b;
+  font-family:inherit;
+  font-size:12.5px;
+}
+#bina-documents-company { width:min(420px,39vw); flex:0 1 420px; min-width:160px; }
+#bina-documents-year { width:130px; flex:0 0 130px; }
+.bina-documents-controls select:focus-visible { outline:2px solid #3581ae; outline-offset:1px; }
+.bina-documents-status { min-width:0; flex:1 1 130px; color:#536e80; font-size:11.5px; }
+.bina-documents-status.error { color:#a52727; }
+/* Scroll occurs in the grid's Tabulator body, not in its iframe; the footer remains visible. */
+.company-grid-host {
+  display:flex;
+  flex:1 1 0;
+  flex-direction:column;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+}
+.company-grid-host > .bina-grid {
+  display:flex;
+  flex:1 1 0;
+  flex-direction:column;
+  width:100%;
+  height:100%;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+}
+.company-grid-host .bina-toolbar { flex:0 0 auto; min-height:0; }
+.company-grid-host .bina-wrap {
+  display:flex;
+  flex:1 1 0;
+  flex-direction:column;
+  min-height:0;
+  min-width:0;
+  height:auto!important;
+  overflow:hidden;
+}
+.company-grid-host .bina-table { flex:1 1 0; min-height:0; min-width:0; height:100%; }
+.company-grid-host .tabulator { height:100%!important; max-height:100%; min-height:0; min-width:0; }
+.company-grid-host .tabulator-tableholder { overflow-x:auto!important; overflow-y:auto!important; min-height:0; }
+.company-grid-host .tabulator-footer { flex-shrink:0; }
+@media (max-width:680px) {
+  .bina-documents-controls { gap:6px; }
+  #bina-documents-company { flex:1 1 175px; width:auto; }
+  #bina-documents-year { flex:0 1 95px; width:95px; }
+  .bina-documents-status { flex:1 1 100%; }
+}
+
+/* Code segments render LTR within the RTL grid: Kol at LEFT, Moien center,
+   Tafsil right (English order is reversed by the column formatter). */
+.bina-documents-grid .tabulator-cell[tabulator-field="codehesab"] .smart,
+.bina-documents-grid .tabulator-cell[tabulator-field="codehesab"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}

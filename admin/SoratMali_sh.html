@@ -1,61 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>بینا | مدیریت هوشمند نگاشت حساب‌ها (Coding-Index)</title>
-    <link rel="stylesheet" href="../FINAL/css/tabulator.min.css">
-    <link rel="stylesheet" href="../FINAL/css/bina-grid.css?v=1.2.41">
+    <link rel="stylesheet" href="../FINAL/css/tabulator.min.css" />
+    <link rel="stylesheet" href="../FINAL/css/com_grid.css" />
     <style>
-        body { margin: 0; font-family: IRANYekanX, Tahoma, sans-serif; font-size: 13px; background: #0b1220; color: #e8eef8; }
-        .wrap { max-width: 1400px; margin: 0 auto; padding: 12px 16px; }
-        .topbar, .action-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; background: #121a2b; border: 1px solid #243047; }
-        .topbar { background: linear-gradient(135deg, #1e3a5f, #0f766e 120%); }
-        .topbar h1 { margin: 0; font-size: 1rem; }
-        .controls, .assign-box, .stats-pills { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        select, button { font-family: inherit; font-size: 12.5px; border-radius: 8px; padding: 7px 12px; }
-        select { background: #182235; color: #e8eef8; border: 1px solid #243047; min-width: 180px; }
-        button { cursor: pointer; border: 0; color: #fff; background: #3b82f6; }
-        button.ok { background: #15803d; }
-        button.warn { background: #d97706; }
-        button.bad { background: #dc2626; }
-        button:disabled { opacity: 0.45; cursor: not-allowed; }
-        .pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #182235; border: 1px solid #243047; }
-        #gridContainer { background: #fff; border-radius: 12px; overflow: hidden; }
+      body {
+        margin: 0;
+        font-family: IRANYekanX, Tahoma, sans-serif;
+        font-size: 13px;
+        background: #0b1220;
+        color: #e8eef8;
+      }
+      .wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 12px 16px;
+      }
+      .topbar,
+      .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        background: #121a2b;
+        border: 1px solid #243047;
+      }
+      .topbar {
+        background: linear-gradient(135deg, #1e3a5f, #0f766e 120%);
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .controls,
+      .assign-box,
+      .stats-pills {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      select,
+      button {
+        font-family: inherit;
+        font-size: 12.5px;
+        border-radius: 8px;
+        padding: 7px 12px;
+      }
+      select {
+        background: #182235;
+        color: #e8eef8;
+        border: 1px solid #243047;
+        min-width: 180px;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        color: #fff;
+        background: #3b82f6;
+      }
+      button.ok {
+        background: #15803d;
+      }
+      button.warn {
+        background: #d97706;
+      }
+      button.bad {
+        background: #dc2626;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: #182235;
+        border: 1px solid #243047;
+      }
+      #gridContainer {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="wrap">
-        <div class="topbar">
-            <h1>مدیریت هوشمند نگاشت حساب‌ها (Coding-Index)</h1>
-            <div class="controls">
-                <select id="companySelect"><option value="">انتخاب شرکت...</option></select>
-                <button id="loadAndSyncBtn" class="ok">همگام‌سازی با سرور</button>
-                <button id="pushToServerBtn" disabled>ارسال تغییرات به سرور (0)</button>
-            </div>
+      <div class="topbar">
+        <h1>مدیریت هوشمند نگاشت حساب‌ها (Coding-Index)</h1>
+        <div class="controls">
+          <select id="companySelect">
+            <option value="">انتخاب شرکت...</option>
+          </select>
+          <button id="loadAndSyncBtn" class="ok">همگام‌سازی با سرور</button>
+          <button id="pushToServerBtn" disabled>
+            ارسال تغییرات به سرور (0)
+          </button>
         </div>
+      </div>
 
-        <div class="action-bar">
-            <div class="assign-box">
-                <span>تخصیص به ردیف‌های انتخاب‌شده:</span>
-                <select id="assignGroupSelect"><option value="">— انتخاب گروه صورت مالی —</option></select>
-                <button id="applyGroupBtn" class="warn" disabled>اعمال گروه</button>
-                <button id="clearGroupBtn" class="bad" disabled>حذف گروه</button>
-            </div>
-            <div class="stats-pills">
-                <span class="pill">کل حساب‌ها: <b id="statTotal">0</b></span>
-                <span class="pill">همگام: <b id="statSynced">0</b></span>
-                <span class="pill">در انتظار ارسال: <b id="statPending">0</b></span>
-                <span class="pill">بدون گروه: <b id="statNoGroup">0</b></span>
-            </div>
+      <div class="action-bar">
+        <div class="assign-box">
+          <span>تخصیص به ردیف‌های انتخاب‌شده:</span>
+          <select id="assignGroupSelect">
+            <option value="">— انتخاب گروه صورت مالی —</option>
+          </select>
+          <button id="applyGroupBtn" class="warn" disabled>اعمال گروه</button>
+          <button id="clearGroupBtn" class="bad" disabled>حذف گروه</button>
         </div>
+        <div class="stats-pills">
+          <span class="pill">کل حساب‌ها: <b id="statTotal">0</b></span>
+          <span class="pill">همگام: <b id="statSynced">0</b></span>
+          <span class="pill">در انتظار ارسال: <b id="statPending">0</b></span>
+          <span class="pill">بدون گروه: <b id="statNoGroup">0</b></span>
+        </div>
+      </div>
 
-        <div id="gridContainer"></div>
+      <div id="gridContainer"></div>
     </div>
 
     <script src="../FINAL/app/bina/tabulator.min.js"></script>
     <script src="../FINAL/app/bina/bina-grid.js"></script>
-    <script src="../admin/manager/bina-db-manager.js"></script>
     <script src="SoratMali_sh.js?v=6"></script>
-</body>
+  </body>
 </html>

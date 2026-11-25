@@ -175,10 +175,23 @@ document.querySelectorAll(".sidebar-menu a.menu-item").forEach((menuItem) => {
     openTab(menuItem);
   });
 });
-closeAllTabsButton.addEventListener("click", () => {
-  tabList.replaceChildren();
+function closeAllTabs() {
+  // ابتدا از نقشه حذف، بعد از DOM؛ تا هیچ تبی (حتی تب آخر) جا نماند.
+  openTabs.forEach((tabData) => tabData.element.remove());
   openTabs.clear();
-  activateTab("");
+  activeTabKey = "";
+  tabList.replaceChildren();
+  contentFrame.hidden = true;
+  contentFrame.removeAttribute("src");
+  contentFrame.dataset.page = "";
+  contentWelcome.hidden = false;
+  contentWelcome.textContent = "یک گزینه از منو انتخاب کنید";
+}
+
+closeAllTabsButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  closeAllTabs();
 });
 // Header controls: dark/light, language direction and sidebar collapse.
 const appLayout = document.querySelector(".app-layout");

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "freellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "FreeLLM Local",
+      "options": {
+        "baseURL": "http://127.0.0.1:31415/v1",
+        "apiKey": "not-needed"
+      },
+      "models": {
+        "local": {
+          "name": "Local Model",
+          "limit": {
+            "context": 32000,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "model": "freellm/local"
+}

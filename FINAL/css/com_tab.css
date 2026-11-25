@@ -1,0 +1,147 @@
+/* BINA shared form visual standard — v1.2.47.
+   Based on the approved v1.2.46 Taraz windows: crisp, non-dimmed surfaces,
+   readable contrast, subtle frames and a consistent palette.  This sheet
+   changes presentation ONLY. BinaGrid's own saved themes remain authoritative.
+   No external fonts are bundled or distributed. */
+@font-face {
+  font-family:'BinaForm-IRANYekanX';
+  src:local('IRANYekanX Regular'),local('IRANYekanX');
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+}
+:root {
+  --bf-accent:var(--palette-color,#285f92);
+  --bf-ink:#192a3b;
+  --bf-muted:#526478;
+  --bf-page:color-mix(in srgb,var(--bf-accent) 5%,#f4f8fc);
+  --bf-surface:#ffffff;
+  --bf-surface-alt:color-mix(in srgb,var(--bf-accent) 4%,#f8fafc);
+  --bf-stroke:color-mix(in srgb,var(--bf-accent) 24%,#bfcedb);
+  --bf-heading:color-mix(in srgb,var(--bf-accent) 82%,#163752);
+  --bf-heading-text:#fff;
+  --bf-hover:color-mix(in srgb,var(--bf-accent) 11%,#fff);
+  --bf-shadow:0 2px 7px rgba(24,55,79,.09);
+  --bf-radius:9px;
+}
+html[data-theme="dark"] {
+  --bf-ink:#edf4fc;
+  --bf-muted:#b5c5d2;
+  --bf-page:#111e29;
+  --bf-surface:#1b2a36;
+  --bf-surface-alt:#253644;
+  --bf-stroke:#516677;
+  --bf-heading:color-mix(in srgb,var(--bf-accent) 60%,#233746);
+  --bf-heading-text:#fff;
+  --bf-hover:color-mix(in srgb,var(--bf-accent) 18%,#273746);
+  --bf-shadow:0 2px 8px rgba(0,0,0,.23);
+}
+/* A single optional opt-in class for ordinary independent tab pages. */
+body.bina-form-page {
+  background:var(--bf-page);
+  color:var(--bf-ink);
+  font-family:'BinaForm-IRANYekanX',Tahoma,Arial,sans-serif;
+  font-synthesis:weight;
+}
+body.bina-form-page .card {
+  background:var(--bf-surface);
+  color:var(--bf-ink);
+  border:1px solid var(--bf-stroke);
+  border-radius:var(--bf-radius);
+  box-shadow:var(--bf-shadow);
+}
+body.bina-form-page .card th {
+  background:var(--bf-heading);
+  color:var(--bf-heading-text);
+  font-weight:700;
+  border-color:var(--bf-stroke);
+}
+body.bina-form-page .card td {
+  border-color:var(--bf-stroke);
+}
+body.bina-form-page .card tbody tr:nth-child(even) {
+  background:var(--bf-surface-alt);
+}
+body.bina-form-page .card h1 {border-bottom:1px solid var(--bf-stroke)}
+/* Document browser: no backdrop/blur; visually match the cascade frame. */
+.sanad-browser {
+  background:var(--bf-page);
+  color:var(--bf-ink);
+  font-family:'BinaForm-IRANYekanX',Tahoma,Arial,sans-serif;
+  font-synthesis:weight;
+}
+.sanad-browser :is(.sb-top,.sb-toolbar) {
+  background:var(--bf-surface);
+  border:1px solid var(--bf-stroke);
+  border-radius:var(--bf-radius);
+  box-shadow:var(--bf-shadow);
+}
+.sanad-browser :is(.sb-field select,.sb-doc-picker select,.sb-number,.sb-date,.sb-account-title,.sb-total output) {
+  border:1px solid var(--bf-stroke);
+  border-radius:7px;
+  background:var(--bf-surface);
+  color:var(--bf-ink);
+}
+.sanad-browser :is(.sb-field label,.sb-doc-picker label,.sb-caption,.sb-total span) {
+  background:var(--bf-heading);
+  color:var(--bf-heading-text);
+  border-radius:6px;
+  font-weight:700;
+}
+.sanad-browser .sb-footer {
+  border:1px solid var(--bf-stroke);
+  border-radius:var(--bf-radius);
+  background:var(--bf-surface);
+  padding:8px 10px;
+  box-shadow:var(--bf-shadow);
+}
+.sanad-browser .sb-account label {background:transparent;color:var(--bf-ink)}
+.sanad-browser .sb-navigation button {
+  border:1px solid var(--bf-stroke);
+  background:var(--bf-surface);
+  color:var(--bf-heading);
+  border-radius:7px;
+  box-shadow:0 1px 2px rgba(24,55,79,.07);
+}
+.sanad-browser .sb-navigation button:hover:not(:disabled) {background:var(--bf-hover)}
+.sanad-browser .sb-navigation button:disabled {background:var(--bf-surface-alt)}
+/* Grid frame and user-selected colors belong to BinaGrid, not the form. */
+.sanad-browser .sb-grid-panel {background:transparent}
+.sanad-browser .sb-grid .bina-grid {--bina-grid-frame:var(--bf-stroke)}
+/* Other reporting/account-entry views that already expose these classes. */
+.bqv,.bdv {font-family:'BinaForm-IRANYekanX',Tahoma,Arial,sans-serif;
+  font-synthesis:weight;color:var(--bf-ink)}
+.bqv .bqv-bar,.bdv .bdv-bar {
+  background:var(--bf-surface);
+  color:var(--bf-ink);
+  border:1px solid var(--bf-stroke);
+  border-radius:var(--bf-radius);
+  box-shadow:var(--bf-shadow);
+}
+:is(.bqv,.bdv) :is(.bqv-bar,.bdv-bar) label {color:var(--bf-ink)}
+.bqv :is(select,input[type="text"]),.bdv select,
+.bqv .bqv-output input {
+  background:var(--bf-surface);
+  color:var(--bf-ink);
+  border:1px solid var(--bf-stroke);
+  border-radius:7px;
+}
+.bqv .bqv-search {background:var(--bf-heading);border:1px solid var(--bf-stroke);
+  color:var(--bf-heading-text);border-radius:7px}
+.bqv .bqv-search:hover {filter:brightness(1.08)}
+.bqv .bqv-info,.bdv .bdv-info {color:var(--bf-muted)}
+/* Accessibility: never suppress the focus indication. */
+.sanad-browser :is(button,select):focus-visible,
+.bqv :is(button,input,select):focus-visible,
+.bdv select:focus-visible {
+  outline:2px solid var(--bf-accent);
+  outline-offset:2px;
+}
+@media print {
+  body.bina-form-page,.sanad-browser {background:#fff;color:#111}
+  .sanad-browser :is(.sb-top,.sb-toolbar,.sb-footer),
+  body.bina-form-page .card {box-shadow:none}
+}
+html[data-theme="dark"] .sanad-browser .sb-navigation button {
+  color:var(--bf-ink);
+}

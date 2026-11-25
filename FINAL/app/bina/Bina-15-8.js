@@ -628,8 +628,16 @@ class BinaReportEngine {
           result = await this._generateTaraz(params, metrics);
           break;
 
-        case 'daftarTafsil':                    // 👈 این ۳ خط را اضافه کن
+        case 'daftarTafsil':
           result = await this._generateDaftarTafsil(params, metrics);
+          break;
+
+        case 'daftarMoienKol':
+          result = await this._generateDaftarMoienKol(params, metrics);
+          break;
+
+        case 'daftarTafsilMoien':
+          result = await this._generateDaftarTafsilMoien(params, metrics);
           break;
 
         default:
@@ -724,27 +732,29 @@ class BinaReportEngine {
         ShomarehSanad: row.shomarehsanad,
         Tarikh: row.tarikh,
         SharhSanad: row.sharhsanad,
-        Bedehkar: Number(row.bedehkar) || 0,
-        Bestankar: Number(row.bestankar) || 0,
+        Bedehkar: binaLedgerText(binaLedgerUnits(row.bedehkar)),
+        Bestankar: binaLedgerText(binaLedgerUnits(row.bestankar)),
         Mandeh: 0,
         Vaziat: ''
       });
     }
 
-    // مرتب‌سازی دفتر به ترتیب تاریخ و سپس شماره سند
+    // Date first, then document number; Persian/Arabic digits and unpadded months
+    // must not change chronological order. JS stable sort preserves line order
+    // for multiple accounting entries in the same document.
     result.sort((a, b) => {
-      const ta = String(a.Tarikh || '');
-      const tb = String(b.Tarikh || '');
+      const ta = binaLedgerDateKey(a.Tarikh), tb = binaLedgerDateKey(b.Tarikh);
       if (ta !== tb) return ta < tb ? -1 : 1;
-      return (Number(a.ShomarehSanad) || 0) - (Number(b.ShomarehSanad) || 0);
+      return binaLedgerDocCompare(a.ShomarehSanad, b.ShomarehSanad);
     });
 
-    // مانده تجمعی بعد از مرتب‌سازی حساب می‌شود تا با ترتیب نمایش بخواند
-    let sumMandeh = 0;
+    // Debit is positive, credit is negative; display magnitude + status.
+    // BIGINT balances remain exact even above Number.MAX_SAFE_INTEGER.
+    let running = 0n;
     for (const r of result) {
-      sumMandeh += (r.Bedehkar - r.Bestankar);
-      r.Mandeh = Math.abs(sumMandeh);
-      r.Vaziat = sumMandeh > 0 ? 'بد' : 'بس';
+      running += binaLedgerUnits(r.Bedehkar) - binaLedgerUnits(r.Bestankar);
+      r.Mandeh = binaLedgerText(running < 0n ? -running : running);
+      r.Vaziat = binaLedgerStatus(running);
     }
 
     metrics.phases.filterAndSort = { durationMs: performance.now() - t0, resultCount: result.length };
@@ -752,6 +762,134 @@ class BinaReportEngine {
 
     return result;
   }
+  /**
+   * گردش معین‌های زیرمجموعه یک کل، به شکل یک دفتر مشترک.
+   * فقط این نمای ویژه به جای مانده و وضعیت، کد و عنوان معین دارد.
+   * سندها در سطح ردیف باقی می‌مانند؛ هیچ تجمیعی بین معین‌ها صورت نمی‌گیرد.
+   */
+  async _generateDaftarMoienKol(params, metrics) {
+    const { companyCode, fiscalYear } = params;
+    const docType = params.docType || 'all';
+    const kolCode = params.filter?.KOl_Code;
+    if (kolCode === undefined || kolCode === null || String(kolCode).trim() === '') {
+      throw new Error('برای نمایش معین‌های دفتر کل، کد کل الزامی است.');
+    }
+    const cacheKey = `daftarMoienKol|${companyCode}|${fiscalYear}|${docType}|${binaAccountKey(kolCode)}`;
+    const cached = this._cache.results.get(cacheKey);
+    if (cached) {
+      metrics.phases.cache = { durationMs: 0, hit: true };
+      return cached.map(row => ({ ...row }));
+    }
+
+    let t0 = performance.now();
+    const codingRows = await this._getCachedRows(companyCode, 'coding', null, metrics, 'codingLoad');
+    const moienTitles = new Map();
+    for (const c of codingRows) {
+      if (binaAccountKey(c.kol_code) !== binaAccountKey(kolCode)) continue;
+      const key = binaAccountKey(c.moien_code);
+      if (key && !moienTitles.get(key) && c.moien_onvan) {
+        moienTitles.set(key, String(c.moien_onvan));
+      }
+    }
+    metrics.phases.codingIndex = { durationMs: performance.now() - t0, indexSize: moienTitles.size };
+
+    t0 = performance.now();
+    const sanadRows = await this._getCachedRows(companyCode, 'sanad', fiscalYear, metrics, 'sanadLoad');
+    const excludedDocNumber = this._excludedDocumentNumber(sanadRows, docType);
+    const result = [];
+    for (const row of sanadRows) {
+      if (binaAccountKey(row.kol_code) !== binaAccountKey(kolCode)) continue;
+      if (excludedDocNumber !== null &&
+          this._documentNumber(row.shomarehsanad) === excludedDocNumber) continue;
+
+      const moienCode = row.moien_code === null || row.moien_code === undefined ? '' : String(row.moien_code);
+      result.push({
+        ShomarehSanad: row.shomarehsanad,
+        Tarikh: row.tarikh,
+        SharhSanad: row.sharhsanad,
+        Bedehkar: binaLedgerText(binaLedgerUnits(row.bedehkar)),
+        Bestankar: binaLedgerText(binaLedgerUnits(row.bestankar)),
+        CodeMoien: moienCode,
+        OnvanMoien: moienTitles.get(binaAccountKey(moienCode)) || String(row.moien_onvan || '')
+      });
+    }
+    // First chronological date, then document number; preserve row order on ties.
+    result.sort((a, b) => {
+      const da = binaLedgerDateKey(a.Tarikh), db = binaLedgerDateKey(b.Tarikh);
+      if (da !== db) return da < db ? -1 : 1;
+      return binaLedgerDocCompare(a.ShomarehSanad, b.ShomarehSanad);
+    });
+    metrics.phases.filterAndSort = { durationMs: performance.now() - t0, resultCount: result.length };
+    if (result.length) this._cache.results.set(cacheKey, result);
+    return result;
+  }
+  /**
+   * گردش تمام تفصیلی‌های زیرمجموعه یک معین در یک دفتر مشترک.
+   * Unlike a ledger for one Tafsil, each document line identifies its own
+   * Tafsil code and title; no running balance/status is shown here.
+   * Both Kol and Moien are mandatory to prevent mixing similarly numbered
+   * Moien accounts from different Kol groups.
+   */
+  async _generateDaftarTafsilMoien(params, metrics) {
+    const { companyCode, fiscalYear } = params;
+    const docType = params.docType || 'all';
+    const kolCode = params.filter?.KOl_Code;
+    const moienCode = params.filter?.Moien_Code;
+    if (!binaAccountKey(kolCode) || !binaAccountKey(moienCode)) {
+      throw new Error('برای گردش تفصیلی‌های معین، کد کل و معین الزامی است.');
+    }
+
+    const cacheKey = `daftarTafsilMoien|${companyCode}|${fiscalYear}|${docType}|${binaAccountKey(kolCode)}|${binaAccountKey(moienCode)}`;
+    const cached = this._cache.results.get(cacheKey);
+    if (cached) {
+      metrics.phases.cache = { durationMs: 0, hit: true };
+      return cached.map(row => ({ ...row }));
+    }
+
+    let t0 = performance.now();
+    const codingRows = await this._getCachedRows(companyCode, 'coding', null, metrics, 'codingLoad');
+    const tafsilTitles = new Map();
+    for (const row of codingRows) {
+      if (binaAccountKey(row.kol_code) !== binaAccountKey(kolCode) ||
+          binaAccountKey(row.moien_code) !== binaAccountKey(moienCode)) continue;
+      const key = binaAccountKey(row.tafsil_code);
+      if (key && !tafsilTitles.get(key) && row.tafsil_onvan) {
+        tafsilTitles.set(key, String(row.tafsil_onvan));
+      }
+    }
+    metrics.phases.codingIndex = { durationMs: performance.now() - t0, indexSize: tafsilTitles.size };
+
+    t0 = performance.now();
+    const sanadRows = await this._getCachedRows(companyCode, 'sanad', fiscalYear, metrics, 'sanadLoad');
+    const excludedDocNumber = this._excludedDocumentNumber(sanadRows, docType);
+    const result = [];
+    for (const row of sanadRows) {
+      if (binaAccountKey(row.kol_code) !== binaAccountKey(kolCode) ||
+          binaAccountKey(row.moien_code) !== binaAccountKey(moienCode)) continue;
+      if (excludedDocNumber !== null &&
+          this._documentNumber(row.shomarehsanad) === excludedDocNumber) continue;
+
+      const tafsilCode = row.tafsil_code == null ? '' : String(row.tafsil_code);
+      result.push({
+        ShomarehSanad: row.shomarehsanad,
+        Tarikh: row.tarikh,
+        SharhSanad: row.sharhsanad,
+        Bedehkar: binaLedgerText(binaLedgerUnits(row.bedehkar)),
+        Bestankar: binaLedgerText(binaLedgerUnits(row.bestankar)),
+        CodeTafsil: tafsilCode,
+        OnvanTafsil: tafsilTitles.get(binaAccountKey(tafsilCode)) || String(row.tafsil_onvan || '')
+      });
+    }
+    result.sort((a, b) => {
+      const da = binaLedgerDateKey(a.Tarikh), db = binaLedgerDateKey(b.Tarikh);
+      if (da !== db) return da < db ? -1 : 1;
+      return binaLedgerDocCompare(a.ShomarehSanad, b.ShomarehSanad);
+    });
+    metrics.phases.filterAndSort = { durationMs: performance.now() - t0, resultCount: result.length };
+    if (result.length) this._cache.results.set(cacheKey, result);
+    return result;
+  }
+
   /**
    * ═══════════════════════════════════════════════════════════════════════
    * تراز (Trial Balance) — سه سطح: kol (کل) / moien (معین) / tafsil (تفصیل)
@@ -955,11 +1093,11 @@ class BinaReportEngine {
     // ═══ فاز ۶: مرتب‌سازی ═══
     t0 = performance.now();
 
-    result.sort((a, b) => {
-      if (a.KOl_Code !== b.KOl_Code) return a.KOl_Code - b.KOl_Code;
-      if (a.Moien_Code !== b.Moien_Code) return (a.Moien_Code || 0) - (b.Moien_Code || 0);
-      return (a.Tafsil_Code || 0) - (b.Tafsil_Code || 0);
-    });
+    // CodeHesab preserves Kol → Moien → Tafsil in the stored value.
+    // The individual fields were intentionally removed from the displayed rows
+    // above, so sorting by KOl_Code/Moien_Code/Tafsil_Code here is ineffective.
+    // Compare the raw code segments numerically (without losing leading zeros).
+    result.sort((a, b) => binaTarazCompareAccountCodes(a.CodeHesab, b.CodeHesab));
 
     metrics.phases.sorting = {
       durationMs: performance.now() - t0
@@ -1031,6 +1169,80 @@ class BinaReportEngine {
 
 }
 
+/* BINA ledgers: exact running balance and predictable date/document sorting.
+   The stored account and document identifiers are never modified for display. */
+const BINA_LEDGER_SCALE = 1000000n;
+function binaLatinDigits(value) {
+  return String(value ?? '').replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 0x06F0))
+    .replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x0660));
+}
+function binaLedgerUnits(value) {
+  if (value == null || value === '') return 0n;
+  const s = binaLatinDigits(value).trim().replace(/[,٬\s]/g, '').replace(/٫/g, '.').replace(/−/g, '-');
+  const m = /^([+-]?)(\d+)(?:\.(\d{1,6}))?$/.exec(s);
+  if (!m) return 0n;
+  const unit = BigInt(m[2]) * BINA_LEDGER_SCALE + BigInt((m[3] || '').padEnd(6, '0'));
+  return m[1] === '-' ? -unit : unit;
+}
+function binaLedgerText(units) {
+  const neg = units < 0n;
+  const abs = neg ? -units : units;
+  const whole = abs / BINA_LEDGER_SCALE;
+  const frac = (abs % BINA_LEDGER_SCALE).toString().padStart(6, '0').replace(/0+$/, '');
+  return (neg ? '-' : '') + String(whole) + (frac ? '.' + frac : '');
+}
+// Compare numeric account identifiers without stripping their stored display format.
+// For example, codes 083 and 83 refer to the same account for lookup purposes.
+function binaAccountKey(value) {
+  if (value == null) return '';
+  const normalized = binaLatinDigits(value).trim();
+  return /^\d+$/.test(normalized) ? BigInt(normalized).toString() : normalized;
+}
+// Natural ascending order for the raw hierarchical balance account code.
+// A visible CodeHesab always stores Kol-Moien-Tafsil, regardless of the UI language.
+// BigInt prevents codes larger than Number.MAX_SAFE_INTEGER from sorting incorrectly.
+function binaTarazCompareAccountCodes(firstCode, secondCode) {
+  const first = binaLatinDigits(firstCode).split(/\s*-\s*/);
+  const second = binaLatinDigits(secondCode).split(/\s*-\s*/);
+  const count = Math.max(first.length, second.length);
+  for (let i = 0; i < count; i++) {
+    const a = (first[i] || '').trim();
+    const b = (second[i] || '').trim();
+    if (a === b) continue;
+    if (!a) return -1;
+    if (!b) return 1;
+    if (/^\d+$/.test(a) && /^\d+$/.test(b)) {
+      const x = BigInt(a), y = BigInt(b);
+      if (x !== y) return x < y ? -1 : 1;
+      continue; // e.g. 002 and 2 are the same numeric code.
+    }
+    const cmp = a.localeCompare(b, 'en', { numeric: true, sensitivity: 'base' });
+    if (cmp) return cmp;
+  }
+  return 0;
+}
+function binaLedgerNet(rows) {
+  return (rows || []).reduce((amount, r) => amount + binaLedgerUnits(r.Bedehkar) - binaLedgerUnits(r.Bestankar), 0n);
+}
+function binaLedgerStatus(net) { return net > 0n ? 'بد' : net < 0n ? 'بس' : '—'; }
+function binaLedgerDateKey(value) {
+  const source = binaLatinDigits(value).trim();
+  const pieces = source.split(/\D+/).filter(Boolean);
+  if (pieces.length >= 3) {
+    return pieces[0].padStart(4, '0') + pieces[1].padStart(2, '0') + pieces[2].padStart(2, '0') +
+      pieces.slice(3).map(p => p.padStart(2, '0')).join('');
+  }
+  return source.replace(/\D/g, '');
+}
+function binaLedgerDocCompare(a, b) {
+  const x = binaLatinDigits(a).trim(), y = binaLatinDigits(b).trim();
+  if (/^\d+$/.test(x) && /^\d+$/.test(y)) {
+    const lx = BigInt(x), ly = BigInt(y);
+    return lx < ly ? -1 : lx > ly ? 1 : 0;
+  }
+  return x.localeCompare(y, 'fa', { numeric: true });
+}
+
 /* ============================ Taraz UI ============================ */
 /* =========================================
    taraz.js - منطق و کامپوننت فرم تراز
@@ -1074,10 +1286,19 @@ function installTarazDrillControls(view) {
   else toolbar.appendChild(controls);
 }
 
-function handleTarazCodeDblClick(e, context, currentLevel) {
-  // Trigger only from an account-code cell, inside this page's specific grids.
+function handleTarazCodeDblClick(e, context, currentLevel, sourceModal = null) {
+  // Account-code drill-down is scoped to this page's BinaGrid instances.
   if (!context || e?.field !== 'CodeHesab' || !e.data?.CodeHesab) return;
   if (e.event?.target?.closest?.('.bina-selector-gutter,.bina-selector-corner,.bina-row-resizer')) return;
+
+  // Opening another branch from an ancestor must not leave unrelated descendants
+  // on screen. The selected ancestor itself stays open, with its layout intact.
+  if (sourceModal) {
+    if (!_closeDescendantsOf(sourceModal)) return;
+  } else {
+    closeAllModals();
+  }
+
   const nextLevel = tarazDrillMode === 'daftar' ? 'daftar' :
     (currentLevel === 'kol' ? 'moien' : (currentLevel === 'moien' ? 'tafsil' : 'daftar'));
   openDrillDown(e.data, nextLevel, context.companyCode, context.fiscalYear, context.docType);
@@ -1096,6 +1317,20 @@ const TARAZ_CAPTIONS = {
 const DAFTAR_CAPTIONS = {
   ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', SharhSanad: 'شرح سند',
   Bedehkar: 'بدهکار', Bestankar: 'بستانکار', Mandeh: 'مانده', Vaziat: 'وضعیت'
+};
+// This is NOT a single-Moien ledger: multiple Moien codes share one Kol report.
+const DAFTAR_MOIEN_KOL_CAPTIONS = {
+  ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', SharhSanad: 'شرح سند',
+  Bedehkar: 'بدهکار', Bestankar: 'بستانکار',
+  CodeMoien: 'کد حساب معین', OnvanMoien: 'عنوان حساب معین'
+};
+
+// In the special Moien breakdown, each ledger line belongs to one of the
+// underlying Tafsil accounts (not one running-balance account).
+const DAFTAR_TAFSIL_MOIEN_CAPTIONS = {
+  ShomarehSanad: 'شماره سند', Tarikh: 'تاریخ', SharhSanad: 'شرح سند',
+  Bedehkar: 'بدهکار', Bestankar: 'بستانکار',
+  CodeTafsil: 'کد حساب تفصیل', OnvanTafsil: 'عنوان حساب تفصیل'
 };
 
 // Carry over the latest existing layout from v1.0.2 (Taraz_kol/moien/tafsil)
@@ -1140,7 +1375,99 @@ function ensureMainTarazGrid() {
   return grid;
 }
 
-// Account segments must read LTR: Kol → Moien → Tafsil, regardless of page RTL.
+// Display order only: stored CodeHesab remains Kol-Moien-Tafsil for filtering.
+// Persian / Arabic: Kol on the left, Moien middle, Tafsil right.
+// English: Tafsil on the left, Moien middle, Kol right.
+function tarazAccountLanguage() {
+  let language = '';
+  try { language = window.parent?.document?.documentElement?.lang || ''; } catch (_) {}
+  if (!language) {
+    try { language = localStorage.getItem('sidebarLanguage') || ''; } catch (_) {}
+  }
+  return language.toLowerCase().split('-')[0] === 'en' ? 'en' :
+    language.toLowerCase().split('-')[0] === 'ar' ? 'ar' : 'fa';
+}
+function tarazDisplayAccountCode(value) {
+  const segments = String(value ?? '').split('-').map(s => s.trim());
+  if (tarazAccountLanguage() === 'en') segments.reverse();
+  const visual = segments.join(' - ');
+  const digits = tarazAccountLanguage() === 'en' ? '0123456789' :
+    tarazAccountLanguage() === 'ar' ? '٠١٢٣٤٥٦٧٨٩' : '۰۱۲۳۴۵۶۷۸۹';
+  return visual.replace(/[0-9۰-۹٠-٩]/g, c => {
+    const d = c.charCodeAt(0);
+    const n = d >= 48 && d <= 57 ? d - 48 :
+      d >= 0x06f0 && d <= 0x06f9 ? d - 0x06f0 : d - 0x0660;
+    return digits[n];
+  });
+}
+
+// Shared account-code component for the GREEN cascade-window titles.
+// Keep the visual order independent of the RTL title: in fa/ar the LEFTMOST
+// segment is Kol, then Moien, then Tafsil; in en the order is reversed.
+// The raw CodeHesab, filters, and user-selected column layout never change.
+function setTarazDrillWindowTitle(titleEl, prefix, codeSegments, accountTitle = '', clickable = false) {
+  const parts = (codeSegments || []).map(v => String(v ?? '').trim()).filter(Boolean);
+  const codeEl = document.createElement(clickable ? 'button' : 'bdi');
+  codeEl.className = 'taraz-title-account-code' + (clickable ? ' taraz-ledger-kol-code' : '');
+  codeEl.dir = 'ltr';
+  if (clickable) codeEl.type = 'button';
+  codeEl.textContent = tarazDisplayAccountCode(parts.join(' - '));
+  titleEl.replaceChildren(
+    document.createTextNode(prefix + ' '),
+    codeEl,
+    ...(accountTitle ? [document.createTextNode(' — ' + accountTitle)] : [])
+  );
+  return codeEl;
+}
+async function installTarazAccountCodePresentation(view) {
+  if (view._tarazCodePresentation) return;
+  const column = view.table?.getColumn?.('CodeHesab');
+  if (!column) return;
+  const applyCode = cell => {
+    const node = view.smart.cellFormatter(cell); // standard BinaGrid font/colors/bold
+    node.textContent = tarazDisplayAccountCode(cell.getValue());
+    node.style.direction = 'ltr';
+    node.style.unicodeBidi = 'isolate';
+    return node;
+  };
+  // Use the same numeric hierarchy when the user sorts the code column.
+  await column.updateDefinition({ formatter: applyCode, sorter: binaTarazCompareAccountCodes });
+  const refresh = () => {
+    // Update currently rendered cells after a language change; the formatter
+    // handles newly virtualized cells automatically during scrolling.
+    for (const row of view.table?.getRows('visible') || []) {
+      const cell = row.getCells().find(c => c.getField() === 'CodeHesab');
+      if (!cell) continue;
+      const node = cell.getElement()?.querySelector('.smart');
+      if (!node) continue;
+      const text = tarazDisplayAccountCode(cell.getValue());
+      if (node.textContent !== text) node.textContent = text;
+      node.style.direction = 'ltr';
+      node.style.unicodeBidi = 'isolate';
+    }
+  };
+  let frame = 0;
+  const scheduleRefresh = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => { frame = 0; refresh(); });
+  };
+  const parentRoot = (() => {
+    try { return window.parent?.document?.documentElement; } catch (_) { return null; }
+  })();
+  const observer = parentRoot && window.MutationObserver ? new MutationObserver(scheduleRefresh) : null;
+  observer?.observe(parentRoot, { attributes: true, attributeFilter: ['lang'] });
+  window.addEventListener('storage', scheduleRefresh);
+  view.table.on('renderComplete', scheduleRefresh);
+  view._tarazCodePresentation = () => {
+    observer?.disconnect();
+    window.removeEventListener('storage', scheduleRefresh);
+    view.table?.off('renderComplete', scheduleRefresh);
+    if (frame) cancelAnimationFrame(frame);
+  };
+  scheduleRefresh();
+}
+
+// Account segments are visual-only; do not override a saved user alignment.
 async function applyAccountCodeDirection(view) {
   const col = view.table?.getColumn?.('CodeHesab');
   if (!col) return;
@@ -1249,6 +1576,7 @@ async function runTaraz() {
         // Default account-code presentation is LTR. Do not override a user's
         // chosen alignment every time a new level is selected.
         await applyAccountCodeDirection(view);
+        await installTarazAccountCodePresentation(view);
       } else {
         // Keep the very same Tabulator columns and BinaGrid instance; update
         // only row data. This preserves all live column-management settings.
@@ -1264,6 +1592,9 @@ async function runTaraz() {
         view._toggleEmpty();
         view.emit('dataLoaded', { tableName: TARAZ_MAIN_GRID_NAME, rows: rows.length });
       }
+      // Always open each balance level in ascending account-code order,
+      // even if a sort on another column was saved in this shared grid.
+      view.table.setSort('CodeHesab', 'asc');
       view.stateStore?.cancelPending?.();
       view.saveState();
       if (requestId === tarazRequestId) {
@@ -1291,46 +1622,187 @@ async function runTaraz() {
 }
 
 // ==========================================
-// ۳. پنجره‌های Drill-down — روی هم باز می‌شوند
-//    هر سطح یک مودال مستقل است که روی مودال قبلی
-//    می‌نشیند؛ بستن هر مودال فقط همان سطح را می‌بندد
-//    و سطح قبلی (گرید زیرین) دوباره در دسترس می‌شود.
+// ۳. پنجره‌های شناور و غیرمسدودکننده Drill-down
+//    - no backdrops, blur or dimming of ancestor grids
+//    - cascade exposes each ancestor's title bar (Access-style)
+//    - title-bar drag, focus/bring-to-front, viewport-safe placement
+//    - closing an ancestor closes only its dependent descendants
+//    All behavior is private to Bina-15-8.js, not the shared BinaGrid.
 // ==========================================
 let modalSeq = 0;
+let modalFocusSeq = 0;
 const modalStack = [];
+// Main shell is a different document (the page lives in an iframe).
+// Lock only shell navigation, never the in-page grids or floating windows.
+function _syncShellDrillNavigation() {
+  if (window.parent === window) return;
+  try {
+    if (window.parent.BinaDrillNavigationLock?.setLocked) {
+      window.parent.BinaDrillNavigationLock.setLocked(modalStack.length > 0, window);
+      return;
+    }
+    window.parent.postMessage({ type: 'bina:drill-navigation-state', open: modalStack.length > 0 }, '*');
+  } catch (_) { /* standalone/local preview: no shell to lock */ }
+}
+window.addEventListener('pagehide', () => {
+  try { window.parent?.BinaDrillNavigationLock?.setLocked(false, window); } catch (_) {}
+});
+const DRILL_Z_BASE = 9000;
+const _clampModal = (value, low, high) => Math.max(low, Math.min(value, high));
 
-// چیدمان آبشاری: هر سطح کمی کوچک‌تر و جابه‌جا می‌شود تا سطح قبلی از پشت آن دیده شود
+function _defaultModalRect(depth) {
+  const vw = document.documentElement.clientWidth || window.innerWidth;
+  const vh = document.documentElement.clientHeight || window.innerHeight;
+  const edgeX = _clampModal(Math.round(vw * .015), 8, 22);
+  const edgeY = _clampModal(Math.round(vh * .020), 8, 20);
+  const stepX = _clampModal(Math.round(vw * .037), 30, 58);
+  const stepY = _clampModal(Math.round(vh * .045), 28, 42);
+  // Keep the top level nearly full-screen while retaining readable ancestor
+  // title strips (and enough room for a child window on narrower displays).
+  const left = Math.min(edgeX + depth * stepX, Math.max(edgeX, vw - 300));
+  const top = Math.min(edgeY + depth * stepY, Math.max(edgeY, vh - 220));
+  return {
+    left, top,
+    width: Math.max(1, vw - left - edgeX),
+    height: Math.max(1, vh - top - edgeY)
+  };
+}
+
+function _setModalRect(m, rect) {
+  m.box.style.left = Math.round(rect.left) + 'px';
+  m.box.style.top = Math.round(rect.top) + 'px';
+  m.box.style.width = Math.round(rect.width) + 'px';
+  m.box.style.height = Math.round(rect.height) + 'px';
+}
+
+function _syncModalFocus() {
+  const ordered = modalStack.slice().sort((a, b) => a.focusOrder - b.focusOrder);
+  ordered.forEach((m, i) => {
+    m.overlay.style.zIndex = String(DRILL_Z_BASE + i * 3);
+    m.box.classList.toggle('is-active', i === ordered.length - 1);
+  });
+}
+
+function _focusModal(m) {
+  if (!modalStack.includes(m)) return;
+  m.focusOrder = ++modalFocusSeq;
+  _syncModalFocus();
+}
+
 function _layoutModalStack() {
   modalStack.forEach((m, i) => {
-    m.overlay.style.zIndex = String(9000 + i * 10);
-    m.overlay.style.background = `rgba(15, 23, 42, ${Math.min(0.22 + i * 0.12, 0.55)})`;
-    m.box.style.transform = `translate(${i * -18}px, ${i * 12}px)`;
-    m.box.style.width = `calc(92vw - ${i * 36}px)`;
-    m.box.style.height = `calc(88vh - ${i * 24}px)`;
+    if (!m.manuallyMoved) {
+      _setModalRect(m, _defaultModalRect(i));
+      return;
+    }
+    // Preserve the position selected by the user on resize, but don't let a
+    // floating window disappear beyond the viewport after a resize.
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    const vh = document.documentElement.clientHeight || window.innerHeight;
+    const width = Math.min(m.box.offsetWidth || vw - 16, Math.max(1, vw - 16));
+    const height = Math.min(m.box.offsetHeight || vh - 16, Math.max(1, vh - 16));
+    _setModalRect(m, {
+      left: _clampModal(m.box.offsetLeft, 8, Math.max(8, vw - width - 8)),
+      top: _clampModal(m.box.offsetTop, 8, Math.max(8, vh - height - 8)),
+      width, height
+    });
   });
+  _syncModalFocus();
+}
+
+// A press on the header is NOT immediately a drag. Capturing the pointer and
+// calling preventDefault on the first press prevented browsers from delivering
+// a reliable double-click to the Kol account code in the title.
+// Move the pointer >= 6px before starting a drag; clicks remain untouched.
+// A Kol ledger title is NEVER draggable; only the neighboring explicit handle
+// (or a non-drill title in another modal) can move the window.
+function _makeModalDraggable(m) {
+  const header = m.box.querySelector('.modal-header');
+  const DRAG_THRESHOLD = 6;
+  let pending = null;
+
+  const removeTracking = () => {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', stopTracking);
+    window.removeEventListener('pointercancel', stopTracking);
+  };
+
+  function stopTracking(ev) {
+    if (!pending || pending.id !== ev.pointerId) return;
+    pending = null;
+    m.box.classList.remove('is-dragging');
+    removeTracking();
+  }
+
+  function onPointerMove(ev) {
+    if (!pending || pending.id !== ev.pointerId) return;
+    const dx = ev.clientX - pending.x;
+    const dy = ev.clientY - pending.y;
+    if (!pending.started) {
+      if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+      pending.started = true;
+      m.box.classList.add('is-dragging');
+    }
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    const vh = document.documentElement.clientHeight || window.innerHeight;
+    const left = _clampModal(pending.left + dx,
+      8, Math.max(8, vw - m.box.offsetWidth - 8));
+    const top = _clampModal(pending.top + dy,
+      8, Math.max(8, vh - m.box.offsetHeight - 8));
+    m.box.style.left = Math.round(left) + 'px';
+    m.box.style.top = Math.round(top) + 'px';
+    m.manuallyMoved = true;
+    if (ev.cancelable) ev.preventDefault();
+  }
+
+  header.addEventListener('pointerdown', ev => {
+    // Code and its entire green title are a drill target, NEVER a drag handle.
+    // The explicit drag handle remains usable even in Kol-ledger windows.
+    if (ev.button !== 0 || !ev.isPrimary ||
+        ev.target.closest('.is-kol-drill-title, button:not(.modal-drag-handle), a, input, select, textarea')) return;
+    _focusModal(m);
+    if (pending) removeTracking();
+    pending = { id: ev.pointerId, x: ev.clientX, y: ev.clientY,
+      left: m.box.offsetLeft, top: m.box.offsetTop, started: false };
+    // Do NOT preventDefault or capture the pointer on a simple press: native
+    // click/dblclick must still reach the account-code trigger.
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', stopTracking);
+    window.addEventListener('pointercancel', stopTracking);
+  });
+
+  // A window can be destroyed while dragging; discard any outstanding state.
+  m.stopDragging = () => {
+    pending = null;
+    m.box.classList.remove('is-dragging');
+    removeTracking();
+  };
 }
 
 function _createModal(levelKey) {
   modalSeq += 1;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay open';
-  // رنگ نوار بالای گرید هر سطح با سطح‌های دیگر فرق می‌کند (در taraz.css)
   if (levelKey) overlay.dataset.level = levelKey;
   overlay.innerHTML =
-    '<div class="modal-box">' +
+    '<section class="modal-box" role="dialog" aria-modal="false" aria-labelledby="modalTitle_' + modalSeq + '">' +
       '<div class="modal-header">' +
-        '<h3 class="modal-title">جزئیات</h3>' +
-        '<button type="button" class="modal-close" title="بستن این سطح (Esc)">✕</button>' +
+        '<h3 class="modal-title" id="modalTitle_' + modalSeq + '">جزئیات</h3>' +
+        '<button type="button" class="modal-drag-handle" title="برای جابه‌جایی پنجره، این دستگیره را بکشید" aria-label="جابه‌جایی پنجره با موس">' +
+          '<span aria-hidden="true">⠿</span><span class="modal-drag-label">جابه‌جایی</span>' +
+        '</button>' +
+        '<button type="button" class="modal-close" title="بستن این سطح (Esc)" aria-label="بستن پنجره">✕</button>' +
       '</div>' +
       '<div class="modal-body" id="modalBody_' + modalSeq + '"></div>' +
-    '</div>';
+    '</section>';
 
   const m = {
-    seq: modalSeq,
-    overlay: overlay,
+    seq: modalSeq, overlay,
     box: overlay.querySelector('.modal-box'),
     titleEl: overlay.querySelector('.modal-title'),
     bodyEl: overlay.querySelector('.modal-body'),
+    focusOrder: 0,
+    manuallyMoved: false,
     grid: null
   };
 
@@ -1338,43 +1810,58 @@ function _createModal(levelKey) {
     ev.stopPropagation();
     _closeModal(m);
   });
+  m.box.addEventListener('pointerdown', () => _focusModal(m));
+  _makeModalDraggable(m);
 
-  // کلیک روی پس‌زمینه‌ی همان سطح = بستن همان سطح
-  overlay.addEventListener('mousedown', (ev) => {
-    if (ev.target === overlay) _closeModal(m);
-  });
-
+  // No backdrop-click close: other windows and the parent report stay usable.
   document.body.appendChild(overlay);
   modalStack.push(m);
+  _syncShellDrillNavigation();
+  _focusModal(m);
   _layoutModalStack();
   return m;
 }
 
-// بستن یک مودال مشخص به‌همراه سطح‌های بالاترِ آن (اگر از میانه بسته شود)
+// Closing a level closes its descendants but not any ancestor.
 function _closeModal(target) {
   const idx = modalStack.indexOf(target);
   if (idx === -1) return;
   while (modalStack.length > idx) {
     const m = modalStack.pop();
+    m.stopDragging?.();
     if (m.grid) {
+      try { m.grid._tarazCodePresentation?.(); } catch (_) {}
       try { m.grid.destroy(); } catch (err) { console.warn(err); }
       m.grid = null;
     }
     m.overlay.remove();
   }
+  if (modalStack.length) _focusModal(modalStack[modalStack.length - 1]);
+  _syncShellDrillNavigation();
   _layoutModalStack();
 }
 
-function closeAllModals() {
-  while (modalStack.length) _closeModal(modalStack[modalStack.length - 1]);
+function _closeDescendantsOf(parent) {
+  const idx = modalStack.indexOf(parent);
+  if (idx < 0) return false;
+  if (modalStack.length > idx + 1) _closeModal(modalStack[idx + 1]);
+  return true;
 }
 
-// Esc فقط بالاترین سطح را می‌بندد
+function closeAllModals() {
+  while (modalStack.length) _closeModal(modalStack[0]);
+}
+
+window.addEventListener('resize', _layoutModalStack);
+
+// Escape closes the currently foremost floating window, unless another
+// control such as the column manager has its own open dialog.
 document.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Escape' && modalStack.length) {
-    ev.preventDefault();
-    _closeModal(modalStack[modalStack.length - 1]);
-  }
+  if (ev.key !== 'Escape' || !modalStack.length || ev.defaultPrevented) return;
+  if (document.querySelector('.bina-cm.open')) return;
+  ev.preventDefault();
+  const front = modalStack.reduce((best, m) => m.focusOrder > best.focusOrder ? m : best);
+  _closeModal(front);
 });
 
 // Open the existing accounting-document viewer in a page-local modal.
@@ -1386,12 +1873,233 @@ function openSanadDocument(companyCode, fiscalYear, documentNumber) {
   const frame = document.createElement('iframe');
   frame.className = 'taraz-sanad-frame';
   frame.title = m.titleEl.textContent;
-  const url = new URL('./tab-16.html', window.location.href);
+  const url = new URL('./tab-15-1.html', window.location.href);
   url.searchParams.set('companyCode', String(companyCode));
   url.searchParams.set('fiscalYear', String(fiscalYear));
   url.searchParams.set('documentNumber', String(documentNumber));
   frame.src = url.href;
   m.bodyEl.appendChild(frame);
+}
+
+// The standard BinaGrid sums every numeric column. In ledgers, the final
+// balance is NOT the sum of balances: it is SUM(debit) - SUM(credit).
+// Override only this ledger instance (not the global BinaGrid component).
+async function configureBinaLedgerSummary(view, rows) {
+  const table = view?.table;
+  if (!table) return;
+  const calcRows = data => Array.isArray(data) ? data : rows;
+  const balance = (_values, data) => {
+    const net = binaLedgerNet(calcRows(data));
+    return binaLedgerText(net < 0n ? -net : net);
+  };
+  const status = (_values, data) => binaLedgerStatus(binaLedgerNet(calcRows(data)));
+  const definitions = [
+    ['Mandeh', { bottomCalc: balance, bottomCalcFormatter: view.makeBottomCalcFormatter('Mandeh') }],
+    ['Vaziat', { bottomCalc: status, bottomCalcFormatter: 'plaintext' }],
+    ['SharhSanad', { bottomCalc: () => 'جمع:' , bottomCalcFormatter: 'plaintext' }]
+  ];
+  for (const [field, definition] of definitions) {
+    const column = table.getColumn(field);
+    if (column) await column.updateDefinition(definition);
+  }
+  // Keep date/document sorting fixed. Otherwise clicking a header could make
+  // the running balance appear unrelated to the visible transaction sequence.
+  for (const column of table.getColumns()) {
+    if (column.getField()) await column.updateDefinition({ headerSort: false });
+  }
+  // A sort saved by a previous version must not override chronological order.
+  await Promise.resolve(table.clearSort());
+}
+
+// The Kol identifier INSIDE the green "دفتر کل" title (not the floating
+// window's generic header) is a dedicated, keyboard-accessible drill target.
+// It must never start a title-bar drag. All events stay scoped to BinaTaraz.
+// Ledger Kol code in the GREEN title bar. The whole title is also a forgiving
+// double-click hit area: users sometimes click the title text next to the code.
+// Handler is page-scoped; other grid instances never acquire this behaviour.
+function installKolLedgerTitleDrill(modal, kolCode, kolTitle, companyCode, fiscalYear, docType) {
+  modal.titleEl.replaceChildren();
+  modal.titleEl.classList.add('is-kol-drill-title');
+  modal.titleEl.setAttribute('title', 'روی کد حساب دابل‌کلیک کنید تا گردش معین‌ها باز شود');
+  const trigger = setTarazDrillWindowTitle(modal.titleEl, 'دفتر کل:',
+    [kolCode], kolTitle, true);
+  trigger.setAttribute('aria-label', 'باز کردن گردش معین‌های کل ' + kolCode + ' با دابل‌کلیک');
+  trigger.title = 'برای باز کردن گردش معین‌های کل ' + kolCode + ' دابل‌کلیک کنید';
+
+  let activationInProgress = false;
+  function activate(ev) {
+    ev?.stopPropagation();
+    ev?.preventDefault();
+    if (activationInProgress || !modalStack.includes(modal)) return;
+    activationInProgress = true;
+    _focusModal(modal);
+    if (_closeDescendantsOf(modal)) {
+      Promise.resolve(openKolMoienBreakdown(kolCode, kolTitle, companyCode, fiscalYear, docType))
+        .catch(err => console.error('[BinaTaraz] باز کردن گردش معین‌ها:', err))
+        .finally(() => { activationInProgress = false; });
+    } else {
+      activationInProgress = false;
+    }
+  }
+  // On the entire green title, not on its floating-window frame. Since the
+  // drag handler starts only after true movement, native dblclick now arrives.
+  modal.titleEl.addEventListener('dblclick', activate);
+  trigger.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') activate(ev);
+  });
+}
+
+// Moien ledger heading uses the same independent double-click target as
+// the Kol ledger heading. The draggable region explicitly excludes this title.
+function installMoienLedgerTitleDrill(modal, kolCode, moienCode, moienTitle, companyCode, fiscalYear, docType) {
+  modal.titleEl.replaceChildren();
+  modal.titleEl.classList.add('is-kol-drill-title'); // reusable interactive title/drag exclusion
+  modal.titleEl.title = 'روی کد حساب معین دابل‌کلیک کنید تا گردش تفصیلی‌ها باز شود';
+  const trigger = setTarazDrillWindowTitle(modal.titleEl, 'دفتر معین:',
+    [kolCode, moienCode], moienTitle, true);
+  trigger.setAttribute('aria-label', `باز کردن گردش تفصیلی‌های معین ${moienCode} با دابل‌کلیک`);
+  trigger.title = `برای باز کردن گردش تفصیلی‌های معین ${moienCode} دابل‌کلیک کنید`;
+
+  let busy = false;
+  function activate(ev) {
+    ev?.stopPropagation();
+    ev?.preventDefault();
+    if (busy || !modalStack.includes(modal)) return;
+    busy = true;
+    _focusModal(modal);
+    if (_closeDescendantsOf(modal)) {
+      Promise.resolve(openMoienTafsilBreakdown(kolCode, moienCode, moienTitle, companyCode, fiscalYear, docType))
+        .catch(err => console.error('[BinaTaraz] باز کردن گردش تفصیلی‌ها:', err))
+        .finally(() => { busy = false; });
+    } else {
+      busy = false;
+    }
+  }
+  modal.titleEl.addEventListener('dblclick', activate);
+  trigger.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') activate(ev);
+  });
+}
+
+// Details of every Moien within the selected Kol, without a running balance.
+// Clicking an individual Moien code opens its original, single-account ledger.
+async function openKolMoienBreakdown(kolCode, kolTitle, companyCode, fiscalYear, docType = 'all') {
+  const m = _createModal('daftarMoienKol');
+  setTarazDrillWindowTitle(m.titleEl, 'گردش معین‌های کل', [kolCode], kolTitle);
+  m.bodyEl.innerHTML = '<div class="modal-loading">در حال بارگذاری…</div>';
+  try {
+    const rows = await engine.execute({
+      reportType: 'daftarMoienKol', companyCode, fiscalYear,
+      filter: { KOl_Code: kolCode }, docType
+    });
+    if (!modalStack.includes(m)) return;
+    if (!rows.length) {
+      m.bodyEl.innerHTML = '<div class="modal-loading">گردشی برای معین‌های این حساب کل یافت نشد.</div>';
+      return;
+    }
+    m.bodyEl.replaceChildren();
+    m.grid = new BinaGrid('#modalBody_' + m.seq, {
+      pageSize: 500, height: '100%', captions: DAFTAR_MOIEN_KOL_CAPTIONS
+    });
+    await m.grid.setData(rows, 'Drill_DaftarMoienKol', { own: true });
+    if (!modalStack.includes(m)) {
+      m.grid.destroy();
+      m.grid = null;
+      return;
+    }
+    await configureBinaLedgerBreakdown(m.grid);
+    m.grid.on('cellDblClick', e => {
+      if (!modalStack.includes(m) || !e?.data) return;
+      if (e.field === 'ShomarehSanad') {
+        const docNumber = e.data.ShomarehSanad;
+        if (docNumber == null || String(docNumber).trim() === '') return;
+        _closeDescendantsOf(m);
+        openSanadDocument(companyCode, fiscalYear, docNumber);
+      } else if (e.field === 'CodeMoien') {
+        const moienCode = e.data.CodeMoien;
+        if (moienCode == null || String(moienCode).trim() === '') return;
+        _closeDescendantsOf(m);
+        openDrillDown({
+          CodeHesab: `${kolCode} - ${moienCode}`,
+          OnvanHesab: e.data.OnvanMoien || ''
+        }, 'daftar', companyCode, fiscalYear, docType);
+      }
+    });
+  } catch (err) {
+    console.error('[BinaTaraz] دفتر معین‌های کل:', err);
+    if (modalStack.includes(m)) {
+      m.bodyEl.textContent = 'خطا در نمایش گردش معین‌ها: ' + (err?.message || 'نامشخص');
+      m.bodyEl.classList.add('taraz-modal-error');
+    }
+  }
+}
+
+// All Tafsil document lines under one Moien. CodeTafsil double-click
+// opens the existing single-Tafsil ledger; document-number double-click opens
+// the full accounting document. No handlers leak to the global BinaGrid.
+async function openMoienTafsilBreakdown(kolCode, moienCode, moienTitle, companyCode, fiscalYear, docType = 'all') {
+  const m = _createModal('daftarTafsilMoien');
+  setTarazDrillWindowTitle(m.titleEl, 'گردش تفصیلی‌های معین',
+    [kolCode, moienCode], moienTitle);
+  m.bodyEl.innerHTML = '<div class="modal-loading">در حال بارگذاری…</div>';
+  try {
+    const rows = await engine.execute({
+      reportType: 'daftarTafsilMoien', companyCode, fiscalYear,
+      filter: { KOl_Code: kolCode, Moien_Code: moienCode }, docType
+    });
+    if (!modalStack.includes(m)) return;
+    if (!rows.length) {
+      m.bodyEl.innerHTML = '<div class="modal-loading">گردشی برای تفصیلی‌های این حساب معین یافت نشد.</div>';
+      return;
+    }
+    m.bodyEl.replaceChildren();
+    m.grid = new BinaGrid('#modalBody_' + m.seq, {
+      pageSize: 500, height: '100%', captions: DAFTAR_TAFSIL_MOIEN_CAPTIONS
+    });
+    await m.grid.setData(rows, 'Drill_DaftarTafsilMoien', { own: true });
+    if (!modalStack.includes(m)) {
+      m.grid.destroy();
+      m.grid = null;
+      return;
+    }
+    await configureBinaLedgerBreakdown(m.grid);
+    m.grid.on('cellDblClick', e => {
+      if (!modalStack.includes(m) || !e?.data) return;
+      if (e.field === 'ShomarehSanad') {
+        const documentNumber = e.data.ShomarehSanad;
+        if (documentNumber == null || String(documentNumber).trim() === '') return;
+        _closeDescendantsOf(m);
+        openSanadDocument(companyCode, fiscalYear, documentNumber);
+      } else if (e.field === 'CodeTafsil') {
+        const tafsilCode = e.data.CodeTafsil;
+        if (tafsilCode == null || String(tafsilCode).trim() === '') return;
+        _closeDescendantsOf(m);
+        openDrillDown({
+          CodeHesab: `${kolCode} - ${moienCode} - ${tafsilCode}`,
+          OnvanHesab: e.data.OnvanTafsil || ''
+        }, 'daftar', companyCode, fiscalYear, docType);
+      }
+    });
+  } catch (err) {
+    console.error('[BinaTaraz] دفتر تفصیلی‌های معین:', err);
+    if (modalStack.includes(m)) {
+      m.bodyEl.textContent = 'خطا در نمایش گردش تفصیلی‌ها: ' + (err?.message || 'نامشخص');
+      m.bodyEl.classList.add('taraz-modal-error');
+    }
+  }
+}
+
+async function configureBinaLedgerBreakdown(view) {
+  if (!view?.table) return;
+  const description = view.table.getColumn('SharhSanad');
+  if (description) await description.updateDefinition({
+    bottomCalc: () => 'جمع:', bottomCalcFormatter: 'plaintext'
+  });
+  // Code and title are identifiers/text; never sum or format them as financials.
+  for (const column of view.table.getColumns()) {
+    if (column.getField()) await column.updateDefinition({ headerSort: false });
+  }
+  await Promise.resolve(view.table.clearSort());
 }
 
 // ==========================================
@@ -1421,22 +2129,30 @@ async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear, docT
   if (kodMoien !== undefined) filter.Moien_Code = kodMoien;
   if (kodTafsil !== undefined) filter.Tafsil_Code = kodTafsil;
 
-  let title = '';
+  let titlePrefix = '';
   let reportType = 'taraz';
 
   if (nextLevel === 'daftar') {
     // نام دفتر بر اساس عمق کد حساب: ۱ بخش = کل، ۲ بخش = معین، ۳ بخش = تفصیل
     const ledgerLabel = parts.length === 1 ? 'دفتر کل' :
       (parts.length === 2 ? 'دفتر معین' : 'دفتر تفصیل');
-    title = `${ledgerLabel}: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab}`;
+    titlePrefix = `${ledgerLabel}:`;
     reportType = 'daftarTafsil';
   } else {
-    title = `جزئیات: ${parentRow.CodeHesab} — ${parentRow.OnvanHesab} (سطح ${nextLevel === 'moien' ? 'معین' : 'تفصیل'})`;
+    titlePrefix = `تراز ${nextLevel === 'moien' ? 'معین' : 'تفصیلی'} —`;
   }
 
   // مودال جدید روی مودال فعلی باز می‌شود (سطح قبلی زیر آن باقی می‌ماند)
   const m = _createModal(nextLevel);
-  m.titleEl.textContent = title;
+  if (nextLevel === 'daftar' && parts.length === 1) {
+    installKolLedgerTitleDrill(m, parts[0], parentRow.OnvanHesab,
+      companyCode, fiscalYear, docType);
+  } else if (nextLevel === 'daftar' && parts.length === 2) {
+    installMoienLedgerTitleDrill(m, parts[0], parts[1], parentRow.OnvanHesab,
+      companyCode, fiscalYear, docType);
+  } else {
+    setTarazDrillWindowTitle(m.titleEl, titlePrefix, parts, parentRow.OnvanHesab);
+  }
 
   m.bodyEl.innerHTML = '<div class="modal-loading">در حال بارگذاری…</div>';
 
@@ -1468,6 +2184,11 @@ async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear, docT
     });
 
     await m.grid.setData(rows, `Drill_${nextLevel}`, { own: true });
+    if (nextLevel === 'daftar') await configureBinaLedgerSummary(m.grid, rows);
+    else {
+      await installTarazAccountCodePresentation(m.grid);
+      m.grid.table.setSort('CodeHesab', 'asc');
+    }
 
     if (!modalStack.includes(m)) {
       try { m.grid.destroy(); } catch (err) { console.warn(err); }
@@ -1481,6 +2202,7 @@ async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear, docT
         if (!modalStack.includes(m) || e?.field !== 'ShomarehSanad') return;
         const documentNumber = e.data?.ShomarehSanad;
         if (documentNumber === undefined || documentNumber === null || String(documentNumber).trim() === '') return;
+        _closeDescendantsOf(m);
         openSanadDocument(companyCode, fiscalYear, documentNumber);
       });
     }
@@ -1489,7 +2211,7 @@ async function openDrillDown(parentRow, nextLevel, companyCode, fiscalYear, docT
     if (nextLevel === 'moien' || nextLevel === 'tafsil') {
       const context = { companyCode, fiscalYear, docType };
       m.grid.on('cellDblClick', (e) => {
-        if (modalStack.includes(m)) handleTarazCodeDblClick(e, context, nextLevel);
+        if (modalStack.includes(m)) handleTarazCodeDblClick(e, context, nextLevel, m);
       });
     }
 

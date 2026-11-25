@@ -1,0 +1,136 @@
+/* The embedded tab provides the viewport height. Do not give the grid a second fixed height:
+   the standard toolbar, table, horizontal scrollbar AND page-size footer must all fit. */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+body.bina-form-page {
+  box-sizing: border-box;
+  padding: 4px;
+  overflow: hidden;
+  background: #f7f9fb;
+  font-family: IRANYekanX, Tahoma, Arial, sans-serif;
+}
+body.bina-form-page *,
+body.bina-form-page *::before,
+body.bina-form-page *::after {
+  box-sizing: border-box;
+}
+.companies-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+}
+/* Scope these fixes to company pages; the shared com_grid.js is unchanged. */
+.company-grid-host {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.company-grid-host > .bina-grid {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.company-grid-host .bina-toolbar {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.company-grid-host .bina-wrap {
+  height: auto !important;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.company-grid-host .bina-table {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.company-grid-host .tabulator {
+  height: 100% !important;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+/* Scroll only inside the table; footer and page navigation stay in view. */
+.company-grid-host .tabulator-tableholder {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-height: 0;
+}
+.company-grid-host .tabulator-footer {
+  flex-shrink: 0;
+}
+/* Status occupies no visual line except when there is an error. */
+.company-page-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.company-page-status.error {
+  position: relative;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  white-space: normal;
+  border: 1px solid #e4aaa5;
+  border-radius: 7px;
+  background: #fff5f2;
+  color: #9f2626;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+/* //////////////////////////// */
+/* استایل عنوان ستون‌های گرید در صفحه 10-1 */
+.company-grid-host
+  .tabulator-header
+  .tabulator-col
+  .tabulator-col-content
+  .tabulator-col-title {
+  color: #0f172a; /* رنگ متن عنوان */
+  font-family: Tahoma, Arial, sans-serif; /* فونت عنوان */
+  font-size: 13px; /* اندازه فونت */
+  font-weight: 700; /* ضخامت فونت */
+}
+
+/* رنگ پس‌زمینه هدر ستون‌ها */
+.company-grid-host .tabulator-header,
+.company-grid-host .tabulator-header .tabulator-col {
+  background-color: #dbeafe;
+}
+
+/* اگر بخواهید فقط عنوان یک ستون خاص رنگی شود (مثلاً فیلد EsmSherkat) */
+.company-grid-host
+  .tabulator-header
+  .tabulator-col[tabulator-field="EsmSherkat"]
+  .tabulator-col-title {
+  color: #1d4ed8;
+}
