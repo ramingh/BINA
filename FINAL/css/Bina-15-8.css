@@ -1,0 +1,611 @@
+/* BinaTaraz — account browser and floating cascade windows (v1.2.48).
+   All window styles are scoped to this page; shared BinaGrid is unchanged.
+   User-selected grid themes and field settings remain authoritative. */
+/* The shared grid font-face resolves IRANYekanX Regular when available.
+   Never map the bundled Light file to normal or bold weights. */
+:root {
+  --taraz-accent: var(--palette-color, #0e7490);
+  --taraz-heading: color-mix(in srgb, var(--taraz-accent) 76%, #1e293b);
+  --taraz-heading-text: #fff;
+  --taraz-background: color-mix(in srgb, var(--taraz-accent) 7%, #f4f6f8);
+  --taraz-panel: color-mix(in srgb, var(--taraz-accent) 7%, #f7fbfd);
+  --taraz-border: color-mix(in srgb, var(--taraz-accent) 30%, #c9d7e0);
+  --taraz-field-border: color-mix(in srgb, var(--taraz-accent) 28%, #a9b1b8);
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font:
+    13px "BinaGrid-IRANYekanX",
+    Tahoma,
+    sans-serif;
+  padding: 9px 11px;
+  background: var(--taraz-background);
+  color: #18212a;
+}
+button,
+select,
+input {
+  font: inherit;
+}
+.access-container {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+/* RTL: first group (company/year) on the right, filters on the left. */
+.top-controls {
+  display: flex;
+  flex-direction: row;
+  direction: rtl;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.company-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 11px;
+  flex: 0 1 auto;
+  min-width: 0;
+  background: var(--taraz-panel);
+  border: 1px solid var(--taraz-border);
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+.taraz-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.taraz-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--taraz-heading);
+  color: var(--taraz-heading-text);
+  padding: 4px 8px;
+  min-height: 26px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+}
+.company-controls select {
+  height: 30px;
+  padding: 2px 7px;
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--taraz-field-border);
+  border-radius: 5px;
+  font-size: 12px;
+  outline-offset: 2px;
+}
+#companyCode {
+  width: min(395px, 43vw);
+  max-width: 100%;
+}
+#fiscalYear {
+  width: 86px;
+}
+.taraz-filters {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 14px;
+  min-height: 33px;
+  padding: 5px 10px;
+  background: var(--taraz-panel);
+  border: 1px solid var(--taraz-border);
+  border-radius: 6px;
+}
+/* Document filters: exactly two readable rows, in the requested order. */
+.radio-group.doc-type-group {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  grid-template-rows: repeat(2, auto);
+  gap: 7px 20px;
+  justify-content: start;
+  align-content: center;
+  padding-block: 7px;
+}
+@media (max-width: 540px) {
+  .radio-group.doc-type-group {
+    grid-template-columns: 1fr;
+  }
+}
+.radio-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.radio-group input[type="radio"] {
+  margin: 0;
+  accent-color: var(--taraz-accent);
+}
+@media (max-width: 1080px) {
+  .company-controls,
+  .taraz-filters {
+    width: 100%;
+  }
+  .taraz-filters {
+    align-items: stretch;
+  }
+  #companyCode {
+    width: min(395px, 55vw);
+  }
+}
+@media (max-width: 540px) {
+  body {
+    padding: 6px;
+  }
+  .access-container {
+    padding: 5px;
+  }
+  .company-controls {
+    width: 100%;
+    gap: 6px;
+  }
+  .taraz-field {
+    flex: 1 1 100%;
+  }
+  #companyCode {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+  .radio-group {
+    gap: 6px 10px;
+  }
+}
+/* دکمه زرد */
+.btn-yellow {
+  background: #fef08a;
+  border: 1px solid #eab308;
+  color: #713f12;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  border-radius: 6px;
+  width: 220px;
+  text-align: center;
+  transition: all 0.2s;
+  margin-bottom: 15px;
+}
+.btn-yellow:hover {
+  background: #fde047;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+/* کانتینر گرید */
+/* The standard BinaGrid itself now owns the frame (including toolbar);
+   this host only controls layout. This prevents a double frame in Taraz. */
+#gridContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+#gridContainer > .bina-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  --bina-grid-frame: var(--taraz-border);
+}
+#gridContainer .bina-grid > .bina-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+}
+/* Account code is displayed and read from left to right: Kol → Moien → Tafsil. */
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"],
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"] .smart {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+}
+.taraz-grid-error {
+  position: absolute;
+  z-index: 3;
+  inset-inline: 10px;
+  top: 10px;
+  padding: 8px 10px;
+  background: #fff1f2;
+  border: 1px solid #fda4af;
+  border-radius: 5px;
+  color: #991b1b;
+}
+/* =========================================
+   Floating non-modal drill-down windows — v1.2.46
+   The overlay is a POSITIONING LAYER ONLY: no opacity, dimming, or blur.
+   Only its window accepts pointer input; earlier grids stay interactive.
+   ========================================= */
+.modal-overlay,
+.modal-overlay.open {
+  position: fixed;
+  inset: 0;
+  display: block;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+  isolation: auto;
+}
+.modal-box {
+  --drill-accent: #34719b;
+  --drill-title-bg: #e9f2fa;
+  --drill-title-fg: #1c4768;
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  pointer-events: auto;
+  background: #fff;
+  border: 1px solid #789bb6;
+  border-top: 3px solid var(--drill-accent);
+  border-radius: 10px;
+  box-shadow:
+    0 6px 24px rgba(24, 48, 71, 0.16),
+    0 2px 5px rgba(24, 48, 71, 0.1);
+  color: #192d41;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+.modal-box.is-active {
+  box-shadow:
+    0 10px 35px rgba(24, 48, 71, 0.22),
+    0 2px 8px rgba(24, 48, 71, 0.1);
+}
+.modal-header {
+  min-height: 43px;
+  flex: 0 0 43px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 13px;
+  direction: rtl;
+  background: var(--drill-title-bg);
+  color: var(--drill-title-fg);
+  border-bottom: 1px solid #9eb8cc;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.modal-box.is-dragging .modal-header {
+  cursor: grabbing;
+}
+/* v1.2.52 — Only the explicit drag control may drag on Kol ledger titles.
+   Keep the code/title clearly clickable; no inherited move-tooltip. */
+.modal-header .modal-drag-handle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3px 9px;
+  min-height: 28px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--drill-title-fg);
+  border: 1px solid #b9cad7;
+  border-radius: 7px;
+  white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.modal-header .modal-drag-handle span[aria-hidden] {
+  font-size: 18px;
+  line-height: 1;
+}
+.modal-header .modal-drag-handle:hover,
+.modal-header .modal-drag-handle:focus-visible {
+  border-color: var(--drill-accent);
+  background: #fff;
+  outline: none;
+}
+.modal-box.is-dragging .modal-header .modal-drag-handle {
+  cursor: grabbing;
+}
+.modal-header .modal-title.is-kol-drill-title,
+.modal-header .modal-title.is-kol-drill-title * {
+  cursor: pointer !important;
+  user-select: none;
+  touch-action: manipulation;
+}
+@media (max-width: 580px) {
+  .modal-drag-label {
+    display: none;
+  }
+}
+.modal-title,
+.modal-header h3 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+  font-synthesis: weight;
+}
+.modal-close {
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 29px;
+  padding: 0;
+  border: 1px solid #b9cad7;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #31536c;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.modal-close:hover,
+.modal-close:focus-visible {
+  border-color: #7b9db8;
+  background: #fff;
+  color: #102f48;
+}
+.modal-loading {
+  padding: 24px;
+  text-align: center;
+  color: #415a70;
+  font-size: 13px;
+}
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.modal-body > .bina-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  --bina-grid-frame: #95afc3;
+  --bina-grid-surface: #fff;
+}
+.modal-body > .bina-grid .bina-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+}
+/* Crisper neutral defaults for drill-down grids only; user themes and
+   per-column colors take precedence and are not overwritten. */
+.modal-body > .bina-grid:not(.bina-themed) .tabulator {
+  background: #fff;
+  border-color: #9fb6c9;
+  color: #1e3448;
+}
+.modal-body > .bina-grid:not(.bina-themed) .tabulator-header,
+.modal-body > .bina-grid:not(.bina-themed) .tabulator-header .tabulator-col {
+  background: #eaf2fb;
+  color: #1a3c5a;
+  border-color: #b0c6d7;
+}
+.modal-body
+  > .bina-grid:not(.bina-themed)
+  .tabulator-tableholder
+  .tabulator-row {
+  background: #fff;
+}
+.modal-body
+  > .bina-grid:not(.bina-themed)
+  .tabulator-tableholder
+  .tabulator-row:nth-child(even) {
+  background: #f3f7fb;
+}
+.modal-body
+  > .bina-grid:not(.bina-themed)
+  .tabulator-tableholder
+  .tabulator-row:hover {
+  background: #e9f2fa;
+}
+.modal-body > .bina-grid:not(.bina-themed) .tabulator-row .tabulator-cell {
+  border-color: #c2d0dc;
+}
+.modal-overlay[data-level="moien"] .modal-box {
+  --drill-accent: #2e67a7;
+  --drill-title-bg: #e9f1fc;
+  --drill-title-fg: #174572;
+}
+.modal-overlay[data-level="tafsil"] .modal-box {
+  --drill-accent: #c08a35;
+  --drill-title-bg: #fff2df;
+  --drill-title-fg: #75440f;
+}
+.modal-overlay[data-level="daftar"] .modal-box {
+  --drill-accent: #19815d;
+  --drill-title-bg: #e7f6ed;
+  --drill-title-fg: #0c6045;
+}
+.modal-overlay[data-level="sanad"] .modal-box {
+  --drill-accent: #725ba6;
+  --drill-title-bg: #f0eafa;
+  --drill-title-fg: #533e7d;
+}
+.modal-overlay[data-level="sanad"] .modal-body {
+  padding: 0;
+}
+.taraz-sanad-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+/* v1.2.44: The drill-down selector is a single rounded toolbar control,
+   matching the common print/Excel/copy button height and border.
+   This control belongs only to the Taraz page, not all BinaGrid instances. */
+#gridContainer .taraz-drill-controls {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #b9c8d4;
+  border-radius: 9px;
+  background: #fff;
+  color: #20374b;
+  box-shadow: 0 1px 2px rgba(22, 46, 66, 0.06);
+  direction: rtl;
+  white-space: nowrap;
+  font:
+    12.5px "BinaGrid-IRANYekanX",
+    Tahoma,
+    sans-serif;
+  line-height: 1;
+}
+#gridContainer .taraz-drill-controls:focus-within {
+  border-color: #8fa8ba;
+}
+#gridContainer .taraz-drill-controls .taraz-drill-title {
+  font-weight: 600;
+}
+#gridContainer .taraz-drill-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+#gridContainer .taraz-drill-controls input[type="radio"] {
+  margin: 0;
+  accent-color: var(--taraz-accent);
+}
+#gridContainer .tabulator-cell[tabulator-field="CodeHesab"] {
+  cursor: pointer;
+}
+/* The document iframe uses the same floating-window geometry. */
+/* v1.2.51: Kol ledger header receives native double-click; real dragging
+   starts only after moving the pointer. No pointer-capture on simple clicks. */
+.modal-header .modal-title.is-kol-drill-title {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.modal-header .modal-title.is-kol-drill-title .taraz-ledger-kol-code {
+  cursor: pointer !important;
+}
+/* v1.2.50: the code INSIDE the Kol-ledger title is an actual button.
+   It is interactive, never draggable, and does not affect any other grid. */
+.modal-header .taraz-ledger-kol-code {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: baseline;
+  min-height: 26px;
+  padding: 2px 10px;
+  margin-inline: 4px;
+  border: 1px solid color-mix(in srgb, var(--drill-accent) 58%, #fff);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--drill-title-fg);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.3;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.modal-header .taraz-ledger-kol-code:hover,
+.modal-header .taraz-ledger-kol-code:focus-visible {
+  background: color-mix(in srgb, var(--drill-accent) 10%, #fff);
+  border-color: var(--drill-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--drill-accent) 17%, transparent);
+  outline: none;
+}
+.modal-box.is-dragging .modal-header .taraz-ledger-kol-code {
+  cursor: pointer !important;
+}
+.modal-overlay[data-level="daftarMoienKol"] .modal-box {
+  --drill-accent: #176d83;
+  --drill-title-bg: #e4f4f7;
+  --drill-title-fg: #124c5b;
+}
+.taraz-modal-error {
+  padding: 16px;
+  color: #a32727;
+}
+/* v1.2.53 — Identical crisp palette for Moien → all Tafsil drill-down. */
+.modal-overlay[data-level="daftarTafsilMoien"] .modal-box {
+  --drill-accent: #7a5dab;
+  --drill-title-bg: #f1edfa;
+  --drill-title-fg: #4d3979;
+}
+.modal-overlay[data-level="daftarTafsilMoien"]
+  .tabulator-cell[tabulator-field="CodeTafsil"] {
+  cursor: pointer;
+}
+.modal-overlay[data-level="daftarMoienKol"]
+  .tabulator-cell[tabulator-field="CodeMoien"] {
+  cursor: pointer;
+}
+/* v1.2.55 — Fixed code hierarchy in every cascade title regardless of
+   the surrounding RTL text flow. This affects display, not stored codes. */
+.modal-header .taraz-title-account-code {
+  display: inline-block;
+  direction: ltr !important;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+  text-align: left;
+  vertical-align: middle;
+}

@@ -1,0 +1,97 @@
+/* Bina-10-4.css — صفحات ۱۰-۴ (کدینگ استاندارد) */
+.bina-grid-message {
+  padding: 0.9rem 1.1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 2;
+  color: #7a2f2f;
+  background: #fdf1f1;
+  border: 1px solid #f0cccc;
+  border-radius: 0.5rem;
+  direction: rtl;
+  text-align: right;
+  white-space: normal;
+}
+
+/* ── چیدمان گریدهای صفحات ۱۰-۴ ─────────────────────────────────────────
+   قالب تب ارتفاع مشخصی دارد؛ گرید باید همان ارتفاع را پر کند تا
+   بدنهٔ جدول اسکرول عمودی بگیرد و فوتر (صفحه‌بندی) هم دیده شود. */
+.bina-grid-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.bina-grid-host {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.bina-grid-host > .bina-grid {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.bina-grid-host .bina-toolbar {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.bina-grid-host .bina-wrap {
+  height: auto !important;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.bina-grid-host .bina-table {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.bina-grid-host .tabulator {
+  height: 100% !important;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+/* اسکرول فقط داخل جدول؛ فوتر و صفحه‌بندی همیشه در دید بمانند. */
+.bina-grid-host .tabulator-tableholder {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-height: 0;
+}
+.bina-grid-host .tabulator-footer {
+  flex-shrink: 0;
+}
+
+/* ستون «فعال» — تیک بله/خیر قابل تغییر */
+.bina-active-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.bina-active-toggle input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #2e7d32;
+}

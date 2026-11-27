@@ -83,27 +83,33 @@ function activateTab(tabKey) {
   openTabs.forEach((tabData, key) => {
     tabData.element.classList.toggle("tab--active", key === activeTabKey);
   });
+
   const activeTab = openTabs.get(activeTabKey);
-  // Only load pages already present in FINAL/pages; pending menus are still navigable.
   const hasPage = !!(activeTab && activeTab.ready);
+
   contentWelcome.hidden = hasPage;
   contentFrame.hidden = !hasPage;
+
   if (!activeTab) {
+    contentFrame.removeAttribute("src");
+    contentFrame.dataset.page = "";
     contentWelcome.textContent = "یک گزینه از منو انتخاب کنید";
   } else if (!hasPage) {
+    contentFrame.removeAttribute("src");
+    contentFrame.dataset.page = "";
     contentWelcome.textContent = `صفحه «${activeTab.title}» (کد ${activeTab.code}) هنوز در پروژه پیاده‌سازی نشده است.`;
-  }
-  if (hasPage && contentFrame.dataset.page !== activeTab.page) {
+  } else if (contentFrame.dataset.page !== activeTab.page) {
     contentFrame.src = activeTab.page;
     contentFrame.dataset.page = activeTab.page;
   }
-  if (activeTab)
+
+  if (activeTab) {
     activeTab.element.scrollIntoView({
       block: "nearest",
       inline: "nearest",
     });
+  }
 }
-
 function closeTab(tabKey) {
   const tabData = openTabs.get(tabKey);
   if (!tabData) return;
@@ -236,15 +242,15 @@ function applyLanguage(language) {
     );
   });
   languageButton.title = isPersian ? "زبان" : "Language";
-  languageStatus.textContent = isPersian ?
-    "فارسی" :
-    language === "ar" ?
-    "العربية" :
-    "English";
+  languageStatus.textContent = isPersian
+    ? "فارسی"
+    : language === "ar"
+      ? "العربية"
+      : "English";
   themeButton.title = isPersian ? "شب / روز" : "Dark / Light";
-  sidebarToggleButton.title = isPersian ?
-    "باز / بسته کردن سایدبار" :
-    "Toggle sidebar";
+  sidebarToggleButton.title = isPersian
+    ? "باز / بسته کردن سایدبار"
+    : "Toggle sidebar";
   updateStatusClock();
 }
 

@@ -105,7 +105,7 @@
       };
     }
 
-    /* نام عمومی برای استفاده از بیرون کلاس (indx.js / Indexed_db.html) */
+    /* نام عمومی برای استفاده از بیرون کلاس (صفحهٔ tab-95-1) */
     async fetchStats(table, signal) {
       return this._fetchStats(table, signal);
     }

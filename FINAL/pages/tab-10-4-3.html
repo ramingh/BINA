@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>نمایش کدینگ استاندارد</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css"
+    />
+    <link rel="stylesheet" href="../css/com_tab.css" />
+    <link rel="stylesheet" href="../css/Bina-10-1.css?v=1.2.58" />
+    <link rel="stylesheet" href="../css/Bina-10-4.css?v=3" />
+
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="../app/com/com_tab.js"></script>
+    <script src="../app/com/com_grid.js"></script>
+    <script src="../app/com/bina-db-manager.js"></script>
+  </head>
+  <body class="bina-form-page">
+    <main class="bina-grid-page">
+      <section id="idb-coding-grid" class="bina-grid-host" translate="no"></section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        const DEFAULT_DB = "public";
+        const DEFAULT_STORE = "tk_c_Gozareshat_st";
+
+        let gridInstance = null;
+
+        function readStoreRows(dbName, storeName) {
+          return new Promise((resolve, reject) => {
+            const req = indexedDB.open(dbName);
+            req.onerror = () =>
+              reject(req.error || new Error("خطا در باز کردن دیتابیس"));
+            req.onsuccess = () => {
+              const db = req.result;
+              const actualStore = Array.from(db.objectStoreNames).find(
+                (n) => n.toLowerCase() === String(storeName).toLowerCase(),
+              );
+              if (!actualStore) {
+                db.close();
+                reject(
+                  new Error(
+                    `جدول «${storeName}» در دیتابیس «${dbName}» یافت نشد.`,
+                  ),
+                );
+                return;
+              }
+              const tx = db.transaction(actualStore, "readonly");
+              const store = tx.objectStore(actualStore);
+              const rows = [];
+              const cursorReq = store.openCursor();
+              cursorReq.onsuccess = (ev) => {
+                const cursor = ev.target.result;
+                if (cursor) {
+                  const val = cursor.value;
+                  if (val && typeof val === "object" && !Array.isArray(val)) {
+                    rows.push({ _key: cursor.key, ...val });
+                  } else {
+                    rows.push({ _key: cursor.key, value: val });
+                  }
+                  cursor.continue();
+                } else {
+                  db.close();
+                  resolve(rows);
+                }
+              };
+              cursorReq.onerror = () => {
+                db.close();
+                reject(cursorReq.error || new Error("خطا در خواندن رکوردها"));
+              };
+            };
+          });
+        }
+
+        // ─── خواندن جدول از سرور (وقتی استور محلی موجود یا پر نیست) ───
+        const SERVER_ENDPOINT = () =>
+          localStorage.getItem("bina_manager_endpoint") ||
+          "http://localhost/FastDataHandler.ashx";
+
+        async function readStoreRowsFromServer(tableName) {
+          if (typeof window.webservice !== "function") {
+            throw new Error("webservice (bina-db-manager.js) بارگذاری نشده است.");
+          }
+          const ws = new window.webservice({ endpoint: SERVER_ENDPOINT() });
+          const stats = await ws.fetchStats(tableName);
+          const names = (stats.columns || []).map((c) => String(c.name));
+          const out = [];
+          for await (const pack of ws.fetchTable({
+            table: tableName,
+            batchSize: 20000,
+            afterId: 0,
+          })) {
+            for (const row of pack.rows || []) {
+              const obj = {};
+              if (Array.isArray(row)) {
+                names.forEach((n, i) => {
+                  obj[n] = row[i];
+                });
+              } else {
+                names.forEach((n) => {
+                  obj[n] = row ? row[n] : "";
+                });
+              }
+              out.push(obj);
+            }
+          }
+          return out;
+        }
+
+        // خواندن مقدار فیلد بدون حساسیت به حروف بزرگ/کوچک
+        function pickField(row, ...names) {
+          for (const wanted of names) {
+            const target = String(wanted).toLowerCase();
+            for (const key of Object.keys(row || {})) {
+              if (String(key).toLowerCase() !== target) continue;
+              const value = row[key];
+              if (value === null || value === undefined) continue;
+              if (String(value).trim() !== "") return value;
+            }
+          }
+          return "";
+        }
+
+        // نوشتن مقدار در فیلد، بدون حساسیت به حروف بزرگ/کوچک نام فیلد؛
+        // تا کلید تکراری با حروف دیگر ساخته نشود.
+        function setField(row, name, value) {
+          if (!row) return false;
+          const target = String(name).toLowerCase();
+          const key = Object.keys(row).find(
+            (k) => String(k).toLowerCase() === target,
+          );
+          if (key === undefined) return false;
+          row[key] = value;
+          return true;
+        }
+
+        // ترتیب ردیف‌ها: کد کل، معین، تفصیل، تفصیل ۱ و تفصیل ۲
+        const SORT_FIELDS = [
+          "KOl_Code_st",
+          "MOien_Code_st",
+          "Tafsil_Code_st",
+          "Tafsil_Code1_st",
+          "Tafsil_Code2_st",
+        ];
+
+        function sortCodingRows(rows) {
+          return rows.slice().sort((a, b) => {
+            for (const field of SORT_FIELDS) {
+              const va = Number(pickField(a, field)) || 0;
+              const vb = Number(pickField(b, field)) || 0;
+              if (va !== vb) return va - vb;
+            }
+            return 0;
+          });
+        }
+
+        // ─── عرض ستون‌ها: ستون‌های کد باریک، عنوان‌ها متوسط ────────────────
+        // با این عرض‌ها مجموع ستون‌ها در عرض جدول جا می‌شود و ستون «فعال»
+        // (آخرین ستون) بدون اسکرول افقی دیده می‌شود.
+        const COLUMN_WIDTHS = {
+          kol_code_st: 70,
+          kol_onvan_st: 150,
+          moien_code_st: 75,
+          moien_onvan_st: 150,
+          tafsil_code_st: 80,
+          tafsil_onvan_st: 150,
+          tafsil_code1_st: 85,
+          tafsil_onvan1_st: 150,
+          tafsil_code2_st: 85,
+          tafsil_onvan2_st: 150,
+          active: 80,
+        };
+
+        function columnWidth(col) {
+          return COLUMN_WIDTHS[String(col).toLowerCase()] || 120;
+        }
+
+        // ─── ثبت موقت تغییر «فعال» در IndexedDB ──────────────────────────
+        // چون تا آماده شدن وب‌سرویس امکان ذخیره روی سرور نیست، تغییر تیک‌ها
+        // در استور محلی نگه داشته می‌شود و در بارگذاری بعدی روی داده اعمال
+        // می‌گردد. هر رکورد: { Id, Active, UpdatedAt }
+        const ACTIVE_DB = "public";
+        const ACTIVE_STORE = "tk_c_Gozareshat_st_Active";
+
+        function rowIdentity(row) {
+          const id = pickField(row || {}, "Id");
+          if (id !== "") return String(id);
+          return SORT_FIELDS.map((f) => String(pickField(row || {}, f))).join("|");
+        }
+
+        function isActiveOn(value) {
+          if (value === true) return true;
+          if (value === false || value === null || value === undefined) return false;
+          const text = String(value).trim().toLowerCase();
+          return text === "1" || text === "true" || text === "yes" || text === "بله";
+        }
+
+        function openActiveDb(version) {
+          return new Promise((resolve, reject) => {
+            const req = version
+              ? indexedDB.open(ACTIVE_DB, version)
+              : indexedDB.open(ACTIVE_DB);
+            req.onerror = () =>
+              reject(req.error || new Error("خطا در باز کردن دیتابیس"));
+            req.onupgradeneeded = () => {
+              const db = req.result;
+              if (!db.objectStoreNames.contains(ACTIVE_STORE)) {
+                db.createObjectStore(ACTIVE_STORE, { keyPath: "Id" });
+              }
+            };
+            req.onsuccess = () => resolve(req.result);
+          });
+        }
+
+        async function activeStore() {
+          const db = await openActiveDb();
+          if (db.objectStoreNames.contains(ACTIVE_STORE)) return db;
+          const nextVersion = db.version + 1;
+          db.close();
+          return openActiveDb(nextVersion);
+        }
+
+        async function loadActiveOverrides() {
+          const map = new Map();
+          try {
+            const db = await activeStore();
+            await new Promise((resolve, reject) => {
+              const tx = db.transaction(ACTIVE_STORE, "readonly");
+              const req = tx.objectStore(ACTIVE_STORE).openCursor();
+              req.onsuccess = (ev) => {
+                const cursor = ev.target.result;
+                if (cursor) {
+                  map.set(
+                    String(cursor.key),
+                    cursor.value ? cursor.value.Active : undefined,
+                  );
+                  cursor.continue();
+                }
+              };
+              tx.oncomplete = () => resolve();
+              tx.onerror = () => reject(tx.error);
+              tx.onabort = () => reject(tx.error);
+            });
+            db.close();
+          } catch (err) {
+            console.warn(
+              "[۱۰-۴-۳] خواندن تغییرهای «فعال» از IndexedDB ناموفق بود",
+              err,
+            );
+          }
+          return map;
+        }
+
+        async function saveActiveOverride(identity, active) {
+          const db = await activeStore();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(ACTIVE_STORE, "readwrite");
+            tx.objectStore(ACTIVE_STORE).put({
+              Id: identity,
+              Active: active,
+              UpdatedAt: new Date().toISOString(),
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+          });
+          db.close();
+        }
+
+        // ─── ستون «فعال» به شکل تیک بله/خیر ───────────────────────────────
+        let rowById = new Map();
+
+        function activeCheckboxFormatter(cell, params, onRendered) {
+          const checked = isActiveOn(cell.getValue()) ? " checked" : "";
+          onRendered(() => {
+            const box = cell
+              .getElement()
+              .querySelector(".bina-active-toggle input");
+            if (!box) return;
+            box.addEventListener("click", (ev) => ev.stopPropagation());
+            box.addEventListener("change", () => toggleActiveCell(cell, box));
+          });
+          return `<label class="bina-active-toggle"><input type="checkbox"${checked} /></label>`;
+        }
+
+        // ثبت تغییر «فعال» روی سرور (mode=save_coding_active).
+        // مقدار اول در IndexedDB ذخیره می‌شود؛ اگر سرور هم پاسخ مثبت داد
+        // رکورد موقت محلی پاک می‌شود و از این به بعد مقدار سرور مبنا است.
+        async function pushActiveToServer(identity, active) {
+          if (!/^-?\d+$/.test(String(identity))) {
+            throw new Error("Id عددی نیست");
+          }
+          const res = await fetch(SERVER_ENDPOINT() + "?mode=save_coding_active", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              table: DEFAULT_STORE,
+              id: Number(identity),
+              active: active ? 1 : 0,
+            }),
+          });
+          const text = await res.text();
+          let data = null;
+          try {
+            data = JSON.parse(text);
+          } catch (_) {
+            throw new Error("پاسخ غیر JSON از سرور (" + res.status + ")");
+          }
+          if (!res.ok || data.ok === false) {
+            throw new Error(
+              (data && (data.error || data.message)) ||
+                "خطای سرور (" + res.status + ")",
+            );
+          }
+          return data;
+        }
+
+        async function clearActiveOverride(identity) {
+          const db = await activeStore();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(ACTIVE_STORE, "readwrite");
+            tx.objectStore(ACTIVE_STORE).delete(identity);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+          });
+          db.close();
+        }
+
+        async function toggleActiveCell(cell, box) {
+          const next = box.checked ? 1 : 0;
+          const data = cell.getRow().getData();
+          const row = rowById.get(data.__id);
+          const identity = rowIdentity(row || data);
+          box.disabled = true;
+          try {
+            await saveActiveOverride(identity, next);
+          } catch (err) {
+            box.checked = !box.checked;
+            box.disabled = false;
+            console.warn("[۱۰-۴-۳] ثبت محلی تغییر «فعال» ناموفق بود", err);
+            return;
+          }
+          if (row) setField(row, "Active", next);
+          cell.setValue(next);
+          try {
+            await pushActiveToServer(identity, next);
+            await clearActiveOverride(identity);
+          } catch (err) {
+            console.warn(
+              "[۱۰-۴-۳] ثبت «فعال» روی سرور ناموفق بود؛ مقدار در IndexedDB نگه داشته شد",
+              err,
+            );
+          } finally {
+            box.disabled = false;
+          }
+        }
+
+        // عرض ستون‌ها به‌صورت نسبی در عرض در دسترس جدول پخش می‌شود تا
+        // ستون «فعال» (آخرین ستون) همیشه در دید بماند.
+        let lastFitWidth = 0;
+
+        function fitColumnsToHost() {
+          const table = gridInstance && gridInstance.table;
+          if (!table) return;
+          const holder = document.querySelector(
+            "#idb-coding-grid .tabulator-tableholder",
+          );
+          if (!holder) return;
+          const cols = table.getColumns().filter((c) => c.isVisible());
+          if (!cols.length) return;
+          const bases = cols.map((c) => columnWidth(c.getField()));
+          const totalBase = bases.reduce((sum, w) => sum + w, 0);
+          const available = holder.clientWidth;
+          if (!totalBase || available <= 0) return;
+          if (Math.abs(available - lastFitWidth) < 1) return;
+          lastFitWidth = available;
+          const scale = (available - 2) / totalBase;
+          cols.forEach((col, i) => {
+            const width = Math.max(34, Math.floor(bases[i] * scale));
+            if (Math.round(col.getWidth()) !== width) col.setWidth(width);
+          });
+        }
+
+        let fitColumnsTimer = 0;
+        function scheduleFitColumns() {
+          window.clearTimeout(fitColumnsTimer);
+          fitColumnsTimer = window.setTimeout(fitColumnsToHost, 120);
+        }
+
+        function applyActiveColumn() {
+          const table = gridInstance && gridInstance.table;
+          if (!table) return;
+          const col = table
+            .getColumns()
+            .find((c) => String(c.getField()).toLowerCase() === "active");
+          if (!col) return;
+          col.updateDefinition({
+            width: columnWidth("Active"),
+            minWidth: 60,
+            hozAlign: "center",
+            headerHozAlign: "center",
+            headerSort: false,
+            headerFilter: false,
+            formatter: activeCheckboxFormatter,
+          });
+        }
+
+        function showGridMessage(html) {
+          const host = document.getElementById("idb-coding-grid");
+          if (host) host.innerHTML = `<div class="bina-grid-message">${html}</div>`;
+        }
+
+        async function renderIndexedDbGrid(
+          dbName = DEFAULT_DB,
+          storeName = DEFAULT_STORE,
+        ) {
+          const savedLang = localStorage.getItem("sidebarLanguage") || "fa";
+
+          if (typeof WebTranslator === "function") {
+            window.translator =
+              window.translator ||
+              window.parent?.translator ||
+              new WebTranslator();
+            if (!window.translator.isLoaded) {
+              await window.translator.init();
+            }
+          }
+
+          let rows = [];
+          let localError = "";
+          try {
+            rows = await readStoreRows(dbName, storeName);
+          } catch (localErr) {
+            rows = [];
+            localError = localErr.message || String(localErr);
+          }
+
+          // اگر استور محلی وجود نداشت یا خالی بود، جدول از سرور خوانده می‌شود
+          if (!rows.length) {
+            try {
+              rows = await readStoreRowsFromServer(storeName);
+            } catch (serverErr) {
+              showGridMessage(
+                `جدول «${storeName}» نه در حافظه محلی و نه روی سرور خوانده شد.<br>` +
+                  `حافظه محلی: ${localError || "خالی"}<br>` +
+                  `سرور: ${serverErr.message}`,
+              );
+              return;
+            }
+          }
+
+          rows = sortCodingRows(rows);
+
+          // تغییرهای تیک «فعال» که قبلاً در IndexedDB ثبت شده‌اند
+          const activeOverrides = await loadActiveOverrides();
+          if (activeOverrides.size) {
+            for (const row of rows) {
+              const hasActive = Object.keys(row).some(
+                (k) => k.toLowerCase() === "active",
+              );
+              if (!hasActive) continue;
+              const key = rowIdentity(row);
+              if (activeOverrides.has(key))
+                setField(row, "Active", activeOverrides.get(key));
+            }
+          }
+
+          // کلیدهای فنی جدول در گرید نمایش داده نمی‌شوند (key / id / _key)
+          const HIDDEN_FIELDS = new Set(["_key", "key", "id"]);
+
+          // ترتیب نمایش ستون‌ها بر اساس ترتیب فیلدهای جدول
+          const PREFERRED_ORDER = [
+            "KOl_Code_st",
+            "KOl_Onvan_st",
+            "MOien_Code_st",
+            "MOien_Onvan_st",
+            "Tafsil_Code_st",
+            "Tafsil_Onvan_st",
+            "Tafsil_Code1_st",
+            "Tafsil_Onvan1_st",
+            "Tafsil_Code2_st",
+            "Tafsil_Onvan2_st",
+            "Active",
+          ];
+
+          // نام فیلدها بدون حساسیت به حروف کوچک/بزرگ یکتا می‌شوند.
+          // اگر ردیف‌ها هم Active و هم active داشته باشند، قبلاً دو ستون
+          // با عنوان «فعال» ساخته می‌شد (در فایرفاکس دیده می‌شد).
+          const colByLower = new Map();
+          rows.forEach((r) =>
+            Object.keys(r).forEach((k) => {
+              const lower = String(k).toLowerCase();
+              if (HIDDEN_FIELDS.has(lower)) return;
+              if (!colByLower.has(lower)) colByLower.set(lower, k);
+            }),
+          );
+          const orderIndex = (col) => {
+            const i = PREFERRED_ORDER.findIndex(
+              (c) => c.toLowerCase() === String(col).toLowerCase(),
+            );
+            return i < 0 ? PREFERRED_ORDER.length : i;
+          };
+          const columns = Array.from(colByLower.values()).sort(
+            (a, b) => orderIndex(a) - orderIndex(b),
+          );
+
+          // عنوان ستون‌های جدول tk_c_Gozareshat_st (نمایش کدینگ استاندارد)
+          const FIELD_CAPTIONS = {
+            kol_code_st: "کد کل",
+            kol_onvan_st: "عنوان کل",
+            moien_code_st: "کد معین",
+            moien_onvan_st: "عنوان معین",
+            tafsil_code_st: "کد تفصیل",
+            tafsil_onvan_st: "عنوان تفصیل",
+            tafsil_code1_st: "کد تفصیل ۱",
+            tafsil_onvan1_st: "عنوان تفصیل ۱",
+            tafsil_code2_st: "کد تفصیل ۲",
+            tafsil_onvan2_st: "عنوان تفصیل ۲",
+            active: "فعال",
+          };
+          const captions = {};
+          for (const col of columns) {
+            captions[col] = FIELD_CAPTIONS[String(col).toLowerCase()] || col;
+          }
+
+          // فقط ستون‌های قابل نمایش به گرید داده می‌شود. مقدار هر ستون
+          // بدون حساسیت به حروف خوانده می‌شود تا اگر همان فیلد با حروف
+          // دیگری هم در ردیف باشد، مقدارش از دست نرود.
+          const visibleRows = rows.map((row) => {
+            const out = {};
+            for (const col of columns) out[col] = pickField(row, col);
+            return out;
+          });
+          if (typeof window.BinaGrid === "function") {
+            const presetcolumns = {};
+            for (const col of columns) {
+              presetcolumns[col] = { width: columnWidth(col) };
+            }
+
+            gridInstance = new BinaGrid("#idb-coding-grid", {
+              height: "100%",
+              pageSize: 2000,
+              captions,
+              presetcolumns,
+              // نسخهٔ جدید تا عرض‌های ذخیره‌شدهٔ قبلی (۲۴۰ پیکسل) بازنگردد
+              storagePrefix: `BinaIdb_${dbName}_${storeName}_v2`,
+              rowSelector: false,
+            });
+            await gridInstance.setData(visibleRows, "BinaIdbGrid", {
+              own: true,
+            });
+
+            // نگاشت شناسهٔ داخلی گرید به رکورد اصلی (برای ثبت تغییر «فعال»)
+            rowById = new Map();
+            visibleRows.forEach((item, i) => {
+              const id = Number.isFinite(item.__id) ? item.__id : i + 1;
+              rowById.set(id, rows[i]);
+            });
+            applyActiveColumn();
+            fitColumnsToHost();
+            window.setTimeout(fitColumnsToHost, 300);
+            // با تغییر اندازهٔ پنجره/تب، ستون‌ها دوباره در عرض موجود پخش می‌شوند
+            const fitHost = document.querySelector("#idb-coding-grid .bina-wrap");
+            if (typeof ResizeObserver === "function" && fitHost) {
+              new ResizeObserver(scheduleFitColumns).observe(fitHost);
+            }
+            window.addEventListener("resize", scheduleFitColumns);
+          }
+
+          if (
+            window.translator &&
+            typeof window.translator.setLanguage === "function"
+          ) {
+            await window.translator.setLanguage(savedLang);
+          }
+        }
+
+        window.renderIndexedDbGrid = renderIndexedDbGrid;
+
+        if (document.readyState === "loading") {
+          document.addEventListener(
+            "DOMContentLoaded",
+            () => renderIndexedDbGrid(),
+            { once: true },
+          );
+        } else {
+          renderIndexedDbGrid();
+        }
+      })();
+    </script>
+  </body>
+</html>

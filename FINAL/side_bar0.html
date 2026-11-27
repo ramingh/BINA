@@ -4,17 +4,25 @@
     <meta charset="utf-8" />
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <title>Simple Operational Sidebar</title>
-    <link href="./css/style.css" rel="stylesheet" />
+    <link href="./css/side_bar.css" rel="stylesheet" />
     <link href="./css/palette.css" rel="stylesheet" />
     <script src="./app/com/Dic_sek.Js"></script>
     <!-- <script src="./Dic_gem.Js"></script> -->
+    <style>
+      html.boot-loading body {
+        opacity: 0;
+      }
+      body {
+        transition: opacity 0.12s ease;
+      }
+    </style>
     <script>
-      (function () {
-        var lang = localStorage.getItem("sidebarLanguage") || "fa";
-        document.documentElement.lang = lang;
-        document.documentElement.dir =
-          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
-      })();
+      document.documentElement.classList.add("boot-loading");
+      window.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+          document.documentElement.classList.remove("boot-loading");
+        }, 50);
+      });
     </script>
   </head>
 
@@ -1153,7 +1161,7 @@
                 class="menu-item menu-item--level-2"
                 href="pages/tab-95-1.html"
                 data-menu-code="95-1"
-                data-page-ready="false"
+                data-page-ready="true"
                 title="95-1 — اطلاعات پایه"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
@@ -1248,9 +1256,20 @@
     <site-translator></site-translator>
     <script src="./app/com/side_Bar.js"></script>
     <script>
-      // ۱. ساخت نمونه از کلاس مترجم
+      // ۱. تنظیم فوری زبان و جهت صفحه
+      (function () {
+        var lang = localStorage.getItem("sidebarLanguage") || "fa";
+        document.documentElement.lang = lang;
+        document.documentElement.dir =
+          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
+        if (lang !== "fa") {
+          document.documentElement.classList.add("translating");
+        }
+      })();
+
+      // ۲. ساخت نمونه از کلاس مترجم و آماده‌سازی
       window.translator = new WebTranslator();
-      // ۲. آماده‌سازی دیتابیس
+
       window.addEventListener("DOMContentLoaded", async () => {
         try {
           await window.translator.init();
@@ -1261,60 +1280,38 @@
           console.error("❌ خطا در راه‌اندازی مترجم:", err);
         }
       });
-      // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ بدون دستکاری com_sidebar.js
+
+      // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ تغییر زبان
       const langPopup = document.getElementById("languagePopup");
       if (langPopup) {
         langPopup.addEventListener("click", (event) => {
           const btn = event.target.closest("[data-language]");
           if (!btn) return;
-          const langCode = btn.dataset.language; // fa, en, ar
-          // اجرای ترجمه روی صفحه اصلی
+          const langCode = btn.dataset.language;
           if (window.translator) {
             window.translator.setLanguage(langCode);
           }
-          // ترجمه محتوای تب فعال (iframe) در صورت باز بودن
           const frame = document.getElementById("contentFrame");
           if (frame && frame.contentWindow && frame.contentWindow.translator) {
             frame.contentWindow.translator.setLanguage(langCode);
           }
         });
       }
-    </script>
-    <script>
-      (function () {
-        var lang = localStorage.getItem("sidebarLanguage") || "fa";
-        document.documentElement.lang = lang;
-        document.documentElement.dir =
-          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
-      })();
-    </script>
-    <script>
-      (function () {
-        var lang = localStorage.getItem("sidebarLanguage") || "fa";
-        document.documentElement.lang = lang;
-        document.documentElement.dir =
-          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
-        if (lang !== "fa")
-          document.documentElement.classList.add("translating");
-      })();
 
-      // =========================================================
-      // انیمیشن فوق‌العاده نرم و روان برای باز و بسته شدن منوها
-      // =========================================================
+      // ۴. بستن منوها در شروع و انیمیشن نرم باز و بسته شدن
       document.addEventListener("DOMContentLoaded", () => {
         const menuGroups = document.querySelectorAll(".menu-group");
 
         menuGroups.forEach((details) => {
+          details.removeAttribute("open"); // اطمینان از بسته بودن هنگام لود
+
           const summary = details.querySelector("summary");
           const submenu = details.querySelector(".submenu");
-          console.log("1111111111", summary, submenu);
-
           if (!summary || !submenu) return;
 
           summary.addEventListener("click", (e) => {
-            e.preventDefault(); // جلوگیری از باز/بسته شدن آنی مرورگر
+            e.preventDefault();
 
-            // اگر منو باز است -> انیمیشن بسته شدن
             if (details.open) {
               const startHeight = `${submenu.offsetHeight}px`;
               const anim = submenu.animate(
@@ -1329,9 +1326,7 @@
                 details.removeAttribute("open");
                 submenu.style.height = "";
               };
-            }
-            // اگر منو بسته است -> انیمیشن باز شدن
-            else {
+            } else {
               details.setAttribute("open", "");
               const endHeight = `${submenu.offsetHeight}px`;
 

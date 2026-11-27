@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>گروههای گزارشات مالی</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css"
+    />
+    <link rel="stylesheet" href="../css/com_tab.css" />
+    <link rel="stylesheet" href="../css/Bina-10-1.css?v=1.2.58" />
+    <link rel="stylesheet" href="../css/Bina-10-4.css?v=2" />
+
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="../app/com/com_tab.js"></script>
+    <script src="../app/com/com_grid.js"></script>
+    <script src="../app/com/bina-db-manager.js"></script>
+    <!-- <script src="./app/bina/Bina-10-1.js"></script> -->
+  </head>
+  <body class="bina-form-page">
+    <main class="bina-grid-page">
+      <section
+        id="idb-gozaresh-grid"
+        class="bina-grid-host"
+        translate="no"
+      ></section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <!-- <script src="./app/com/Dic_sek.Js"></script>
+    <script src="./app/com/com_tab.js"></script>
+    <script src="./app/com/com_grid.js"></script> -->
+    <script>
+      (function () {
+        "use strict";
+
+        const DEFAULT_DB = "public";
+        const DEFAULT_STORE = "tk_g_GozareshMali_sh";
+
+        //  const countEl = document.getElementById("grid-record-count");
+        let gridInstance = null;
+
+        function readStoreRows(dbName, storeName) {
+          return new Promise((resolve, reject) => {
+            const req = indexedDB.open(dbName);
+            req.onerror = () =>
+              reject(req.error || new Error("خطا در باز کردن دیتابیس"));
+            req.onsuccess = () => {
+              const db = req.result;
+              const actualStore = Array.from(db.objectStoreNames).find(
+                (n) => n.toLowerCase() === String(storeName).toLowerCase(),
+              );
+              if (!actualStore) {
+                db.close();
+                reject(
+                  new Error(
+                    `جدول «${storeName}» در دیتابیس «${dbName}» یافت نشد.`,
+                  ),
+                );
+                return;
+              }
+              const tx = db.transaction(actualStore, "readonly");
+              const store = tx.objectStore(actualStore);
+              const rows = [];
+              const cursorReq = store.openCursor();
+              cursorReq.onsuccess = (ev) => {
+                const cursor = ev.target.result;
+                if (cursor) {
+                  const val = cursor.value;
+                  if (val && typeof val === "object" && !Array.isArray(val)) {
+                    rows.push({ _key: cursor.key, ...val });
+                  } else {
+                    rows.push({ _key: cursor.key, value: val });
+                  }
+                  cursor.continue();
+                } else {
+                  db.close();
+                  resolve(rows);
+                }
+              };
+              cursorReq.onerror = () => {
+                db.close();
+                reject(cursorReq.error || new Error("خطا در خواندن رکوردها"));
+              };
+            };
+          });
+        }
+
+        function buildCaptionsFromDict(columns, translator) {
+          const captions = {};
+          const faDict = translator?.dictionaries?.fa || {};
+          for (const col of columns) {
+            const norm =
+              typeof translator?.normalize === "function"
+                ? translator.normalize(col)
+                : col;
+            captions[col] = faDict[norm] || col;
+          }
+          return captions;
+        }
+
+        // ─── خواندن جدول از سرور (وقتی استور محلی موجود یا پر نیست) ───
+        const SERVER_ENDPOINT = () =>
+          localStorage.getItem("bina_manager_endpoint") ||
+          "http://localhost/FastDataHandler.ashx";
+
+        async function readStoreRowsFromServer(tableName) {
+          if (typeof window.webservice !== "function") {
+            throw new Error("webservice (bina-db-manager.js) بارگذاری نشده است.");
+          }
+          const ws = new window.webservice({ endpoint: SERVER_ENDPOINT() });
+          const stats = await ws.fetchStats(tableName);
+          const names = (stats.columns || []).map((c) => String(c.name));
+          const out = [];
+          for await (const pack of ws.fetchTable({
+            table: tableName,
+            batchSize: 20000,
+            afterId: 0,
+          })) {
+            for (const row of pack.rows || []) {
+              const obj = {};
+              if (Array.isArray(row)) {
+                names.forEach((n, i) => {
+                  obj[n] = row[i];
+                });
+              } else {
+                names.forEach((n) => {
+                  obj[n] = row ? row[n] : "";
+                });
+              }
+              out.push(obj);
+            }
+          }
+          return out;
+        }
+
+        // خواندن مقدار فیلد بدون حساسیت به حروف بزرگ/کوچک
+        function pickField(row, ...names) {
+          for (const wanted of names) {
+            const target = String(wanted).toLowerCase();
+            for (const key of Object.keys(row || {})) {
+              if (String(key).toLowerCase() !== target) continue;
+              const value = row[key];
+              if (value === null || value === undefined) continue;
+              if (String(value).trim() !== "") return value;
+            }
+          }
+          return "";
+        }
+
+        // ترتیب ردیف‌ها: TartibNamayesh و سپس کد گروه
+        function sortRows(rows) {
+          return rows.slice().sort((a, b) => {
+            // ترتیب نمایش صفر مقدار معتبر است؛ فقط مقدار خالی به آخر می‌رود
+            const ra = Number(pickField(a, "TartibNamayesh"));
+            const rb = Number(pickField(b, "TartibNamayesh"));
+            const ta = Number.isFinite(ra) ? ra : 999999;
+            const tb = Number.isFinite(rb) ? rb : 999999;
+            if (ta !== tb) return ta - tb;
+            return String(pickField(a, "Code_Gozareshat_sh")).localeCompare(
+              String(pickField(b, "Code_Gozareshat_sh")),
+              undefined,
+              { numeric: true },
+            );
+          });
+        }
+
+        function showGridMessage(html) {
+          const host = document.getElementById("idb-gozaresh-grid");
+          if (host) host.innerHTML = `<div class="bina-grid-message">${html}</div>`;
+        }
+
+        async function renderIndexedDbGrid(
+          dbName = DEFAULT_DB,
+          storeName = DEFAULT_STORE,
+        ) {
+          const savedLang = localStorage.getItem("sidebarLanguage") || "fa";
+
+          if (typeof WebTranslator === "function") {
+            window.translator =
+              window.translator ||
+              window.parent?.translator ||
+              new WebTranslator();
+            if (!window.translator.isLoaded) {
+              await window.translator.init();
+            }
+          }
+
+          let rows = [];
+          let localError = "";
+          try {
+            rows = await readStoreRows(dbName, storeName);
+          } catch (localErr) {
+            rows = [];
+            localError = localErr.message || String(localErr);
+          }
+
+          // اگر استور محلی وجود نداشت یا خالی بود، جدول از سرور خوانده می‌شود
+          if (!rows.length) {
+            try {
+              rows = await readStoreRowsFromServer(storeName);
+            } catch (serverErr) {
+              showGridMessage(
+                `جدول «${storeName}» نه در حافظه محلی و نه روی سرور خوانده شد.<br>` +
+                  `حافظه محلی: ${localError || "خالی"}<br>` +
+                  `سرور: ${serverErr.message}`,
+              );
+              return;
+            }
+          }
+
+          rows = sortRows(rows);
+
+          // کلیدهای فنی جدول در گرید نمایش داده نمی‌شوند (key / id / _key)
+          const HIDDEN_FIELDS = new Set(["_key", "key", "id"]);
+
+          const colSet = new Set();
+          rows.forEach((r) =>
+            Object.keys(r).forEach((k) => {
+              if (!HIDDEN_FIELDS.has(String(k).toLowerCase())) colSet.add(k);
+            }),
+          );
+          const columns = Array.from(colSet);
+
+          // عنوان ستون‌های جدول tk_g_soratmali_st (گروه استاندارد)
+          // TartibNamayesh, Code_SoratMali_st, Onvan, Karbord, Mahiat
+          const FIELD_CAPTIONS = {
+            tartibnamayesh: "ترتیب نمایش",
+            code_gozareshat_sh: "کد گروه گزارش",
+            onvangozareshat: "عنوان گروه گزارش",
+            karbord: "کاربرد",
+            mahiat: "ماهیت",
+          };
+          const captions = {};
+          for (const col of columns) {
+            captions[col] = FIELD_CAPTIONS[String(col).toLowerCase()] || col;
+          }
+
+          // فقط ستون‌های قابل نمایش به گرید داده می‌شود
+          const visibleRows = rows.map((row) => {
+            const out = {};
+            for (const col of columns) out[col] = row[col];
+            return out;
+          });
+          if (typeof window.BinaGrid === "function") {
+            gridInstance = new BinaGrid("#idb-gozaresh-grid", {
+              height: "100%",
+              pageSize: 50,
+              captions,
+              storagePrefix: `BinaIdb_${dbName}_${storeName}`,
+              rowSelector: false,
+            });
+            await gridInstance.setData(visibleRows, "BinaIdbGrid", {
+              own: true,
+            });
+          }
+
+          if (
+            window.translator &&
+            typeof window.translator.setLanguage === "function"
+          ) {
+            await window.translator.setLanguage(savedLang);
+          }
+        }
+
+        window.renderIndexedDbGrid = renderIndexedDbGrid;
+
+        if (document.readyState === "loading") {
+          document.addEventListener(
+            "DOMContentLoaded",
+            () => renderIndexedDbGrid(),
+            { once: true },
+          );
+        } else {
+          renderIndexedDbGrid();
+        }
+      })();
+    </script>
+  </body>
+</html>

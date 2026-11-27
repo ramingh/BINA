@@ -5,26 +5,54 @@
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <link
       rel="preload"
-      href="IRANYekanX-Light.ttf"
+      href="./css/IRANYekanX-Light.ttf"
       as="font"
       type="font/ttf"
       crossorigin
     />
     <title>Simple Operational Sidebar</title>
-    <link href="./css/style.css" rel="stylesheet" />
+    <link href="./css/side_bar.css" rel="stylesheet" />
     <link href="./css/palette.css" rel="stylesheet" />
     <script src="./app/com/Dic_sek.Js"></script>
-    <!-- <script src="./Dic_gem.Js"></script> -->
+
+    <style>
+      html.boot-loading body {
+        opacity: 0;
+      }
+      body {
+        transition: opacity 0.12s ease;
+      }
+    </style>
+    <script>
+      document.documentElement.classList.add("boot-loading");
+      window.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+          document.documentElement.classList.remove("boot-loading");
+        }, 50);
+      });
+    </script>
     <script>
       (function () {
         var lang = localStorage.getItem("sidebarLanguage") || "fa";
+        var theme = localStorage.getItem("sidebarTheme") || "light";
+        var paletteColor =
+          localStorage.getItem("sidebarPaletteColor") || "#285F92";
+
         document.documentElement.lang = lang;
         document.documentElement.dir =
           lang === "fa" || lang === "ar" ? "rtl" : "ltr";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.setProperty(
+          "--palette-color",
+          paletteColor,
+        );
+
+        if (lang !== "fa") {
+          document.documentElement.classList.add("translating");
+        }
       })();
     </script>
   </head>
-
   <body>
     <div class="app-layout">
       <aside aria-label="منوی اصلی" class="sidebar">
@@ -124,7 +152,7 @@
                   ></circle>
                 </svg>
               </button>
-              <div class="palette-popup" hidden="" id="palettePopup">
+              <div class="palette-popup" hidden id="palettePopup">
                 <div aria-label="رنگ‌های آماده" class="palette-grid">
                   <button
                     aria-label="خاکستری آبی"
@@ -411,7 +439,7 @@
                     class="menu-item menu-item--level-3"
                     href="pages/tab-10-4-1.html"
                     data-menu-code="10-4-1"
-                    data-page-ready="false"
+                    data-page-ready="true"
                     title="10-4-1 — گروه استاندارد"
                     ><span
                       class="menu-item__bullet menu-item__bullet--leaf"
@@ -421,23 +449,9 @@
                   >
                   <a
                     class="menu-item menu-item--level-3"
-                    href="pages/tab-10-4-2.html"
-                    data-menu-code="10-4-2"
-                    data-page-ready="false"
-                    title="10-4-2 — ایجاد کدینگ استاندارد"
-                    ><span
-                      class="menu-item__bullet menu-item__bullet--leaf"
-                      aria-hidden="true"
-                    ></span
-                    ><span class="menu-item__label"
-                      >ایجاد کدینگ استاندارد</span
-                    ></a
-                  >
-                  <a
-                    class="menu-item menu-item--level-3"
                     href="pages/tab-10-4-3.html"
                     data-menu-code="10-4-3"
-                    data-page-ready="false"
+                    data-page-ready="true"
                     title="10-4-3 — نمایش کدینگ استاندارد"
                     ><span
                       class="menu-item__bullet menu-item__bullet--leaf"
@@ -463,7 +477,7 @@
                 class="menu-item menu-item--level-2"
                 href="pages/tab-11-1.html"
                 data-menu-code="11-1"
-                data-page-ready="false"
+                data-page-ready="true"
                 title="11-1 — گروههای صورتهای مالی"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
@@ -475,7 +489,7 @@
                 class="menu-item menu-item--level-2"
                 href="pages/tab-11-2.html"
                 data-menu-code="11-2"
-                data-page-ready="false"
+                data-page-ready="true"
                 title="11-2 — گروههای گزارشات مالی"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
@@ -803,7 +817,7 @@
               >
             </div>
           </details>
-          <details class="menu-group" data-menu-code="70">
+          <details class="menu-group" data-menu-code="40">
             <summary class="menu-item menu-item--level-1">
               <span class="menu-item__icon" aria-hidden="true">▦</span
               ><span class="menu-item__label"
@@ -813,10 +827,10 @@
             <div class="submenu submenu--level-2">
               <a
                 class="menu-item menu-item--level-2"
-                href="pages/tab-70-1.html"
-                data-menu-code="70-1"
+                href="pages/tab-40-1.html"
+                data-menu-code="40-1"
                 data-page-ready="false"
-                title="70-1 — تجمیع اطلاعات شرکتها"
+                title="40-1 — تجمیع اطلاعات شرکتها"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
                   aria-hidden="true"
@@ -825,10 +839,10 @@
               >
               <a
                 class="menu-item menu-item--level-2"
-                href="pages/tab-70-2.html"
-                data-menu-code="70-2"
+                href="pages/tab-40-2.html"
+                data-menu-code="40-2"
                 data-page-ready="false"
-                title="70-2 — صورت سود و زیان تجمیعی"
+                title="40-2 — صورت سود و زیان تجمیعی"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
                   aria-hidden="true"
@@ -837,10 +851,10 @@
               >
               <a
                 class="menu-item menu-item--level-2"
-                href="pages/tab-70-3.html"
-                data-menu-code="70-3"
+                href="pages/tab-40-3.html"
+                data-menu-code="40-3"
                 data-page-ready="false"
-                title="70-3 — صورت وضعیت مالی تجمیعی"
+                title="40-3 — صورت وضعیت مالی تجمیعی"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
                   aria-hidden="true"
@@ -849,10 +863,10 @@
               >
               <a
                 class="menu-item menu-item--level-2"
-                href="pages/tab-70-4.html"
-                data-menu-code="70-4"
+                href="pages/tab-40-4.html"
+                data-menu-code="40-4"
                 data-page-ready="false"
-                title="70-4 — صورت جریان وجوه نقد تجمیعی"
+                title="40-4 — صورت جریان وجوه نقد تجمیعی"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
                   aria-hidden="true"
@@ -862,6 +876,239 @@
                 ></a
               >
             </div>
+          </details>
+          <details class="menu-group" data-menu-code="55">
+            <summary class="menu-item menu-item--level-1">
+              <span class="menu-item__icon" aria-hidden="true">◉</span
+              ><span class="menu-item__label">منابع انسانی</span>
+            </summary>
+            <div class="submenu submenu--level-2">
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-55-1.html"
+                data-menu-code="55-1"
+                data-page-ready="false"
+                title="55-1 — اطلاعات پرسنلی"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">اطلاعات پرسنلی</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-55-2.html"
+                data-menu-code="55-2"
+                data-page-ready="false"
+                title="55-2 — گزارشات پرسنلی"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">گزارشات پرسنلی</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-55-3.html"
+                data-menu-code="55-3"
+                data-page-ready="false"
+                title="55-3 — آنالیز پراکندگی استقرار"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label"
+                  >آنالیز پراکندگی استقرار</span
+                ></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-55-4.html"
+                data-menu-code="55-4"
+                data-page-ready="false"
+                title="55-4 — مستندات پرسنلی"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">مستندات پرسنلی</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-55-5.html"
+                data-menu-code="55-5"
+                data-page-ready="false"
+                title="55-5 — به روز آوری مستندات"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">به روز آوری مستندات</span></a
+              >
+            </div>
+          </details>
+          <details class="menu-group" data-menu-code="60">
+            <summary class="menu-item menu-item--level-1">
+              <span class="menu-item__icon" aria-hidden="true">◈</span
+              ><span class="menu-item__label">وام</span>
+            </summary>
+            <div class="submenu submenu--level-2">
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-60-1.html"
+                data-menu-code="60-1"
+                data-page-ready="false"
+                title="60-1 — تعریف انواع وام"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">تعریف انواع وام</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-60-2.html"
+                data-menu-code="60-2"
+                data-page-ready="false"
+                title="60-2 — بررسی احراز وام پرسنلی"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">بررسی احراز وام پرسنلی</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-60-3.html"
+                data-menu-code="60-3"
+                data-page-ready="false"
+                title="60-3 — واگذاری وام"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">واگذاری وام</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-60-4.html"
+                data-menu-code="60-4"
+                data-page-ready="false"
+                title="60-4 — گزارشات وام"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">گزارشات وام</span></a
+              >
+            </div>
+          </details>
+          <details class="menu-group" data-menu-code="65">
+            <summary class="menu-item menu-item--level-1">
+              <span class="menu-item__icon" aria-hidden="true">◫</span
+              ><span class="menu-item__label">بودجه</span>
+            </summary>
+            <div class="submenu submenu--level-2">
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-65-1.html"
+                data-menu-code="65-1"
+                data-page-ready="false"
+                title="65-1 — تعریف بودجه مصوب"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">تعریف بودجه مصوب</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-65-2.html"
+                data-menu-code="65-2"
+                data-page-ready="false"
+                title="65-2 — گزارش انحرافات بودجه"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">گزارش انحرافات بودجه</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-65-3.html"
+                data-menu-code="65-3"
+                data-page-ready="false"
+                title="65-3 — اصلاحیه بودجه"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">اصلاحیه بودجه</span></a
+              >
+            </div>
+          </details>
+          <details class="menu-group" data-menu-code="70">
+            <summary class="menu-item menu-item--level-1">
+              <span class="menu-item__icon" aria-hidden="true">◧</span
+              ><span class="menu-item__label">پروژه</span>
+            </summary>
+            <div class="submenu submenu--level-2">
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-70-1.html"
+                data-menu-code="70-1"
+                data-page-ready="false"
+                title="70-1 — تعریف پروژه ها"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">تعریف پروژه ها</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-70-2.html"
+                data-menu-code="70-2"
+                data-page-ready="false"
+                title="70-2 — ورود اطلاعات پروژه ها"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">ورود اطلاعات پروژه ها</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-70-3.html"
+                data-menu-code="70-3"
+                data-page-ready="false"
+                title="70-3 — گزارش پیشرفت فیزیکی"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">گزارش پیشرفت فیزیکی</span></a
+              >
+              <a
+                class="menu-item menu-item--level-2"
+                href="pages/tab-70-4.html"
+                data-menu-code="70-4"
+                data-page-ready="false"
+                title="70-4 — گانت چارت"
+                ><span
+                  class="menu-item__bullet menu-item__bullet--leaf"
+                  aria-hidden="true"
+                ></span
+                ><span class="menu-item__label">گانت چارت</span></a
+              >
+            </div>
+          </details>
+          <details class="menu-group" data-menu-code="80">
+            <summary class="menu-item menu-item--level-1">
+              <span class="menu-item__icon" aria-hidden="true">◨</span
+              ><span class="menu-item__label">قرار داد</span>
+            </summary>
+            <div class="submenu submenu--level-2"></div>
           </details>
           <details class="menu-group" data-menu-code="85">
             <summary class="menu-item menu-item--level-1">
@@ -941,7 +1188,7 @@
                 class="menu-item menu-item--level-2"
                 href="pages/tab-95-1.html"
                 data-menu-code="95-1"
-                data-page-ready="false"
+                data-page-ready="true"
                 title="95-1 — اطلاعات پایه"
                 ><span
                   class="menu-item__bullet menu-item__bullet--leaf"
@@ -1020,7 +1267,7 @@
           </div>
           <iframe
             class="content-frame"
-            hidden=""
+            hidden
             id="contentFrame"
             title="محتوای تب فعال"
           ></iframe>
@@ -1036,9 +1283,20 @@
     <site-translator></site-translator>
     <script src="./app/com/side_Bar.js?v=1.3.0"></script>
     <script>
-      // ۱. ساخت نمونه از کلاس مترجم
+      // ۱. تنظیم فوری زبان و جهت صفحه
+      (function () {
+        var lang = localStorage.getItem("sidebarLanguage") || "fa";
+        document.documentElement.lang = lang;
+        document.documentElement.dir =
+          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
+        if (lang !== "fa") {
+          document.documentElement.classList.add("translating");
+        }
+      })();
+
+      // ۲. ساخت نمونه از کلاس مترجم و آماده‌سازی
       window.translator = new WebTranslator();
-      // ۲. آماده‌سازی دیتابیس
+
       window.addEventListener("DOMContentLoaded", async () => {
         try {
           await window.translator.init();
@@ -1049,60 +1307,38 @@
           console.error("❌ خطا در راه‌اندازی مترجم:", err);
         }
       });
-      // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ بدون دستکاری app.js
+
+      // ۳. اتصال ایمن به دکمه‌های پاپ‌آپ تغییر زبان
       const langPopup = document.getElementById("languagePopup");
       if (langPopup) {
         langPopup.addEventListener("click", (event) => {
           const btn = event.target.closest("[data-language]");
           if (!btn) return;
-          const langCode = btn.dataset.language; // fa, en, ar
-          // اجرای ترجمه روی صفحه اصلی
+          const langCode = btn.dataset.language;
           if (window.translator) {
             window.translator.setLanguage(langCode);
           }
-          // ترجمه محتوای تب فعال (iframe) در صورت باز بودن
           const frame = document.getElementById("contentFrame");
           if (frame && frame.contentWindow && frame.contentWindow.translator) {
             frame.contentWindow.translator.setLanguage(langCode);
           }
         });
       }
-    </script>
-    <script>
-      (function () {
-        var lang = localStorage.getItem("sidebarLanguage") || "fa";
-        document.documentElement.lang = lang;
-        document.documentElement.dir =
-          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
-      })();
-    </script>
-    <script>
-      (function () {
-        var lang = localStorage.getItem("sidebarLanguage") || "fa";
-        document.documentElement.lang = lang;
-        document.documentElement.dir =
-          lang === "fa" || lang === "ar" ? "rtl" : "ltr";
-        if (lang !== "fa")
-          document.documentElement.classList.add("translating");
-      })();
 
-      // =========================================================
-      // انیمیشن فوق‌العاده نرم و روان برای باز و بسته شدن منوها
-      // =========================================================
+      // ۴. بستن منوها در شروع و انیمیشن نرم باز و بسته شدن
       document.addEventListener("DOMContentLoaded", () => {
         const menuGroups = document.querySelectorAll(".menu-group");
 
         menuGroups.forEach((details) => {
+          details.removeAttribute("open"); // اطمینان از بسته بودن هنگام لود
+
           const summary = details.querySelector("summary");
           const submenu = details.querySelector(".submenu");
-          // console.log( '1111111111',summary,submenu);
-
           if (!summary || !submenu) return;
 
           summary.addEventListener("click", (e) => {
-            e.preventDefault(); // جلوگیری از باز/بسته شدن آنی مرورگر
+            e.preventDefault();
 
-            // اگر منو باز است -> انیمیشن بسته شدن
             if (details.open) {
               const startHeight = `${submenu.offsetHeight}px`;
               const anim = submenu.animate(
@@ -1117,9 +1353,7 @@
                 details.removeAttribute("open");
                 submenu.style.height = "";
               };
-            }
-            // اگر منو بسته است -> انیمیشن باز شدن
-            else {
+            } else {
               details.setAttribute("open", "");
               const endHeight = `${submenu.offsetHeight}px`;
 

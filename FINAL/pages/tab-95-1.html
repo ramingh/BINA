@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>95-1 — اطلاعات پایه</title>
+    <link rel="stylesheet" href="../css/Bina-95-1.css" />
+  </head>
+  <body>
+    <div class="wrap">
+        <!-- TOPBAR -->
+        <div class="topbar">
+          <h1>BINA | مدیریت بانک محلی</h1>
+          <div class="storage" id="storageBar">
+            <span id="stPersist" class="badge-warn">⏳</span>
+            <span id="stUsage">— MB / — MB</span>
+            <button
+              id="btnPersist"
+              class="ghost"
+              style="padding: 3px 9px; font-size: 11px"
+            >
+              درخواست ماندگاری
+            </button>
+            <button
+              id="btnStop"
+              class="danger"
+              style="padding: 3px 9px; font-size: 11px"
+              disabled
+            >
+              توقف
+            </button>
+          </div>
+        </div>
+        <!-- ۱: راه‌اندازی اولیه -->
+        <section class="panel">
+          <h2><span class="dot"></span> ۱) راه‌اندازی اولیه</h2>
+          <div class="row">
+            <button id="btnBootstrap" class="ok">
+              راه‌اندازی اولیه: اول همه tk_*، سپس فهرست و Schema
+            </button>
+            <button id="btnRefreshTables" class="secondary">
+              بروزرسانی فهرست جداول از سرور
+            </button>
+          </div>
+          <div class="row" style="margin-top: 10px">
+            <label class="hint" for="endpointField">آدرس WebService:</label
+            ><input
+              id="endpointField"
+              style="width: min(700px, 100%); direction: ltr"
+              value="http://localhost/FastDataHandler.ashx"
+            /><button class="secondary" id="saveEndpoint">
+              ثبت آدرس و بازخوانی صفحه
+            </button>
+          </div>
+          <div class="hint">
+            ابتدا تمام جدول‌های tk_* از سرور دریافت و کنترل می‌شوند؛ سپس فهرست و
+            دو Schema مشترک آماده می‌شوند. اگر TK ناقص باشد، دریافت اسناد شروع
+            نمی‌شود. آدرس سرویس را در همین بخش تنظیم کنید.
+          </div>
+          <div id="bootMsg"></div>
+          <div class="pills" id="bootPills"></div>
+        </section>
+        <!-- ۲: جداول -->
+        <section class="panel">
+          <h2><span class="dot"></span> ۲) جداول (انتخاب و دانلود)</h2>
+          <div class="row" style="margin-bottom: 8px">
+            <label class="hint">شرکت:</label>
+            <select id="fCompany">
+              <option value>همه</option>
+            </select>
+            <label class="hint">خانواده:</label>
+            <select id="fFamily">
+              <option value>همه</option>
+              <option value="coding">Coding</option>
+              <option value="sanad">Sanad</option>
+            </select>
+            <label class="hint">وضعیت:</label>
+            <select id="fStatus">
+              <option value>همه</option>
+              <option value="missing">نیست</option>
+              <option value="incomplete">ناقص</option>
+              <option value="diff">اختلاف تعداد</option>
+              <option value="ok">کامل</option>
+            </select>
+            <button id="btnApplyFilter" class="secondary">اعمال فیلتر</button>
+          </div>
+          <div class="row">
+            <button id="btnSelVisible" class="secondary">
+              انتخاب همه‌ی نمایش‌داده‌شده
+            </button>
+            <button id="btnSelIncomplete" class="secondary">
+              انتخاب ناقص‌ها
+            </button>
+            <button id="btnSelNone" class="secondary">لغو انتخاب</button>
+            <button id="btnSyncSelected" class="ok">
+              دانلود جداول انتخاب‌شده
+            </button>
+          </div>
+          <div id="tblMsg"></div>
+          <div class="pills" id="tblPills"></div>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      id="chkAll"
+                      style="accent-color: var(--brand)"
+                    />
+                  </th>
+                  <th>جدول</th>
+                  <th>شرکت</th>
+                  <th>خانواده</th>
+                  <th>سال</th>
+                  <th>سرور</th>
+                  <th>لوکال</th>
+                  <th>وضعیت</th>
+                </tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <!-- ۳: TK -->
+        <section class="panel">
+          <h2><span class="dot"></span> ۳) جداول کمکی TK</h2>
+          <div class="row">
+            <button id="btnLoadTK">نمایش tk_dik و tk_sherkat</button>
+          </div>
+          <div id="tkMsg"></div>
+          <div class="pills" id="tkPills"></div>
+          <div class="scroll" style="max-height: 220px">
+            <table>
+              <thead>
+                <tr>
+                  <th>Store</th>
+                  <th>نمونه</th>
+                  <th>تعداد</th>
+                </tr>
+              </thead>
+              <tbody id="tkBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <!-- ۴: موجودی لوکال -->
+        <section class="panel">
+          <h2><span class="dot"></span> ۴) موجودی لوکال</h2>
+          <div class="row">
+            <button id="btnRefreshInv" class="secondary">بروزرسانی</button
+            ><button id="btnInspectMeta" class="secondary">
+              بررسی نام‌های تکراری (بدون تغییر)</button
+            ><button id="btnNormalizeMeta" class="warn">
+              اصلاح ایمن نام‌های متادیتا
+            </button>
+            <button id="btnSelectAllDb" class="secondary">انتخاب همه</button>
+            <button id="btnSelectNoneDb" class="secondary">لغو انتخاب</button>
+            <button id="btnDeleteSelected" class="danger">حذف انتخاب‌ها</button>
+            <button id="btnWipeAll" class="danger">پاک کردن همه</button>
+          </div>
+          <div id="invMsg"></div>
+          <div class="tree" id="invTree"></div>
+        </section>
+        <!-- لاگ -->
+        <section class="panel">
+          <h2><span class="dot"></span> لاگ</h2>
+          <div class="row">
+            <button class="ghost" id="btnClearLog">پاک کردن</button>
+          </div>
+          <pre class="log" id="log"></pre>
+        </section>
+        <footer>
+          BINA v4.2 · دریافت اجباری tk_* در آغاز · شناسه‌های lowercase · GZIP
+          بلوکی · نسخه داینامیک · ماندگاری Persistent
+        </footer>
+      </div>
+
+    <script src="../app/com/bina-db-manager.js"></script>
+    <script src="../app/bina/tab-95-1.js"></script>
+  </body>
+</html>

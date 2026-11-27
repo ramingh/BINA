@@ -1,8 +1,10 @@
 @font-face {
-  font-family: 'IRANYekanX';
-  src: local('IRANYekanX Light'), local('IRANYekanX'),
-    url('IRANYekanX-Light.ttf') format('truetype');
-  font-weight: 300;
+  font-family: "IRANYekanX";
+  src:
+    local("IRANYekanX Light"),
+    local("IRANYekanX"),
+    url("IRANYekanX-Light.ttf") format("truetype");
+  font-weight: 200;
   font-style: normal;
   font-display: swap;
 }
@@ -55,8 +57,8 @@ body {
 }
 
 body {
-  font-family: 'IRANYekanX', Tahoma, Arial, sans-serif;
-  font-size: 14px;
+  font-family: "IRANYekanX", Tahoma, Arial, sans-serif;
+  font-size: 12px;
   background: var(--color-page);
   color: var(--color-text);
   padding: 25px 14px;
@@ -130,7 +132,9 @@ body {
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform var(--transition-fast), filter var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    filter var(--transition-fast);
 }
 
 .header-action-button:hover svg {
@@ -207,11 +211,11 @@ body {
   display: none;
 }
 
-html[data-theme='dark'] .theme-icon--sun {
+html[data-theme="dark"] .theme-icon--sun {
   display: none;
 }
 
-html[data-theme='dark'] .theme-icon--moon {
+html[data-theme="dark"] .theme-icon--moon {
   display: block;
 }
 
@@ -243,8 +247,10 @@ html[data-theme='dark'] .theme-icon--moon {
   color: var(--color-text);
   text-decoration: none;
   cursor: pointer;
-  transition: border-color var(--transition-fast),
-    box-shadow var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
   text-align: right;
   direction: rtl;
 }
@@ -288,7 +294,10 @@ html[data-theme='dark'] .theme-icon--moon {
 }
 
 /* سه سطح: آیکن اصلی، لوزی توخالی برای شاخه، نقطه برای برگ */
-.menu-item__icon { font-size: 15px; flex: 0 0 22px; }
+.menu-item__icon {
+  font-size: 15px;
+  flex: 0 0 22px;
+}
 .menu-item__bullet--branch {
   background: transparent;
   border: 1.5px solid var(--color-active);
@@ -301,8 +310,9 @@ html[data-theme='dark'] .theme-icon--moon {
   border-radius: 50%;
   background: var(--color-tree-line);
 }
-.menu-item--level-3 { padding-inline-start: 9px; }
-
+.menu-item--level-3 {
+  padding-inline-start: 9px;
+}
 
 /* =========================================================
    زیرمنو و خطوط درختی
@@ -323,7 +333,7 @@ html[data-theme='dark'] .theme-icon--moon {
 
 .submenu > .menu-item::before,
 .submenu > .menu-group > .menu-item::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   right: -10px;
@@ -332,7 +342,7 @@ html[data-theme='dark'] .theme-icon--moon {
 }
 
 .submenu > .menu-item:last-child::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -12px;
   top: calc(50% + 1px);
@@ -343,7 +353,7 @@ html[data-theme='dark'] .theme-icon--moon {
 }
 
 .submenu > .menu-group:last-child::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -12px;
   top: 18px;
@@ -358,7 +368,7 @@ html[data-theme='dark'] .theme-icon--moon {
    ========================================================= */
 
 .menu-group > summary::after {
-  content: '▾';
+  content: "▾";
   font-size: 26px;
   color: var(--color-muted);
   margin-inline-start: auto;
@@ -367,7 +377,9 @@ html[data-theme='dark'] .theme-icon--moon {
   justify-content: center;
   width: 20px;
   height: 20px;
-  transition: transform 250ms ease, color 250ms ease;
+  transition:
+    transform 250ms ease,
+    color 250ms ease;
 }
 
 .menu-group[open] > summary::after {
@@ -384,7 +396,7 @@ html[data-theme='dark'] .theme-icon--moon {
 }
 
 .menu-group > summary.menu-item--level-2::after {
-  content: '▾';
+  content: "▾";
   font-size: 14px;
   font-weight: 700;
   color: var(--color-active);
@@ -395,7 +407,9 @@ html[data-theme='dark'] .theme-icon--moon {
   width: 16px;
   height: 16px;
   line-height: 1;
-  transition: transform 250ms ease, color 250ms ease;
+  transition:
+    transform 250ms ease,
+    color 250ms ease;
 }
 
 .menu-group[open] > summary.menu-item--level-2::after {
@@ -534,9 +548,11 @@ html[data-theme='dark'] .theme-icon--moon {
   align-items: center;
   gap: 10px;
   padding: 0 10px;
-  background: color-mix(in srgb,
-      var(--color-sidebar) 88%,
-      var(--color-active) 12%);
+  background: color-mix(
+    in srgb,
+    var(--color-sidebar) 88%,
+    var(--color-active) 12%
+  );
   border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
   border-radius: 7px;
   color: var(--color-muted);
@@ -606,11 +622,14 @@ html[data-theme='dark'] .theme-icon--moon {
   width: auto;
 }
 
-html[dir='ltr'] .app-layout:not(.is-sidebar-collapsed) .sidebar-toggle-button svg {
+html[dir="ltr"]
+  .app-layout:not(.is-sidebar-collapsed)
+  .sidebar-toggle-button
+  svg {
   transform: rotate(180deg);
 }
 
-html[dir='ltr'] .app-layout.is-sidebar-collapsed .sidebar-toggle-button svg {
+html[dir="ltr"] .app-layout.is-sidebar-collapsed .sidebar-toggle-button svg {
   transform: none;
 }
 
@@ -618,7 +637,7 @@ html[dir='ltr'] .app-layout.is-sidebar-collapsed .sidebar-toggle-button svg {
    تم تاریک
    ========================================================= */
 
-html[data-theme='dark'] {
+html[data-theme="dark"] {
   --color-page: #111820;
   --color-surface: #18212a;
   --color-sidebar: #151e26;
@@ -633,39 +652,39 @@ html[data-theme='dark'] {
   --shadow-sidebar: 0 4px 15px rgb(0 0 0 / 26%);
 }
 
-html[data-theme='dark'] .sidebar,
-html[data-theme='dark'] .main-content {
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .main-content {
   border-color: #2b3741;
 }
 
-html[data-theme='dark'] .status-bar {
+html[data-theme="dark"] .status-bar {
   border-color: #2d3943;
   box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
 }
 
-html[data-theme='dark'] .sidebar__header {
+html[data-theme="dark"] .sidebar__header {
   background: rgb(255 255 255 / 3%);
   border-bottom-color: #2b3741;
   box-shadow: 0 1px 4px rgb(0 0 0 / 15%);
 }
 
-html[data-theme='dark'] .tab-strip {
+html[data-theme="dark"] .tab-strip {
   border-bottom-color: #33404a;
 }
 
-html[data-theme='dark'] .tab {
+html[data-theme="dark"] .tab {
   background: #202a33;
   border-color: #43515c;
   color: #aeb9c2;
 }
 
-html[data-theme='dark'] .tabs-close-all {
+html[data-theme="dark"] .tabs-close-all {
   background: #202a33;
   border-color: #43515c;
   color: #cbd4da;
 }
 
-html[data-theme='dark'] .content-panel {
+html[data-theme="dark"] .content-panel {
   border-color: #33404a;
 }
 

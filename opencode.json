@@ -1,23 +1,30 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "freellm": {
+    "ollama": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "FreeLLM Local",
+      "name": "Ollama local",
       "options": {
-        "baseURL": "http://127.0.0.1:31415/v1",
-        "apiKey": "not-needed"
+        "baseURL": "http://localhost:11434/v1"
       },
       "models": {
-        "local": {
-          "name": "Local Model",
+        "qwen2.5-coder:14b": {
+          "name": "Qwen 2.5 Coder 14B",
           "limit": {
-            "context": 32000,
+            "context": 32768,
+            "output": 4096
+          }
+        },
+        "llama3.1:8b": {
+          "name": "Llama 3.1 8B",
+          "limit": {
+            "context": 32768,
             "output": 4096
           }
         }
       }
     }
   },
-  "model": "freellm/local"
+  "model": "ollama/qwen2.5-coder:14b",
+  "small_model": "ollama/llama3.1:8b"
 }

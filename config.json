@@ -1,0 +1,19 @@
+{
+  "models": [
+    {
+      "title": "Qwen Coder 14B",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:14b"
+    },
+    {
+      "title": "Llama 3.1 8B",
+      "provider": "ollama",
+      "model": "llama3.1:8b"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Qwen Coder 14B",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:14b"
+  }
+}
